@@ -64,6 +64,13 @@ ArrayReserve :: inline (arr : *[..]$T, new_capacity : s64)
     arr.allocated = new_capacity;
 }
 
+ArrayTop :: inline (arr : []$T) -> *T #must
+{
+    Assert (arr.count > 0);
+
+    return *arr.data[arr.count - 1];
+}
+
 ArrayPush :: inline (arr : *[..]$T, $initialize := true) -> *T #must
 {
     if arr.count >= arr.allocated
