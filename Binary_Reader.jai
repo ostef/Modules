@@ -10,13 +10,13 @@ MakeBinaryReader :: inline (data : string) -> BinaryReader #must
     return .{data = data.data, size = data.count, offset = 0};
 }
 
-ReadBytes :: (reader : *BinaryReader, data : *void, count : s64) -> bool
+ReadBytes :: (reader : *BinaryReader, data : *void, size : s64) -> bool
 {
-    if reader.offset + size_of (T) * count > reader.size
+    if reader.offset + size > reader.size
         return false;
 
-    memcpy (data, reader.data + reader.offset, count);
-    reader.offset += count;
+    memcpy (data, reader.data + reader.offset, size);
+    reader.offset += size;
 
     return true;
 }
