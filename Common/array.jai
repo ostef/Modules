@@ -164,3 +164,11 @@ ArrayOrderedRemove :: inline (arr : *[..]$T, index : s64)
     memcpy (arr.data + index, arr.data + index + 1, arr.count - index - 1);
     arr.count -= 1;
 }
+
+ArrayGetIndex :: inline (arr : []$T, item : *T) -> s64 #must
+{
+    if item >= arr.data && item < arr.data + arr.count
+        return ptr - arr.data;
+
+    return -1;
+}
