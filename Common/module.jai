@@ -17,12 +17,13 @@ FormatString :: (format_string : string, args : ..Any) -> string #must
 @PrintLike
 
 FormatString :: (allocator : Allocator, format_string : string, args : ..Any) -> string #must
+#deprecated "Use a context argument instead: FormatString (\"...\", ... ,, allocator)"
 {
     builder : StringBuilder;
     builder.allocator = allocator;
     StringBuilderAppend (*builder, format_string, ..args);
 
-    return StringBuilderBuild (*builder, allocator = allocator);
+    return StringBuilderBuild (*builder,, allocator);
 }
 @PrintLike
 
@@ -37,14 +38,17 @@ FormatToCString :: (format_string : string, args : ..Any) -> *u8 #must
 @PrintLike
 
 FormatToCString :: (allocator : Allocator, format_string : string, args : ..Any) -> *u8 #must
+#deprecated "Use a context argument instead: FormatToCString (\"...\", ... ,, allocator)"
 {
     builder : StringBuilder;
     builder.allocator = allocator;
     StringBuilderAppend (*builder, format_string, ..args);
 
-    return StringBuilderBuildCstr (*builder, allocator = allocator);
+    return StringBuilderBuildCstr (*builder,, allocator);
 }
 @PrintLike
+
+Print :: Basic.print;
 
 Print :: Basic.print;
 

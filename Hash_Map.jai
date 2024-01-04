@@ -57,7 +57,7 @@ HashMapGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) 
     return capacity;
 }
 
-HashMapInit :: inline (map : *HashMap, capacity : s64, allocator := context.allocator)
+HashMapInit :: inline (map : *HashMap, capacity : s64)
 {
     Initialize (map);
 
@@ -69,8 +69,8 @@ HashMapInit :: inline (map : *HashMap, capacity : s64, allocator := context.allo
     capacity = pow;
 
     map.allocated = capacity;
-    map.allocator = allocator;
-    map.entries = Alloc (map.Entry, capacity, allocator);
+    map.allocator = context.allocator;
+    map.entries = Alloc (map.Entry, capacity);
 
     for i : 0..map.allocated - 1
         map.entries[i].hash = Hash_Map_Never_Occupied_Hash;

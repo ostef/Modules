@@ -55,7 +55,7 @@ HashSetGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) 
     return capacity;
 }
 
-HashSetInit :: inline (set : *HashSet, capacity : s64, allocator := context.allocator)
+HashSetInit :: inline (set : *HashSet, capacity : s64)
 {
     Initialize (set);
 
@@ -67,8 +67,8 @@ HashSetInit :: inline (set : *HashSet, capacity : s64, allocator := context.allo
     capacity = pow;
 
     set.allocated = capacity;
-    set.allocator = allocator;
-    set.entries = Alloc (set.Entry, capacity, allocator);
+    set.allocator = context.allocator;
+    set.entries = Alloc (set.Entry, capacity);
 
     for i : 0..set.allocated - 1
         set.entries[i].hash = Hash_Set_Never_Occupied_Hash;

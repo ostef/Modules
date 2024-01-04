@@ -50,7 +50,7 @@ MakeShaderStringWithLineNumbers :: (shader : string) -> string #must
         line_str.data += line_str.count;
     }
 
-    return StringBuilderBuild (*builder, allocator = Temp);
+    return StringBuilderBuild (*builder,, Temp);
 }
 
 #scope_export
@@ -65,9 +65,9 @@ CheckShader :: (handle : GLuint, desc : string, location := #caller_location) ->
     {
         if log_length > 1
         {
-            buffer := Alloc (u8, log_length + 1, Temp);
+            buffer := Alloc (u8, log_length + 1,, Temp);
             glGetShaderInfoLog (handle, xx log_length, null, buffer);
-            LogError ("%:\n\n%", desc, MakeString (log_length, buffer), location = location);
+            LogError ("%:\n\n%", desc, .{log_length, buffer}, location = location);
         }
         else
             LogError (desc, location = location);
@@ -86,9 +86,9 @@ CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_locat
     {
         if log_length > 1
         {
-            buffer := Alloc (u8, log_length + 1, Temp);
+            buffer := Alloc (u8, log_length + 1,, Temp);
             glGetProgramInfoLog (handle, xx log_length, null, buffer);
-            LogError ("%:\n\n%", desc, MakeString (log_length, buffer), location = location);
+            LogError ("%:\n\n%", desc, .{log_length, buffer}, location = location);
         }
         else
             LogError (desc, location = location);
@@ -99,9 +99,7 @@ CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_locat
 
 CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$geometry_source := "", print_shader_on_error := true, location := #caller_location) -> GLuint #must
 {
-    prev_allocator := context.allocator;
-    context.allocator = Temp;
-    defer context.allocator = prev_allocator;
+    AllocatorScope (Temp);
 
     state := GetTemporaryStorageState ();
     defer SetTemporaryStorageState (state);

@@ -9,10 +9,11 @@ Utf8String :: struct
 
 MakeUtf8String :: inline (str : string) -> Utf8String #must
 {
-    return .{str.count, str.data};
+    return .{as_string=str};
 }
 
 MakeUtf8String :: inline (count : s64, data : *u8) -> Utf8String #must
+#deprecated "Use a struct literal directly"
 {
     return .{count, data};
 }
@@ -37,6 +38,7 @@ for_expansion :: (str : Utf8String, body : Code, flags : For_Flags) #expand
 }
 
 MakeString :: inline (count : s64, data : *u8) -> string #must
+#deprecated "Use a struct literal directly"
 {
     str : string = ---;
     str.count = count;
@@ -47,15 +49,17 @@ MakeString :: inline (count : s64, data : *u8) -> string #must
 
 MakeString :: inline (cstr : *u8) -> string #must
 {
-    return MakeString (StringLength (cstr), cstr);
+    return .{StringLength (cstr), cstr};
 }
 
 StringFromArray :: inline (arr : []u8) -> string #must
+#deprecated "Use a cast"
 {
     return MakeString (arr.count, arr.data);
 }
 
 StringToArray :: inline (str : string) -> []u8 #must
+#deprecated "Use a cast"
 {
     return MakeArray (str.count, str.data);
 }
@@ -88,17 +92,17 @@ StringCompare :: inline (a : string, b : string) -> int #must
     return 0;
 }
 
-StringClone :: inline (str : string, allocator := context.allocator) -> string #must
+StringClone :: inline (str : string) -> string #must
 {
-    data := cast (*u8) Alloc (str.count, allocator);
+    data := cast (*u8) Alloc (str.count);
     memcpy (data, str.data, str.count);
 
-    return MakeString (str.count, data);
+    return .{str.count, data};
 }
 
-StringCloneToCString :: inline (str : string, allocator := context.allocator) -> *u8 #must
+StringCloneToCString :: inline (str : string) -> *u8 #must
 {
-    data := cast (*u8) Alloc (str.count + 1, allocator);
+    data := cast (*u8) Alloc (str.count + 1);
     memcpy (data, str.data, str.count);
     data[str.count] = 0;
 
@@ -135,14 +139,14 @@ StringEndsWith :: inline (str : string, with : string) -> bool #must
     return true;
 }
 
-StringFindFirst :: inline (str : string, needle : string) -> s64 #must
+StringFindFirst :: inline (str : string, to_find : string) -> s64 #must
 #no_abc
 {
     for i : 0..str.count - 1
     {
-        for j : 0..needle.count - 1
+        for j : 0..to_find.count - 1
         {
-            if str[i] == needle[j]
+            if str[i] == to_find[j]
                 return i;
         }
     }
@@ -150,14 +154,14 @@ StringFindFirst :: inline (str : string, needle : string) -> s64 #must
     return -1;
 }
 
-StringFindLast :: inline (str : string, needle : string) -> s64 #must
+StringFindLast :: inline (str : string, to_find : string) -> s64 #must
 #no_abc
 {
     for < i : str.count - 1..0
     {
-        for j : 0..needle.count - 1
+        for j : 0..to_find.count - 1
         {
-            if str[i] == needle[j]
+            if str[i] == to_find[j]
                 return i;
         }
     }
@@ -165,7 +169,7 @@ StringFindLast :: inline (str : string, needle : string) -> s64 #must
     return -1;
 }
 
-StringJoin :: (allocator : Allocator, args : ..string) -> string #must
+StringJoin :: (args : ..string) -> string #must
 #no_abc
 {
     total_size := 0;
@@ -175,7 +179,7 @@ StringJoin :: (allocator : Allocator, args : ..string) -> string #must
     if total_size == 0
         return "";
 
-    data := cast (*u8) Alloc (total_size, allocator);
+    data := cast (*u8) Alloc (total_size);
 
     i := 0;
     for args
@@ -184,10 +188,11 @@ StringJoin :: (allocator : Allocator, args : ..string) -> string #must
         i += it.count;
     }
 
-    return MakeString (total_size, data);
+    return .{total_size, data};
 }
 
-StringJoin :: inline (args : ..string) -> string #must
+StringJoin :: (allocator : Allocator, args : ..string) -> string #must
+#deprecated "Use a context argument instead: StringJoin (\"Hello\", \"Sailor\",, allocator)"
 {
-    return StringJoin (context.allocator, ..args);
+    return StringJoin (..args,, allocator);
 }

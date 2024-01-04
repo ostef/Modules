@@ -12,13 +12,13 @@ EnumCombo :: (label : *u8, current_item : *$T, ignore_last_value := false, popup
     enum_info := type_info (T);
 
     count := ifx ignore_last_value then enum_info.names.count - 1 else enum_info.names.count;
-    names := AllocArray (*u8, count, Temp);
+    names := AllocArray (*u8, count,, Temp);
 
     // @Todo: handle aliases
     for value_index : 0..count - 1
     {
         name := *names[value_index];
-        name.* = StringCloneToCString (enum_info.names[value_index], Temp);
+        name.* = StringCloneToCString (enum_info.names[value_index],, Temp);
 
         for i : 0..enum_info.names[value_index].count - 1
         {

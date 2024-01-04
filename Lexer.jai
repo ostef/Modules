@@ -127,7 +127,7 @@ LexerSkipWhitespacesAndComments :: inline (using lexer : *Lexer)
     }
 }
 
-LexerScanQuotedString :: (using lexer : *Lexer, allowed_quotes := "\"", allocator := context.allocator) -> string, bool
+LexerScanQuotedString :: (using lexer : *Lexer, allowed_quotes := "\"") -> string, bool
 {
     if LexerIsAtEnd (lexer)
         return "", false;
@@ -185,12 +185,12 @@ LexerScanQuotedString :: (using lexer : *Lexer, allowed_quotes := "\"", allocato
 
     LexerAdvance (lexer);
 
-    return StringBuilderBuild (*builder, allocator = allocator), true;
+    return StringBuilderBuild (*builder), true;
 }
 
 SyntaxError :: (using lexer : *Lexer, fmt_str : string, args : ..Any)
 {
     has_errors = true;
-    msg := FormatString (Temp, fmt_str, ..args);
+    msg := FormatString (fmt_str, ..args,, Temp);
     LogError ("%:%:%, syntax error: %", name, line, column, msg);
 }

@@ -1,83 +1,75 @@
-AllocOrNull :: inline (size : s64, allocator := context.allocator) -> *void #must
+AllocOrNull :: inline (size : s64) -> *void #must
 {
-    Assert (allocator.proc != null);
-
     if size <= 0
         return null;
 
-    return allocator.proc (.ALLOCATE, size, 0, null, allocator.data);
+    return context.allocator.proc (.ALLOCATE, size, 0, null, context.allocator.data);
 }
 
-Alloc :: inline (size : s64, allocator := context.allocator) -> *void #must
+Alloc :: inline (size : s64) -> *void #must
 {
-    Assert (allocator.proc != null);
-
     if size <= 0
         return null;
 
-    ptr := allocator.proc (.ALLOCATE, size, 0, null, allocator.data);
-    Assert (ptr != null, "Allocator % could not allocate % bytes", GetAllocatorName (allocator), size);
+    ptr := context.allocator.proc (.ALLOCATE, size, 0, null, context.allocator.data);
+    Assert (ptr != null, "Allocator % could not allocate % bytes", GetAllocatorName (context.allocator), size);
 
     #if Basic.MEMORY_DEBUGGER
-        Basic.Memory_Debugger.check_alloc (allocator, ptr, size);
+        Basic.Memory_Debugger.check_alloc (context.allocator, ptr, size);
 
     return ptr;
 }
 
-Alloc :: inline ($T : Type, allocator := context.allocator, $initialize := true) -> *T #must
+Alloc :: inline ($T : Type, $initialize := true) -> *T #must
 {
-    ptr := cast (*T) Alloc (size_of (T), allocator);
+    ptr := cast (*T) Alloc (size_of (T));
     #if initialize
         Initialize (ptr);
 
     return ptr;
 }
 
-Alloc :: inline ($T : Type, count : s64, allocator := context.allocator, $initialize := false) -> *T #must
+Alloc :: inline ($T : Type, count : s64, $initialize := false) -> *T #must
 {
-    ptr := cast (*T) Alloc (size_of (T) * count, allocator);
+    ptr := cast (*T) Alloc (size_of (T) * count);
     #if initialize
         Initialize (ptr, count);
 
     return ptr;
 }
 
-AllocArray :: inline ($T : Type, count : s64, allocator := context.allocator, $initialize := false) -> []T #must
+AllocArray :: inline ($T : Type, count : s64, $initialize := false) -> []T #must
 {
     result : []T = ---;
-    result.data = Alloc (T, count, allocator, initialize);
+    result.data = Alloc (T, count, initialize);
     result.count = count;
 
     return result;
 }
 
-Free :: inline (ptr : *void, allocator := context.allocator)
+Free :: inline (ptr : *void)
 {
-    Assert (allocator.proc != null);
-
     if !ptr
         return;
 
     #if Basic.MEMORY_DEBUGGER
-        Basic.Memory_Debugger.check_free (allocator, ptr);
+        Basic.Memory_Debugger.check_free (context.allocator, ptr);
 
-    allocator.proc (.FREE, 0, 0, ptr, allocator.data);
+    context.allocator.proc (.FREE, 0, 0, ptr, context.allocator.data);
 }
 
-Realloc :: inline (ptr : *void, old_size : s64, size : s64, allocator := context.allocator) -> *void #must
+Realloc :: inline (ptr : *void, old_size : s64, size : s64) -> *void #must
 {
-    Assert (allocator.proc != null);
-
-    new_ptr := allocator.proc (.RESIZE, size, old_size, ptr, allocator.data);
-    Assert (new_ptr != null, "Allocator % failed to reallocate % bytes (previous size was %)", GetAllocatorName (allocator), size, old_size);
+    new_ptr := context.allocator.proc (.RESIZE, size, old_size, ptr, context.allocator.data);
+    Assert (new_ptr != null, "Allocator % failed to reallocate % bytes (previous size was %)", GetAllocatorName (context.allocator), size, old_size);
 
     #if Basic.MEMORY_DEBUGGER
-        Basic.Memory_Debugger.check_realloc (allocator, ptr, old_size, new_ptr, size);
+        Basic.Memory_Debugger.check_realloc (context.allocator, ptr, old_size, new_ptr, size);
 
     return new_ptr;
 }
 
-GetAllocatorName :: inline (allocator := context.allocator) -> string #must
+GetAllocatorName :: inline (allocator : Allocator) -> string #must
 {
     name : string;
     allocator.proc (.CAPS, 0, 0, *name, allocator.data);
@@ -85,16 +77,22 @@ GetAllocatorName :: inline (allocator := context.allocator) -> string #must
     return name;
 }
 
-GetAllocatorSpecs :: inline (allocator := context.allocator) -> Allocator_Caps #must
+GetAllocatorSpecs :: inline (allocator : Allocator) -> Allocator_Caps #must
 {
     return cast, no_check (Allocator_Caps) allocator.proc (.CAPS, 0, 0, null, allocator.data);
 }
 
 Trap :: Allocator.{ proc = TrapAllocatorProc, data = null };
 
-TrapAllocatorProc :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, old_memory: *void, allocator_data: *void) -> *void
+TrapAllocatorProc :: (mode : Allocator_Mode, requested_size : s64, old_size : s64, ptr : *void, allocator_data : *void) -> *void
 {
     Panic ("Allocation trap");
+
+    if mode == .CAPS
+    {
+        name_ptr := cast (*string) ptr;
+        name_ptr.* = "Trap Allocator";
+    }
 
     return null;
 }

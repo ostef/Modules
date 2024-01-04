@@ -159,7 +159,7 @@ RenderTextDrawListsUsingImGui :: (text_draw_lists : *Im3d.TextDrawList, count : 
                 text_data.positionSize.w * ImGui.GetFontSize (),
                 screen,
                 text_data.color.v,
-                MakeString (text_data.textLength, text)
+                .{text_data.textLength, text}
             );
         }
     }

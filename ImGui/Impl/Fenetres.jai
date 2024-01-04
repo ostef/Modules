@@ -305,7 +305,7 @@ UpdateMonitors :: ()
     platform_io := ImGui.GetPlatformIO ();
     platform_io.Monitors.Size = 0;
 
-    for Fenetres.GetDisplays (Temp)
+    for Fenetres.GetDisplays (,, Temp)
     {
         monitor : ImGui.PlatformMonitor;
         monitor.MainPos = ImVec2.{cast (float) it.x, cast (float) it.y};

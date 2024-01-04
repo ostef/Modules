@@ -29,14 +29,14 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
     if message[message.count - 1] != #char "\n"
         StringBuilderAppend (*builder, "\n");
 
-    str := StringBuilderBuild (*builder, allocator = Temp);
+    str := StringBuilderBuild (*builder,, Temp);
 
     write_string (str, to_standard_error = (info.common_flags | .ERROR) != 0);
 }
 
 LogMessage :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0, section : *Log_Section = null)
 {
-    msg := FormatString (Temp, fmt_str, ..args);
+    msg := FormatString (fmt_str, ..args,, Temp);
     if msg.count == 0
         return;
 

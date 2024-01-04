@@ -10,18 +10,18 @@ StringBuilderLength :: inline (builder : *StringBuilder) -> s64 #must
     return Basic.builder_string_length (builder);
 }
 
-StringBuilderBuild :: inline (builder : *StringBuilder, allocator := context.allocator, reset_builder := true) -> string #must
+StringBuilderBuild :: inline (builder : *StringBuilder, reset_builder := true) -> string #must
 {
-    return Basic.builder_to_string (builder, allocator = allocator, do_reset = reset_builder);
+    return Basic.builder_to_string (builder, do_reset = reset_builder);
 }
 
-StringBuilderBuildCstr :: (builder : *StringBuilder, allocator := context.allocator, reset_builder := true) -> *u8 #must
+StringBuilderBuildCstr :: (builder : *StringBuilder, reset_builder := true) -> *u8 #must
 {
     if !builder.initialized
         Basic.init_string_builder (builder);
 
     count := StringBuilderLength (builder);
-    result := Alloc (u8, count + 1, allocator);
+    result := Alloc (u8, count + 1);
     data := result;
 
     buffer := Basic.get_base_buffer (builder);
@@ -33,7 +33,7 @@ StringBuilderBuildCstr :: (builder : *StringBuilder, allocator := context.alloca
         next := buffer.next;
 
         if reset_builder && buffer != Basic.get_base_buffer (builder)
-            Free (buffer, builder.allocator);
+            Free (buffer,, builder.allocator);
 
         buffer = next;
     }
@@ -108,7 +108,7 @@ StringBuilderAppendBuilder :: (builder : *StringBuilder, other : *StringBuilder)
     buffer := Basic.get_base_buffer (other);
     while buffer
     {
-        str := MakeString (buffer.count, Basic.get_buffer_data (buffer));
+        str := string.{buffer.count, Basic.get_buffer_data (buffer)};
         count += StringBuilderAppendString (builder, str);
 
         buffer = buffer.next;
