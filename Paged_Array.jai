@@ -13,6 +13,14 @@ operator == :: inline (a : PagedArraySlotInfo, b : PagedArraySlotInfo) -> bool #
     return a.version == b.version && a.page_index == b.page_index && a.slot_index == b.slot_index;
 }
 
+// @Todo: identify the access patterns of PagedArray (i.e. what slots are used
+// when requesting sequentially, what slots are used after freeing a slot...)
+
+// @Todo @Memory: use smaller integer sizes where possible.
+// Page_Size is supposed to be relatively small so we should
+// make Page.count smaller than 8 bytes, as well as Slot.prev/next
+// The integer type to use could be a struct parameter, and if it's
+// void we use the smallest possible integer?
 PagedArray :: struct (T : Type, Page_Size : int)
 {
     Slot :: struct
@@ -130,7 +138,13 @@ PagedArrayFindSlot :: (using array : *PagedArray, $initialize := true) -> *array
     }
 
     slot.occupied = true;
-    slot.version += 1;
+
+    // We want version to never be 0 so handle overflow
+    if slot.version == 0xffffffff
+        slot.version = 1;
+    else
+        slot.version += 1;
+
     page.count += 1;
 
     count += 1;
@@ -148,44 +162,36 @@ PagedArrayFindSlot :: (using array : *PagedArray, $initialize := true) -> *array
     return item, info, is_new_page;
 }
 
-PagedArrayFreeSlot :: (using array : *PagedArray, info : PagedArraySlotInfo)
+PagedArrayFreeSlot :: (using array : *PagedArray, info : PagedArraySlotInfo, check_occupied := true, check_version := true)
 {
     EnsureInit (array);
 
     page := all_pages[info.page_index];
     page_was_full := page.free_slots == null;
-    Assert (page.slots[info.slot_index].occupied, "Freeing unoccupied slot %", info);
 
     slot := *page.slots[info.slot_index];
+    Assert (!check_occupied || slot.occupied, "Freeing unoccupied slot %", info);
+    Assert (!check_version || slot.version == info.version, "Mismatching version when freeing slot % (got %)", info, slot.version);
+
     slot.occupied = false;
 
-    ListPopRemove (*page.occupied_slots, slot);
+    ListRemove (*page.occupied_slots, slot);
     ListPushFront (*page.free_slots, slot);
-    page.count -= 1;
 
     // Add the page to the free pages list if it was full previously
     if page_was_full
     {
-        if full_pages == page
-            full_pages = page.next;
-
-        if page.prev
-            page.prev.next = page.next;
-
-        if page.next
-            page.next.prev = page.prev;
-
-        page.prev = null;
-        page.next = free_pages;
-        free_pages = page;
+        ListRemove (*full_pages, page);
+        ListPushFront (*free_pages, page);
     }
 
+    page.count -= 1;
     count -= 1;
 }
 
 PagedArrayFreeSlot :: inline (using array : *PagedArray, item : *array.T)
 {
-    valid, info := PagedArrayGetPagedArraySlotInfo (array, item);
+    valid, info := PagedArrayGetSlotInfo (array, item);
     Assert (valid, "Item is not in paged array");
 
     PagedArrayFreeSlot (array, info);
@@ -215,7 +221,7 @@ PagedArrayFreeAllSlots :: (using array : *PagedArray)
     full_pages = null;
 }
 
-PagedArrayGetPagedArraySlotInfo :: (using array : PagedArray, item : *array.T) -> valid : bool, PagedArraySlotInfo, occupied : bool
+PagedArrayGetSlotInfo :: (using array : PagedArray, item : *array.T) -> valid : bool, PagedArraySlotInfo, occupied : bool
 {
     info : PagedArraySlotInfo;
     for page : all_pages
