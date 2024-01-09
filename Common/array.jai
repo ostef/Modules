@@ -40,7 +40,7 @@ ArrayAdvance :: inline (arr : []$T, count : s64) -> []T #must
 
 ArrayFree :: inline (arr : *[..]$T)
 {
-    Free (arr.data, arr.allocator);
+    Free (arr.data,, arr.allocator);
     arr.data = null;
     arr.count = 0;
     arr.allocated = 0;
@@ -59,7 +59,7 @@ ArrayReserve :: inline (arr : *[..]$T, new_capacity : s64)
     if new_capacity <= arr.allocated
         return;
 
-    new_data := cast (*T) Realloc (arr.data, arr.allocated * size_of (T), new_capacity * size_of (T), allocator = arr.allocator);
+    new_data := cast (*T) Realloc (arr.data, arr.allocated * size_of (T), new_capacity * size_of (T),, arr.allocator);
     arr.data = new_data;
     arr.allocated = new_capacity;
 }
@@ -169,6 +169,28 @@ ArrayGetIndex :: inline (arr : []$T, item : *T) -> s64 #must
 {
     if item >= arr.data && item < arr.data + arr.count
         return ptr - arr.data;
+
+    return -1;
+}
+
+ArrayFindFirst :: (arr : []$T, item : T) -> s64 #must
+{
+    for arr
+    {
+        if it == item
+            return it_index;
+    }
+
+    return -1;
+}
+
+ArrayFindLast :: (arr : []$T, item : T) -> s64 #must
+{
+    for < arr
+    {
+        if it == item
+            return it_index;
+    }
 
     return -1;
 }
