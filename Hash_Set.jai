@@ -88,7 +88,7 @@ HashSetInitFromPreallocatedMemory :: inline (set : *HashSet, data : *void, capac
 
 HashSetFree :: inline (using set : *HashSet)
 {
-    Free (entries, allocator);
+    Free (entries,, allocator);
     entries = null;
     count = 0;
     occupied = 0;
@@ -113,11 +113,11 @@ HashSetGrow :: (set : *HashSet)
     old_entries.data = set.entries;
     old_entries.count = set.allocated;
 
-    defer Free (old_entries.data, set.allocator);
+    defer Free (old_entries.data,, set.allocator);
 
     new_capacity := Max (set.allocated * 2, Hash_Set_Min_Capacity);
 
-    set.entries = Alloc (set.Entry, new_capacity, set.allocator);
+    set.entries = Alloc (set.Entry, new_capacity,, set.allocator);
     set.count = 0;
     set.occupied = 0;
     set.allocated = new_capacity;

@@ -90,7 +90,7 @@ HashMapInitFromPreallocatedMemory :: inline (map : *HashMap, data : *void, capac
 
 HashMapFree :: inline (using map : *HashMap)
 {
-    Free (entries, allocator);
+    Free (entries,, allocator);
     entries = null;
     count = 0;
     occupied = 0;
@@ -115,11 +115,11 @@ HashMapGrow :: (map : *HashMap)
     old_entries.data = map.entries;
     old_entries.count = map.allocated;
 
-    defer Free (old_entries.data, map.allocator);
+    defer Free (old_entries.data,, map.allocator);
 
     new_capacity := Max (map.allocated * 2, Hash_Map_Min_Capacity);
 
-    map.entries = Alloc (map.Entry, new_capacity, map.allocator);
+    map.entries = Alloc (map.Entry, new_capacity,, map.allocator);
     map.count = 0;
     map.occupied = 0;
     map.allocated = new_capacity;
