@@ -16,6 +16,9 @@ operator == :: inline (a : PagedArraySlotInfo, b : PagedArraySlotInfo) -> bool #
 // @Todo: identify the access patterns of PagedArray (i.e. what slots are used
 // when requesting sequentially, what slots are used after freeing a slot...)
 
+// @Todo: review slot assignment, iteration is done in reverse order which is
+// not ideal for cache friendliness
+
 // @Todo @Memory: use smaller integer sizes where possible.
 // Page_Size is supposed to be relatively small so we should
 // make Page.count smaller than 8 bytes, as well as Slot.prev/next
@@ -41,7 +44,7 @@ PagedArray :: struct (T : Type, Page_Size : int)
         slots : [Page_Size]Slot;
         items : [Page_Size]T = ---;
         free_slots : *Slot;
-        occupied_Slots : *Slot;
+        occupied_slots : *Slot;
     }
 
     count : s64;
@@ -69,7 +72,7 @@ PagedArrayReset :: (using array : *PagedArray)
     EnsureInit (array);
 
     for page : all_pages
-        Free (page, allocator);
+        Free (page,, allocator);
 
     ArrayReset (*all_pages);
     count = 0;
@@ -112,7 +115,7 @@ PagedArrayFindSlot :: (using array : *PagedArray, $initialize := true) -> *array
     {
         is_new_page = true;
 
-        page = Alloc (Page, allocator);
+        page = Alloc (Page,, allocator);
 
         ListPushFront (*free_pages, page);
         ArrayPush (*all_pages, page);
@@ -256,13 +259,31 @@ PagedArrayIsSlotValid :: (using array : PagedArray, info : PagedArraySlotInfo) -
     return true;
 }
 
-PagedArrayGetItem :: (using array : PagedArray, info : PagedArraySlotInfo) -> *array.T #must
+PagedArrayGetItem :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T #must
 {
     Assert (info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
     Assert (info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");
+
     slot := *all_pages[info.page_index].slots[info.slot_index];
+
     Assert (slot.occupied, "Slot is not occupied");
     Assert (slot.version == info.version, "Slot has different version (requested %, got %)", info.version, slot.version);
+
+    return *all_pages[info.page_index].items[info.slot_index];
+}
+
+PagedArrayGetItemOrNull :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T #must
+{
+    Assert (info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
+    Assert (info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");
+
+    slot := *all_pages[info.page_index].slots[info.slot_index];
+
+    if !slot.occupied
+        return null;
+
+    if slot.version != info.version
+        return null;
 
     return *all_pages[info.page_index].items[info.slot_index];
 }
