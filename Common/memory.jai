@@ -122,5 +122,5 @@ ResetTemporaryStorage :: Basic.reset_temporary_storage;
 TemporaryStorageScope :: () #expand
 {
     state := GetTemporaryStorageState ();
-    defer `SetTemporaryStorageState (state);
+    `defer SetTemporaryStorageState (state);
 }
