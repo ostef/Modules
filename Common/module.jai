@@ -6,7 +6,19 @@ FormatFloat :: Basic.FormatFloat;
 FormatStruct :: Basic.FormatStruct;
 FormatArray :: Basic.FormatArray;
 
+FormatIntHex :: inline (value : Any, digits := 16) -> FormatInt #must
+{
+    return .{value=value, base=16, minimum_digits=digits, padding=#char"0"};
+}
+
 FormatString :: (format_string : string, args : ..Any) -> string #must
+#deprecated "The name of this function has been changed to SPrint"
+{
+    return SPrint (format_string, ..args);
+}
+@PrintLike
+
+SPrint :: (format_string : string, args : ..Any) -> string #must
 {
     builder : StringBuilder;
     builder.allocator = context.allocator;
@@ -28,6 +40,13 @@ FormatString :: (allocator : Allocator, format_string : string, args : ..Any) ->
 @PrintLike
 
 FormatToCString :: (format_string : string, args : ..Any) -> *u8 #must
+#deprecated "The name of this function has been changed to CSPrint"
+{
+    return CSprint (format_string, ..args);
+}
+@PrintLike
+
+CSPrint :: (format_string : string, args : ..Any) -> *u8 #must
 {
     builder : StringBuilder;
     builder.allocator = context.allocator;
@@ -131,7 +150,7 @@ OffsetOf :: ($T : Type, $member : string) -> s64 #must #expand
 {
     dummy := cast (*T) null;
 
-    #insert #run FormatString ("return cast (s64) *dummy.%;", member);
+    #insert #run SPrint ("return cast (s64) *dummy.%;", member);
 }
 
 DefaultValue :: ($T : Type) -> T #expand

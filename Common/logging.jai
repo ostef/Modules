@@ -36,7 +36,7 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
 
 LogMessage :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0, section : *Log_Section = null)
 {
-    msg := FormatString (fmt_str, ..args,, Temp);
+    msg := SPrint (fmt_str, ..args,, Temp);
     if msg.count == 0
         return;
 

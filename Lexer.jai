@@ -191,6 +191,6 @@ LexerScanQuotedString :: (using lexer : *Lexer, allowed_quotes := "\"") -> strin
 SyntaxError :: (using lexer : *Lexer, fmt_str : string, args : ..Any)
 {
     has_errors = true;
-    msg := FormatString (fmt_str, ..args,, Temp);
+    msg := SPrint (fmt_str, ..args,, Temp);
     LogError ("%:%:%, syntax error: %", name, line, column, msg);
 }
