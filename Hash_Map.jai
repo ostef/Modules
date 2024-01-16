@@ -136,6 +136,8 @@ HashMapGrow :: (map : *HashMap)
 
 HashMapProbe :: (map : HashMap, key : map.Key) -> h : map.HashType, index : s64, is_present : bool
 {
+    Assert (map.allocated != 0);
+
     mask := cast, trunc (map.HashType) (map.allocated - 1);
     hash := map.HashKey (key);
     if hash < Hash_Map_First_Occupied_Hash
@@ -191,6 +193,9 @@ HashMapInsert :: inline (map : *HashMap, key : map.Key, value : map.Value) -> *m
 
 HashMapRemove :: inline (map : *HashMap, key : map.Key) -> found : bool, removed : map.Value
 {
+    if map.count == 0
+        return false, DefaultValue (map.Value);
+
     hash, index, is_present := HashMapProbe (map, key);
     if !is_present
         return false, DefaultValue (map.Value);
