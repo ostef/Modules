@@ -252,19 +252,20 @@ PagedArrayGetSlotInfo :: (using array : PagedArray ($T, $N), item : *T) -> valid
     return false, info, false;
 }
 
-PagedArrayIsSlotValid :: (using array : PagedArray, info : PagedArraySlotInfo) -> bool #must
+PagedArrayIsSlotValid :: (using array : PagedArray, info : PagedArraySlotInfo) -> bool #must, invalid_indices : bool, not_occupied : bool, version_mismatch : bool
 {
     if info.slot_index < 0 && info.slot_index >= Page_Size
-        return false;
+        return false, true, false, false;
 
     if info.page_index < 0 || info.page_index >= all_pages.count
-        return false;
+        return false, true, false, false;
 
     slot := *all_pages[info.page_index].slots[info.slot_index];
-    if !slot.occupied || slot.version != info.version
-        return false;
 
-    return true;
+    if !slot.occupied || slot.version != info.version
+        return false, false, !slot.occupied, slot.version != info.version;
+
+    return true, false, false, false;
 }
 
 PagedArrayGetItem :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T #must
