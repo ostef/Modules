@@ -355,3 +355,29 @@ TypeIsEnumFlags :: inline (info : *Type_Info) -> bool #must
     return info != null && info.type == .ENUM
         && (cast (*Type_Info_Enum) info).enum_type_flags & .FLAGS == .FLAGS;
 }
+
+TypeIsSubstructOf :: inline (type : Type, of : Type) -> bool #must
+{
+    return TypeIsSubstructOf (cast (*Type_Info) type, cast (*Type_Info) of);
+}
+
+TypeIsSubstructOf :: (info : *Type_Info, of : *Type_Info) -> bool #must
+{
+    if info == of
+        return false;
+
+    while true
+    {
+        member := GetNonConstantStructMember (info, 0);
+
+        if !member || !(member.flags & .AS) || !(member.flags & .USING)
+            return false;
+
+        if member.type == of
+            return true;
+
+        info = member.type;
+    }
+
+    return false;
+}
