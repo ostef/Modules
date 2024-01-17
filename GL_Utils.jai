@@ -67,7 +67,7 @@ CheckShader :: (handle : GLuint, desc : string, location := #caller_location) ->
         {
             buffer := Alloc (u8, log_length + 1,, Temp);
             glGetShaderInfoLog (handle, xx log_length, null, buffer);
-            LogError ("%:\n\n%", desc, .{log_length, buffer}, location = location);
+            LogError ("%:\n\n%", desc, string.{log_length, buffer}, location = location);
         }
         else
             LogError (desc, location = location);
@@ -88,7 +88,7 @@ CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_locat
         {
             buffer := Alloc (u8, log_length + 1,, Temp);
             glGetProgramInfoLog (handle, xx log_length, null, buffer);
-            LogError ("%:\n\n%", desc, .{log_length, buffer}, location = location);
+            LogError ("%:\n\n%", desc, string.{log_length, buffer}, location = location);
         }
         else
             LogError (desc, location = location);
@@ -158,7 +158,7 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
     glShaderSource (fragment_shader, 1, *cstr_fragment_source, null);
     glCompileShader (fragment_shader);
 
-    if !CheckShader (fragment_shader, "Could not compile vertex shader", location = location)
+    if !CheckShader (fragment_shader, "Could not compile fragment shader", location = location)
     {
         if print_shader_on_error
             LogMessage ("Here's the shader we tried to compile:\n\n%", MakeShaderStringWithLineNumbers (fragment_source));
