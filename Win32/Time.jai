@@ -55,6 +55,8 @@ SystemTimeToTzSpecificLocalTime :: (lpTimeZoneInformation : *TIME_ZONE_INFORMATI
 SystemTimeToTzSpecificLocalTimeEx :: (lpTimeZoneInformation : *DYNAMIC_TIME_ZONE_INFORMATION, lpUniversalTime : *SYSTEMTIME, lpLocalTime : *SYSTEMTIME) -> BOOL #foreign KERNEL32;
 TzSpecificLocalTimeToSystemTime :: (lpTimeZoneInformation : *TIME_ZONE_INFORMATION, lpLocalTime : *SYSTEMTIME, lpUniversalTime : *SYSTEMTIME) -> BOOL #foreign KERNEL32;
 TzSpecificLocalTimeToSystemTimeEx :: (lpTimeZoneInformation : *DYNAMIC_TIME_ZONE_INFORMATION, lpLocalTime : *SYSTEMTIME, lpUniversalTime : *SYSTEMTIME) -> BOOL #foreign KERNEL32;
+timeBeginPeriod :: (uPeriod : u32) -> u32 #foreign WINMM;
+timeEndPeriod :: (uPeriod : u32) -> u32 #foreign WINMM;
 
 // Unicode aliases
 
@@ -65,3 +67,4 @@ TzSpecificLocalTimeToSystemTimeEx :: (lpTimeZoneInformation : *DYNAMIC_TIME_ZONE
 
 ADVAPI32 :: #system_library "ADVAPI32";
 KERNEL32 :: #system_library "KERNEL32";
+WINMM :: #system_library "WINMM";
