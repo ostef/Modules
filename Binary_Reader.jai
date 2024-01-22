@@ -21,6 +21,14 @@ ReadBytes :: (reader : *BinaryReader, data : *void, size : s64) -> bool
     return true;
 }
 
+EqualsString :: (reader : *BinaryReader, str : string) -> bool
+{
+    if reader.offset + str.count > reader.size
+        return false;
+
+    return string.{str.count, reader.data + reader.offset} == str;
+}
+
 ReadString :: (reader : *BinaryReader, count : s64) -> string, bool
 {
     if reader.size - reader.offset < count
