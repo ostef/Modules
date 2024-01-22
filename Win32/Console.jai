@@ -253,8 +253,6 @@ AttachConsole :: (dwProcessId : u32) -> BOOL #foreign KERNEL32;
 ClosePseudoConsole :: (hPC : HPCON)  #foreign KERNEL32;
 CreateConsoleScreenBuffer :: (dwDesiredAccess : u32, dwShareMode : u32, lpSecurityAttributes : *SECURITY_ATTRIBUTES, dwFlags : u32, lpScreenBufferData : *void) -> HANDLE #foreign KERNEL32;
 CreatePseudoConsole :: (size : COORD, hInput : HANDLE, hOutput : HANDLE, dwFlags : u32, phPC : *HPCON) -> HRESULT #foreign KERNEL32;
-ExpungeConsoleCommandHistoryA :: (ExeName : PSTR)  #foreign KERNEL32;
-ExpungeConsoleCommandHistoryW :: (ExeName : PWSTR)  #foreign KERNEL32;
 FillConsoleOutputAttribute :: (hConsoleOutput : HANDLE, wAttribute : u16, nLength : u32, dwWriteCoord : COORD, lpNumberOfAttrsWritten : *u32) -> BOOL #foreign KERNEL32;
 FillConsoleOutputCharacterA :: (hConsoleOutput : HANDLE, cCharacter : CHAR, nLength : u32, dwWriteCoord : COORD, lpNumberOfCharsWritten : *u32) -> BOOL #foreign KERNEL32;
 FillConsoleOutputCharacterW :: (hConsoleOutput : HANDLE, cCharacter : u16, nLength : u32, dwWriteCoord : COORD, lpNumberOfCharsWritten : *u32) -> BOOL #foreign KERNEL32;
@@ -272,10 +270,6 @@ GetConsoleAliasesLengthA :: (ExeName : PSTR) -> u32 #foreign KERNEL32;
 GetConsoleAliasesLengthW :: (ExeName : PWSTR) -> u32 #foreign KERNEL32;
 GetConsoleAliasesW :: (AliasBuffer : *u16, AliasBufferLength : u32, ExeName : PWSTR) -> u32 #foreign KERNEL32;
 GetConsoleCP :: () -> u32 #foreign KERNEL32;
-GetConsoleCommandHistoryA :: (Commands : PSTR, CommandBufferLength : u32, ExeName : PSTR) -> u32 #foreign KERNEL32;
-GetConsoleCommandHistoryLengthA :: (ExeName : PSTR) -> u32 #foreign KERNEL32;
-GetConsoleCommandHistoryLengthW :: (ExeName : PWSTR) -> u32 #foreign KERNEL32;
-GetConsoleCommandHistoryW :: (Commands : PWSTR, CommandBufferLength : u32, ExeName : PWSTR) -> u32 #foreign KERNEL32;
 GetConsoleCursorInfo :: (hConsoleOutput : HANDLE, lpConsoleCursorInfo : *CONSOLE_CURSOR_INFO) -> BOOL #foreign KERNEL32;
 GetConsoleDisplayMode :: (lpModeFlags : *u32) -> BOOL #foreign KERNEL32;
 GetConsoleFontSize :: (hConsoleOutput : HANDLE, nFont : u32) -> COORD #foreign KERNEL32;
@@ -318,8 +312,6 @@ SetConsoleCursorPosition :: (hConsoleOutput : HANDLE, dwCursorPosition : COORD) 
 SetConsoleDisplayMode :: (hConsoleOutput : HANDLE, dwFlags : u32, lpNewScreenBufferDimensions : *COORD) -> BOOL #foreign KERNEL32;
 SetConsoleHistoryInfo :: (lpConsoleHistoryInfo : *CONSOLE_HISTORY_INFO) -> BOOL #foreign KERNEL32;
 SetConsoleMode :: (hConsoleHandle : HANDLE, dwMode : CONSOLE_MODE) -> BOOL #foreign KERNEL32;
-SetConsoleNumberOfCommandsA :: (Number : u32, ExeName : PSTR) -> BOOL #foreign KERNEL32;
-SetConsoleNumberOfCommandsW :: (Number : u32, ExeName : PWSTR) -> BOOL #foreign KERNEL32;
 SetConsoleOutputCP :: (wCodePageID : u32) -> BOOL #foreign KERNEL32;
 SetConsoleScreenBufferInfoEx :: (hConsoleOutput : HANDLE, lpConsoleScreenBufferInfoEx : *CONSOLE_SCREEN_BUFFER_INFOEX) -> BOOL #foreign KERNEL32;
 SetConsoleScreenBufferSize :: (hConsoleOutput : HANDLE, dwSize : COORD) -> BOOL #foreign KERNEL32;
@@ -380,14 +372,6 @@ else             GetConsoleAliasExesLength :: GetConsoleAliasExesLengthA;
 else             GetConsoleAliases :: GetConsoleAliasesA;
 #if UNICODE then GetConsoleAliasExes :: GetConsoleAliasExesW;
 else             GetConsoleAliasExes :: GetConsoleAliasExesA;
-#if UNICODE then ExpungeConsoleCommandHistory :: ExpungeConsoleCommandHistoryW;
-else             ExpungeConsoleCommandHistory :: ExpungeConsoleCommandHistoryA;
-#if UNICODE then SetConsoleNumberOfCommands :: SetConsoleNumberOfCommandsW;
-else             SetConsoleNumberOfCommands :: SetConsoleNumberOfCommandsA;
-#if UNICODE then GetConsoleCommandHistoryLength :: GetConsoleCommandHistoryLengthW;
-else             GetConsoleCommandHistoryLength :: GetConsoleCommandHistoryLengthA;
-#if UNICODE then GetConsoleCommandHistory :: GetConsoleCommandHistoryW;
-else             GetConsoleCommandHistory :: GetConsoleCommandHistoryA;
 
 // System libraries
 
