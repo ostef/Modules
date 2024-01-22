@@ -43,6 +43,11 @@ Hash_Map_Never_Occupied_Hash :: 0;
 Hash_Map_Removed_Hash        :: 1;
 Hash_Map_First_Occupied_Hash :: 2;
 
+HashMapGetMinCapacityForElementCount :: inline (map : HashMap, count : s64) -> s64 #must
+{
+    return HashMapGetMinCapacityForElementCount (map.Load_Factor, count);
+}
+
 HashMapGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64 #must
 {
     capacity := count + count * (1 - load_factor) + 1;

@@ -41,6 +41,11 @@ Hash_Set_Never_Occupied_Hash :: 0;
 Hash_Set_Removed_Hash        :: 1;
 Hash_Set_First_Occupied_Hash :: 2;
 
+HashSetGetMinCapacityForElementCount :: inline (set : HashSet, count : s64) -> s64 #must
+{
+    return HashSetGetMinCapacityForElementCount (set.Load_Factor, count);
+}
+
 HashSetGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64 #must
 {
     capacity := count + count * (1 - load_factor) + 1;
