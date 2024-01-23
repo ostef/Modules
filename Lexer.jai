@@ -2,6 +2,7 @@
 
 #import "Common";
 Basic :: #import "Basic";
+String :: #import "String";
 
 #scope_export
 
@@ -30,23 +31,50 @@ LexerAdvance :: (using lexer : *Lexer, count := 1) -> int
     i := 0;
     while !LexerIsAtEnd (lexer) && i < count
     {
-        if text[byte_index] == #char "\n"
+        str_to_check := string.{text.count - byte_index, text.data + byte_index};
+        if str_to_check.count > count
+            str_to_check.count = count;
+
+        newline_index := String.find_index_from_left (str_to_check, #char "\n");
+        if newline_index != -1
         {
-            column = 0;
+            byte_index += newline_index + 1;
+            i += newline_index + 1;
+            column = 1;
             line += 1;
         }
+        else
+        {
+            byte_index += str_to_check.count;
+            column += str_to_check.count;
+            i += str_to_check.count;
 
-        byte_index += 1;
-        column += 1;
-        i += 1;
+            return i;
+        }
     }
 
     return i;
 }
 
+LexerRemainingBytesString :: inline (using lexer : Lexer) -> string #must
+{
+    return string.{text.count - byte_index, text.data + byte_index};
+}
+
 LexerRemainingBytes :: inline (using lexer : Lexer) -> int #must
 {
     return Max (text.count - byte_index, 0);
+}
+
+LexerGetLine :: inline (using lexer : Lexer) -> string #must
+{
+    remaining := LexerRemainingBytesString (lexer);
+
+    newline_index := String.find_index_from_left (remaining, #char "\n");
+    if newline_index != -1
+        remaining.count = newline_index;
+
+    return remaining;
 }
 
 LexerEqualsString :: inline (using lexer : Lexer, str : string) -> bool #must
@@ -59,6 +87,34 @@ LexerEqualsString :: inline (using lexer : Lexer, str : string) -> bool #must
     remaining_str.count = str.count;
 
     return remaining_str == str;
+}
+
+// This function uses String.find_index_from_left which is SIMD optimized
+LexerAdvanceUntilMatches :: inline (using lexer : *Lexer, str : string) -> bool #must
+{
+    if str.count == 0
+        return false;
+
+    while !LexerIsAtEnd (lexer)
+    {
+        remaining := string.{text.count - byte_index, text.data + byte_index};
+        index := String.find_index_from_left (remaining, str[0]);
+        if index < 0
+        {
+            LexerAdvance (lexer, remaining.count);
+
+            return false;
+        }
+
+        LexerAdvance (lexer, index);
+
+        if LexerEqualsString (lexer, str)
+            return true;
+
+        LexerAdvance (lexer);
+    }
+
+    return false;
 }
 
 LexerMatchString :: inline (using lexer : *Lexer, str : string) -> bool #must
@@ -89,6 +145,20 @@ LexerMatchAlphaNumeric :: inline (using lexer : *Lexer, str : string) -> bool #m
     }
 
     return false;
+}
+
+LexerSkipSpacesUntilNewline :: inline (using lexer : *Lexer)
+{
+    while !LexerIsAtEnd (lexer)
+    {
+        if text[byte_index] == #char "\n"
+            return;
+
+        if Basic.is_space (text[byte_index])
+            LexerAdvance (lexer);
+        else
+            break;
+    }
 }
 
 LexerSkipWhitespacesAndComments :: inline (using lexer : *Lexer)
