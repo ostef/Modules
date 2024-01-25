@@ -97,7 +97,7 @@ MakeShaderStringWithLineNumbers :: (shader : string, errors : []ErrorInfo) -> st
         line_value.padding = #char " ";
         StringBuilderAppend (*builder, " % | %", line_value, line_str);
 
-        if error_index < errors.count && errors[error_index].line == line
+        while error_index < errors.count && errors[error_index].line == line
         {
             AppendConsoleColor (*builder, .Error);
             StringBuilderAppend (*builder, "> %\n", errors[error_index].message);
@@ -113,9 +113,8 @@ MakeShaderStringWithLineNumbers :: (shader : string, errors : []ErrorInfo) -> st
 
 #scope_export
 
-CheckShader :: (handle : GLuint, desc : string, location := #caller_location) -> bool #must, []ErrorInfo
+CheckShader :: (handle : GLuint, desc : string, source : string, location := #caller_location) -> bool #must
 {
-    errors : []ErrorInfo;
     status, log_length : GLint;
     glGetShaderiv (handle, GL_COMPILE_STATUS, *status);
     glGetShaderiv (handle, GL_INFO_LOG_LENGTH, *log_length);
@@ -128,15 +127,33 @@ CheckShader :: (handle : GLuint, desc : string, location := #caller_location) ->
             glGetShaderInfoLog (handle, xx log_length, null, buffer);
 
             message := string.{log_length, buffer};
-            errors = ParseErrorMessage (message);
 
-            LogError ("%:\n\n%", desc, string.{log_length, buffer}, location = location);
+            if source
+            {
+                errors := ParseErrorMessage (message);
+                str := MakeShaderStringWithLineNumbers (source, errors);
+
+                LogError (desc, location = location);
+                LogMessage ("Here's the shader we tried to compile:\n\n%", str, location = location);
+            }
+            else
+            {
+                LogError ("%:\n\n%", desc, message, location = location);
+            }
         }
         else
+        {
             LogError (desc, location = location);
+
+            if source
+            {
+                str := MakeShaderStringWithLineNumbers (source, .[]);
+                LogMessage ("Here's the shader we tried to compile:\n\n%", str, location = location);
+            }
+        }
     }
 
-    return status != 0, errors;
+    return status != 0;
 }
 
 CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_location) -> bool #must
@@ -178,17 +195,14 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
     glShaderSource (vertex_shader, 1, *cstr_vertex_source, null);
     glCompileShader (vertex_shader);
 
-    ok, errors := CheckShader (vertex_shader, "Could not compile vertex shader", location = location);
-    if !ok
-    {
-        if print_shader_on_error
-        {
-            str := MakeShaderStringWithLineNumbers (vertex_source, errors);
-            LogMessage ("Here's the shader we tried to compile:\n\n%", str);
-        }
+    ok := CheckShader (
+        vertex_shader, "Could not compile vertex shader",
+        ifx print_shader_on_error then vertex_source else "",
+        location = location
+    );
 
+    if !ok
         return 0;
-    }
 
     geometry_shader : GLuint;
     defer glDeleteShader (geometry_shader);
@@ -205,17 +219,14 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
         glShaderSource (geometry_shader, 1, *cstr_geometry_source, null);
         glCompileShader (geometry_shader);
 
-        ok, errors = CheckShader (geometry_shader, "Could not compile geometry shader", location = location);
-        if !ok
-        {
-            if print_shader_on_error
-            {
-                str := MakeShaderStringWithLineNumbers (geometry_source, errors);
-                LogMessage ("Here's the shader we tried to compile:\n\n%", str);
-            }
+        ok = CheckShader (
+            geometry_shader, "Could not compile geometry shader",
+            ifx print_shader_on_error then geometry_source else "",
+            location = location
+        );
 
+        if !ok
             return 0;
-        }
     }
 
     fragment_shader := glCreateShader (GL_FRAGMENT_SHADER);
@@ -229,17 +240,14 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
     glShaderSource (fragment_shader, 1, *cstr_fragment_source, null);
     glCompileShader (fragment_shader);
 
-    ok, errors = CheckShader (fragment_shader, "Could not compile fragment shader", location = location);
-    if !ok
-    {
-        if print_shader_on_error
-        {
-            str := MakeShaderStringWithLineNumbers (fragment_source, errors);
-            LogMessage ("Here's the shader we tried to compile:\n\n%", str);
-        }
+    ok = CheckShader (
+        fragment_shader, "Could not compile fragment shader",
+        ifx print_shader_on_error then fragment_source else "",
+        location = location
+    );
 
+    if !ok
         return 0;
-    }
 
     shader_program := glCreateProgram ();
 
