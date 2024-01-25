@@ -46,6 +46,23 @@ ConsoleColor :: enum
     Fatal;
 }
 
+AppendConsoleColor :: (builder : *StringBuilder, color : ConsoleColor)
+{
+    if #complete color ==
+    {
+    case .None;
+        StringBuilderAppend (builder, None_Color_Str);
+    case .Info;
+        StringBuilderAppend (builder, Info_Color_Str);
+    case .Warning;
+        StringBuilderAppend (builder, Warning_Color_Str);
+    case .Error;
+        StringBuilderAppend (builder, Error_Color_Str);
+    case .Fatal;
+        StringBuilderAppend (builder, Fatal_Color_Str);
+    }
+}
+
 SetConsoleColor :: (color : ConsoleColor, to_standard_error := true)
 {
     if #complete color ==
