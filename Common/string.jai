@@ -169,6 +169,23 @@ StringFindLast :: inline (str : string, to_find : string) -> s64 #must
     return -1;
 }
 
+StringAdvance :: inline (str : *string, count : int)
+{
+    if count > str.count
+        count = str.count;
+
+    str.data += count;
+    str.count -= count;
+}
+
+StringAdvance :: inline (str : string, count : int) -> string #must
+{
+    result := str;
+    StringAdvance (*result, count);
+
+    return result;
+}
+
 StringJoin :: (args : ..string) -> string #must
 #no_abc
 {
