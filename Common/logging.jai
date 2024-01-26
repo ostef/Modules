@@ -80,6 +80,38 @@ SetConsoleColor :: (color : ConsoleColor, to_standard_error := true)
     }
 }
 
+InitConsoleLogger :: (logger : *ConsoleLogger, print_colors := true)
+{
+    if !print_colors
+        return;
+
+    #if OS == .WINDOWS
+    {
+        Win32 :: #import "Win32" (Console = true);
+
+        std_out := Win32.GetStdHandle (Win32.STD_HANDLE.STD_OUTPUT_HANDLE);
+        std_err := Win32.GetStdHandle (Win32.STD_HANDLE.STD_ERROR_HANDLE);
+
+        std_out_colors, std_err_colors : bool;
+
+        mode : Win32.CONSOLE_MODE;
+        if Win32.GetConsoleMode (std_out, *mode)
+        {
+            if Win32.SetConsoleMode (std_out, mode | .ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+                std_out_colors = true;
+        }
+
+        mode = 0;
+        if Win32.GetConsoleMode (std_err, *mode)
+        {
+            if Win32.SetConsoleMode (std_err, mode | .ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+                std_err_colors = true;
+        }
+
+        logger.print_colors = std_out_colors && std_err_colors;
+    }
+}
+
 ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
 {
     if !message
