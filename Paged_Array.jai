@@ -74,7 +74,7 @@ PagedArrayReset :: (using array : *PagedArray)
     for page : all_pages
         Free (page,, allocator);
 
-    ArrayReset (*all_pages);
+    ArrayFree (*all_pages);
     count = 0;
     free_pages = null;
     full_pages = null;
