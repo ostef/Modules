@@ -86,12 +86,14 @@ Trap :: Allocator.{ proc = TrapAllocatorProc, data = null };
 
 TrapAllocatorProc :: (mode : Allocator_Mode, requested_size : s64, old_size : s64, ptr : *void, allocator_data : *void) -> *void
 {
-    Panic ("Allocation trap");
-
     if mode == .CAPS
     {
         name_ptr := cast (*string) ptr;
         name_ptr.* = "Trap Allocator";
+    }
+    else if mode == .ALLOCATE || mode == .RESIZE
+    {
+        Panic ("Triggered an allocation trap");
     }
 
     return null;
