@@ -48,8 +48,7 @@ HashSetGetMinCapacityForElementCount :: inline (set : HashSet, count : s64) -> s
 
 HashSetGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64 #must
 {
-    capacity := count + count * (1 - load_factor) + 1;
-
+    capacity := count + (count * (100 - load_factor)) / 100 + 1;
     capacity = Max (capacity, Hash_Set_Min_Capacity);
 
     pow := 1;
@@ -161,7 +160,7 @@ HashSetProbe :: (set : HashSet, value : set.T) -> h : set.HashType, index : s64,
     return hash, cast (s64) index, false;
 }
 
-HashSetInsert :: inline (set : *HashSet, value : set.T) -> *set.T, was_present : bool
+HashSetInsert :: (set : *HashSet, value : set.T) -> *set.T, was_present : bool
 {
     if (set.occupied + 1) * 100 >= set.allocated * set.Load_Factor
         HashSetGrow (set);

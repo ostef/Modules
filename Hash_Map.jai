@@ -50,8 +50,7 @@ HashMapGetMinCapacityForElementCount :: inline (map : HashMap, count : s64) -> s
 
 HashMapGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64 #must
 {
-    capacity := count + count * (1 - load_factor) + 1;
-
+    capacity := count + (count * (100 - load_factor)) / 100 + 1;
     capacity = Max (capacity, Hash_Map_Min_Capacity);
 
     pow := 1;
@@ -165,7 +164,7 @@ HashMapProbe :: (map : HashMap, key : map.Key) -> h : map.HashType, index : s64,
     return hash, cast (s64) index, false;
 }
 
-HashMapInsert :: inline (map : *HashMap, key : map.Key, $initialize_if_new := true) -> *map.Value #must, was_present : bool
+HashMapInsert :: (map : *HashMap, key : map.Key, $initialize_if_new := true) -> *map.Value #must, was_present : bool
 {
     if (map.occupied + 1) * 100 >= map.allocated * map.Load_Factor
         HashMapGrow (map);
