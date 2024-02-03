@@ -195,8 +195,8 @@ PagedArrayFreeSlot :: (using array : *PagedArray, info : PagedArraySlotInfo, che
 // This procedure cannot work for item sizes of 0
 // The reason for this is that we cannot differentiate between items
 // because they all have the same address.
-PagedArrayFreeSlot :: inline (using array : *PagedArray, item : *array.T)
-// #modify { return (cast (*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
+PagedArrayFreeSlot :: inline (using array : *PagedArray ($T, $N), item : *T)
+#modify { return (cast (*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
 {
     valid, info := PagedArrayGetSlotInfo (array, item);
     Assert (valid, "Item is not in paged array");
@@ -232,7 +232,7 @@ PagedArrayFreeAllSlots :: (using array : *PagedArray)
 // The reason for this is that we cannot differentiate between items
 // because they all have the same address.
 PagedArrayGetSlotInfo :: (using array : PagedArray ($T, $N), item : *T) -> valid : bool, PagedArraySlotInfo, occupied : bool
-// #modify { return (cast (*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
+#modify { return (cast (*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
 {
     info : PagedArraySlotInfo;
     for page : all_pages
