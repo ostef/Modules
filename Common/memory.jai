@@ -84,6 +84,11 @@ GetAllocatorSpecs :: inline (allocator : Allocator) -> Allocator_Caps #must
 
 Trap :: Allocator.{ proc = TrapAllocatorProc, data = null };
 
+TrapAllocator :: inline (message : *u8) -> Allocator #must
+{
+    return .{data = message, proc = TrapAllocatorProc };
+}
+
 TrapAllocatorProc :: (mode : Allocator_Mode, requested_size : s64, old_size : s64, ptr : *void, allocator_data : *void) -> *void
 {
     if mode == .CAPS
@@ -93,7 +98,11 @@ TrapAllocatorProc :: (mode : Allocator_Mode, requested_size : s64, old_size : s6
     }
     else if mode == .ALLOCATE || mode == .RESIZE
     {
-        Panic ("Triggered an allocation trap");
+        message := MakeString (cast (*u8) allocator_data);
+        if message
+            Panic ("Triggered an allocation trap: %", message);
+        else
+            Panic ("Triggered an allocation trap");
     }
 
     return null;
