@@ -20,6 +20,7 @@ UserData :: struct
     mouse_buttons_down : int;
     pending_mouse_leave_frame : int;
     clipboard_text : string;
+    want_update_monitors : bool;
 }
 
 GetUserData :: inline () -> *UserData #must #no_context
@@ -54,6 +55,7 @@ InitForGL :: (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
     io.ClipboardUserData = null;
 
     data.window = window;
+    data.want_update_monitors = true;
 
     main_viewport := ImGui.GetMainViewport ();
     main_viewport.PlatformHandle = window;
@@ -66,8 +68,6 @@ InitForGL :: (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
     // It is unlikely to make a difference, but if your app absolutely needs to ignore the initial on-focus click:
     // you can ignore SDL_MOUSEBUTTONDOWN events coming right after a SDL_WINDOWEVENT_FOCUS_GAINED)
     // SDL_SetHint (SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
-
-    UpdateMonitors ();
 
     // if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
         InitPlatformInterface (window, gl_context);
@@ -194,6 +194,11 @@ HandleWindowMessage :: (msg : Fenetres.Message) -> handled : bool
         }
 
         return true;
+
+    case .Display_Changed;
+        data.want_update_monitors = true;
+
+        return true;
     }
 
     return false;
@@ -205,6 +210,9 @@ NewFrame :: (delta_time : float, allow_mouse_input := true)
     Assert (data != null, "ImGui platform backend not initialized");
 
     io := ImGui.GetIO ();
+
+    if data.want_update_monitors
+        UpdateMonitors ();
 
     display_w, display_h := Fenetres.GetViewportSize (data.window);
 
@@ -305,6 +313,9 @@ UpdateMouseCursor :: ()
 
 UpdateMonitors :: ()
 {
+    data := GetUserData ();
+    defer data.want_update_monitors = false;
+
     platform_io := ImGui.GetPlatformIO ();
     platform_io.Monitors.Size = 0;
 
