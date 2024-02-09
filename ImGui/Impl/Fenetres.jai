@@ -69,7 +69,7 @@ InitForGL :: (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
 
     UpdateMonitors ();
 
-    if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
+    // if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
         InitPlatformInterface (window, gl_context);
 }
 
@@ -109,7 +109,7 @@ HandleWindowMessage :: (msg : Fenetres.Message) -> handled : bool
         mouse_pos := ImVec2.{cast (float) msg.mouse_x, cast (float) msg.mouse_y};
         if io.ConfigFlags_ & .ViewportsEnable
         {
-            window_x, window_y := Fenetres.GetWindowPosition (msg.window);
+            window_x, window_y := Fenetres.GetViewportPosition (msg.window);
             mouse_pos.x += cast (float) window_x;
             mouse_pos.y += cast (float) window_y;
         }
@@ -172,6 +172,7 @@ HandleWindowMessage :: (msg : Fenetres.Message) -> handled : bool
 
     case .Window_Received_Focus;
         io.AddFocusEvent (io, true);
+
         return true;
 
     case .Window_Lost_Focus;
@@ -198,25 +199,24 @@ HandleWindowMessage :: (msg : Fenetres.Message) -> handled : bool
     return false;
 }
 
-NewFrame :: (delta_time : float)
+NewFrame :: (delta_time : float, allow_mouse_input := true)
 {
     data := GetUserData ();
     Assert (data != null, "ImGui platform backend not initialized");
 
     io := ImGui.GetIO ();
 
-    w, h := Fenetres.GetWindowSize (data.window);
     display_w, display_h := Fenetres.GetViewportSize (data.window);
 
     if Fenetres.IsMinimized (data.window)
     {
-        w = 0;
-        h = 0;
+        display_w = 0;
+        display_h = 0;
     }
 
-    io.DisplaySize = .{cast (float) w, cast (float) h};
-    if w > 0 && h > 0
-        io.DisplayFramebufferScale = .{display_w / cast (float) w, display_h / cast (float) h};
+    io.DisplaySize = .{cast (float) display_w, cast (float) display_h};
+    if display_w > 0 && display_h > 0
+        io.DisplayFramebufferScale = .{1, 1};
 
     if delta_time <= 0
         io.DeltaTime = 1.0 / 60.0;
@@ -230,11 +230,11 @@ NewFrame :: (delta_time : float)
         io.AddMousePosEvent (io, -Math.FLOAT32_MAX, -Math.FLOAT32_MAX);
     }
 
-    UpdateMouseData ();
+    UpdateMouseData (allow_mouse_input);
     UpdateMouseCursor ();
 }
 
-UpdateMouseData :: ()
+UpdateMouseData :: (allow_mouse_input : bool)
 {
     data := GetUserData ();
     io := ImGui.GetIO ();
@@ -243,7 +243,11 @@ UpdateMouseData :: ()
     Fenetres.SetMouseCapture (focused_window, xx (data.mouse_buttons_down != 0));
     is_app_focused := focused_window && (data.window == focused_window || ImGui.FindViewportByPlatformHandle (focused_window));
 
-    if is_app_focused
+    if !allow_mouse_input
+    {
+        io.AddMousePosEvent (io, -Math.FLOAT32_MAX, -Math.FLOAT32_MAX);
+    }
+    else if is_app_focused
     {
         if io.WantSetMousePos
         {
@@ -291,12 +295,11 @@ UpdateMouseCursor :: ()
     imgui_cursor := ImGui.GetMouseCursor ();
     if io.MouseDrawCursor || imgui_cursor == .None
     {
-        Fenetres.SetCursorVisibility (false);
+        Fenetres.SetCursor (data.window, .None);
     }
     else
     {
-        Fenetres.SetCursor (ImGuiCursorToSystemCursor (imgui_cursor));
-        Fenetres.SetCursorVisibility (true);
+        Fenetres.SetCursor (data.window, ImGuiCursorToSystemCursor (imgui_cursor));
     }
 }
 
@@ -545,6 +548,13 @@ CreateWindow :: (viewport : *ImGui.Viewport) #c_call
             create_flags,
             parent_window
         );
+
+        {
+            x, y := Fenetres.GetViewportPosition (vp_data.window);
+            w, h := Fenetres.GetViewportSize (vp_data.window);
+            Assert (x == xx viewport.Pos.x && y == xx viewport.Pos.y);
+            Assert (w == xx viewport.Size.x && h == xx viewport.Size.y);
+        }
 
         vp_data.window_owned = true;
         vp_data.gl_context = Fenetres_GL.CreateContext (vp_data.window);

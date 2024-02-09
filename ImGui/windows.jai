@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai generate.jai
+// jai -import_dir Modules -import_dir Source/Modules Build.jai - -generate_bindings -sandbox stuff
 //
 
 
@@ -387,6 +387,8 @@ MouseSource :: enum s32 {
     ImGuiMouseSource_COUNT       :: COUNT;
 }
 
+SortDirection :: s32;
+
 KeyChord :: s32;
 
 ImTextureID :: *void;
@@ -414,7 +416,7 @@ ImWchar :: ImWchar16;
 // Callback and functions types
 InputTextCallback :: #type (data: *InputTextCallbackData) -> s32 #c_call;
 SizeCallback :: #type (data: *SizeCallbackData) -> void #c_call;
-MemAllocFunc :: #type (sz: size_t, user_data: *void) -> *void #c_call;
+MemAllocFunc :: #type (sz: u64, user_data: *void) -> *void #c_call;
 MemFreeFunc :: #type (ptr: *void, user_data: *void) -> void #c_call;
 //-----------------------------------------------------------------------------
 // [SECTION] Dear ImGui end-user API functions
@@ -800,12 +802,12 @@ VSliderScalar :: (label: *u8, size: ImVec2, data_type: DataType, p_data: *void, 
 // Widgets: Input with Keyboard
 // - If you want to use InputText() with std::string or any custom dynamic string type, see misc/cpp/imgui_stdlib.h and comments in imgui_demo.cpp.
 // - Most of the ImGuiInputTextFlags flags are only useful for InputText() and not for InputFloatX, InputIntX, InputDouble etc.
-InputText :: (label: *u8, buf: *u8, buf_size: size_t, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #foreign imgui "?InputText@ImGui@@YA_NPEBDPEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z";
-InputTextMultiline :: (label: *u8, buf: *u8, buf_size: size_t, size: *ImVec2, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #foreign imgui "?InputTextMultiline@ImGui@@YA_NPEBDPEAD_KAEBUImVec2@@HP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z";
-InputTextMultiline :: (label: *u8, buf: *u8, buf_size: size_t, size: ImVec2 = ImVec2.{0, 0}, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #no_context {
+InputText :: (label: *u8, buf: *u8, buf_size: u64, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #foreign imgui "?InputText@ImGui@@YA_NPEBDPEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z";
+InputTextMultiline :: (label: *u8, buf: *u8, buf_size: u64, size: *ImVec2, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #foreign imgui "?InputTextMultiline@ImGui@@YA_NPEBDPEAD_KAEBUImVec2@@HP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z";
+InputTextMultiline :: (label: *u8, buf: *u8, buf_size: u64, size: ImVec2 = ImVec2.{0, 0}, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #no_context {
     return InputTextMultiline(label, buf, buf_size, *size, flags, callback, user_data);
 }
-InputTextWithHint :: (label: *u8, hint: *u8, buf: *u8, buf_size: size_t, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #foreign imgui "?InputTextWithHint@ImGui@@YA_NPEBD0PEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z";
+InputTextWithHint :: (label: *u8, hint: *u8, buf: *u8, buf_size: u64, flags: InputTextFlags = .None, callback: InputTextCallback = null, user_data: *void = null) -> bool #foreign imgui "?InputTextWithHint@ImGui@@YA_NPEBD0PEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z";
 InputFloat :: (label: *u8, v: *float, step: float = 0.0, step_fast: float = 0.0, format: *u8 = "%.3f", flags: InputTextFlags = .None) -> bool #foreign imgui "?InputFloat@ImGui@@YA_NPEBDPEAMMM0H@Z";
 InputFloat2 :: (label: *u8, v: *[2] float, format: *u8 = "%.3f", flags: InputTextFlags = .None) -> bool #foreign imgui "?InputFloat2@ImGui@@YA_NPEBDQEAM0H@Z";
 InputFloat3 :: (label: *u8, v: *[3] float, format: *u8 = "%.3f", flags: InputTextFlags = .None) -> bool #foreign imgui "?InputFloat3@ImGui@@YA_NPEBDQEAM0H@Z";
@@ -1062,7 +1064,7 @@ LogText :: (fmt: *u8, __args: ..Any) -> void #foreign imgui "?LogText@ImGui@@YAX
 // - If you stop calling BeginDragDropSource() the payload is preserved however it won't have a preview tooltip (we currently display a fallback "..." tooltip, see #1725)
 // - An item can be both drag source and drop target.
 BeginDragDropSource :: (flags: DragDropFlags = .None) -> bool #foreign imgui "?BeginDragDropSource@ImGui@@YA_NH@Z";
-SetDragDropPayload :: (type: *u8, data: *void, sz: size_t, cond: Cond = .None) -> bool #foreign imgui "?SetDragDropPayload@ImGui@@YA_NPEBDPEBX_KH@Z";
+SetDragDropPayload :: (type: *u8, data: *void, sz: u64, cond: Cond = .None) -> bool #foreign imgui "?SetDragDropPayload@ImGui@@YA_NPEBDPEBX_KH@Z";
 EndDragDropSource :: () -> void #foreign imgui "?EndDragDropSource@ImGui@@YAXXZ";
 BeginDragDropTarget :: () -> bool #foreign imgui "?BeginDragDropTarget@ImGui@@YA_NXZ";
 AcceptDragDropPayload :: (type: *u8, flags: DragDropFlags = .None) -> *Payload #foreign imgui "?AcceptDragDropPayload@ImGui@@YAPEBUImGuiPayload@@PEBDH@Z";
@@ -1205,13 +1207,13 @@ SetClipboardText :: (text: *u8) -> void #foreign imgui "?SetClipboardText@ImGui@
 // - Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually.
 // - Important: default value "imgui.ini" is relative to current working dir! Most apps will want to lock this to an absolute path (e.g. same path as executables).
 LoadIniSettingsFromDisk :: (ini_filename: *u8) -> void #foreign imgui "?LoadIniSettingsFromDisk@ImGui@@YAXPEBD@Z";
-LoadIniSettingsFromMemory :: (ini_data: *u8, ini_size: size_t = 0) -> void #foreign imgui "?LoadIniSettingsFromMemory@ImGui@@YAXPEBD_K@Z";
+LoadIniSettingsFromMemory :: (ini_data: *u8, ini_size: u64 = 0) -> void #foreign imgui "?LoadIniSettingsFromMemory@ImGui@@YAXPEBD_K@Z";
 SaveIniSettingsToDisk :: (ini_filename: *u8) -> void #foreign imgui "?SaveIniSettingsToDisk@ImGui@@YAXPEBD@Z";
-SaveIniSettingsToMemory :: (out_ini_size: *size_t = null) -> *u8 #foreign imgui "?SaveIniSettingsToMemory@ImGui@@YAPEBDPEA_K@Z";
+SaveIniSettingsToMemory :: (out_ini_size: *u64 = null) -> *u8 #foreign imgui "?SaveIniSettingsToMemory@ImGui@@YAPEBDPEA_K@Z";
 
 // Debug Utilities
 DebugTextEncoding :: (text: *u8) -> void #foreign imgui "?DebugTextEncoding@ImGui@@YAXPEBD@Z";
-DebugCheckVersionAndDataLayout :: (version_str: *u8, sz_io: size_t, sz_style: size_t, sz_vec2: size_t, sz_vec4: size_t, sz_drawvert: size_t, sz_drawidx: size_t) -> bool #foreign imgui "?DebugCheckVersionAndDataLayout@ImGui@@YA_NPEBD_K11111@Z";
+DebugCheckVersionAndDataLayout :: (version_str: *u8, sz_io: u64, sz_style: u64, sz_vec2: u64, sz_vec4: u64, sz_drawvert: u64, sz_drawidx: u64) -> bool #foreign imgui "?DebugCheckVersionAndDataLayout@ImGui@@YA_NPEBD_K11111@Z";
 
 // Memory Allocators
 // - Those functions are not reliant on the current context.
@@ -1219,7 +1221,7 @@ DebugCheckVersionAndDataLayout :: (version_str: *u8, sz_io: size_t, sz_style: si
 //   for each static/DLL boundary you are calling from. Read "Context and Memory Allocators" section of imgui.cpp for more details.
 SetAllocatorFunctions :: (alloc_func: MemAllocFunc, free_func: MemFreeFunc, user_data: *void = null) -> void #foreign imgui "?SetAllocatorFunctions@ImGui@@YAXP6APEAX_KPEAX@ZP6AX11@Z1@Z";
 GetAllocatorFunctions :: (p_alloc_func: *MemAllocFunc, p_free_func: *MemFreeFunc, p_user_data: **void) -> void #foreign imgui "?GetAllocatorFunctions@ImGui@@YAXPEAP6APEAX_KPEAX@ZPEAP6AX11@ZPEAPEAX@Z";
-MemAlloc :: (size: size_t) -> *void #foreign imgui "?MemAlloc@ImGui@@YAPEAX_K@Z";
+MemAlloc :: (size: u64) -> *void #foreign imgui "?MemAlloc@ImGui@@YAPEAX_K@Z";
 MemFree :: (ptr: *void) -> void #foreign imgui "?MemFree@ImGui@@YAXPEAX@Z";
 
 // (Optional) Platform/OS interface for multi-viewport support
@@ -1901,7 +1903,7 @@ Dir :: enum s32 {
 }
 
 // A sorting direction
-SortDirection :: enum s32 {
+SortDirection_ :: enum s32 {
     None       :: 0;
     Ascending  :: 1;
     Descending :: 2;
@@ -2659,10 +2661,10 @@ Payload :: struct {
 
 // Sorting specification for one column of a table (sizeof == 12 bytes)
 TableColumnSortSpecs :: struct {
-    ColumnUserID:   ID; // User id of the column (if specified by a TableSetupColumn() call)
-    ColumnIndex:    ImS16; // Index of the column
-    SortOrder:      ImS16; // Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables sorted on a single criteria will always have a 0 here)
-    SortDirection_: SortDirection; // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending (you can use this or SortSign, whichever is more convenient for your sort function)
+    ColumnUserID:  ID; // User id of the column (if specified by a TableSetupColumn() call)
+    ColumnIndex:   ImS16; // Index of the column
+    SortOrder:     ImS16; // Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables sorted on a single criteria will always have a 0 here)
+    SortDirection: u8; // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending (you can use this or SortSign, whichever is more convenient for your sort function)
 }
 
 // Sorting specifications for a table (often handling sort specs for a single column, occasionally more)
