@@ -6,7 +6,7 @@
 #scope_file
 
 Basic :: #import "Basic";
-using, only (.["+", "-", "*", "/"]) Basic;
+using, only (.["+", "-", "*", "/", ">", "<"]) Basic;
 
 Threads :: #import "Thread";
 Hash :: #import "Hash";
@@ -160,11 +160,18 @@ PrintProfilingData :: (builder : *StringBuilder, using data : ProfilingData)
         unit = "ms";
     }
 
-    StringBuilderAppendLine (builder, "% %, profiled % times",
-            avg_time_fmt, unit, number_of_times_profiled);
+    StringBuilderAppendLine (builder, "avg: % %, profiled % times",
+        avg_time_fmt, unit, number_of_times_profiled);
 }
 
-PrintProfilingData :: (builder : *StringBuilder, entries : ProfilingEntriesMap)
+ProfilingSortBy :: enum
+{
+    Average_Time;
+    Total_Time;
+    Name;
+}
+
+PrintProfilingData :: (builder : *StringBuilder, entries : ProfilingEntriesMap, sort_by := ProfilingSortBy.Average_Time)
 {
     Sort :: #import "Sort";
 
@@ -172,14 +179,47 @@ PrintProfilingData :: (builder : *StringBuilder, entries : ProfilingEntriesMap)
     for entries
         ArrayPush (*sorted_entries, it);
 
-    Sort.quick_sort (sorted_entries, (a : ProfilingData, b : ProfilingData) -> int
+    CompareAverageTimes :: (a : ProfilingData, b : ProfilingData) -> int
+    {
+        a_avg := a.total_time / a.number_of_times_profiled;
+        b_avg := b.total_time / b.number_of_times_profiled;
+
+        if a_avg > b_avg
+            return -1;
+        if a_avg < b_avg
+            return 1;
+
+        return 0;
+    }
+
+    CompareTotalTimes :: (a : ProfilingData, b : ProfilingData) -> int
+    {
+        if a.total_time > b.total_time
+            return -1;
+        if a.total_time < b.total_time
+            return 1;
+
+        return 0;
+    }
+
+    CompareNames :: (a : ProfilingData, b : ProfilingData) -> int
     {
         result := StringCompare (a.proc_name, b.proc_name);
         if result == 0
             return StringCompare (a.name, b.name);
 
         return result;
-    });
+    }
+
+    compare : type_of (CompareNames);
+    if #complete sort_by ==
+    {
+    case .Average_Time; compare = CompareAverageTimes;
+    case .Total_Time; compare = CompareTotalTimes;
+    case .Name; compare = CompareNames;
+    }
+
+    Sort.quick_sort (sorted_entries, compare);
 
     for sorted_entries
     {
