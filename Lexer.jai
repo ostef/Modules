@@ -90,7 +90,7 @@ LexerEqualsString :: inline (using lexer : Lexer, str : string) -> bool #must
 }
 
 // This function uses String.find_index_from_left which is SIMD optimized
-LexerAdvanceUntilMatches :: inline (using lexer : *Lexer, str : string) -> bool #must
+LexerAdvanceUntilMatches :: inline (using lexer : *Lexer, str : string) -> bool
 {
     if str.count == 0
         return false;
