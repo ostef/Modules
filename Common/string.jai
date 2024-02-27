@@ -100,6 +100,7 @@ StringClone :: inline (str : string) -> string #must
     return .{str.count, data};
 }
 
+CStringClone :: StringCloneToCString;
 StringCloneToCString :: inline (str : string) -> *u8 #must
 {
     data := cast (*u8) Alloc (str.count + 1);
