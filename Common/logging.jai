@@ -25,6 +25,32 @@ SetContextLogger :: inline (data : *void, proc : Logger)
     context.logger = proc;
 }
 
+MultiLogger :: struct
+{
+    DispatchTarget :: struct
+    {
+        data : *void;
+        proc : Logger;
+    }
+
+    dispatch_targets : [..]DispatchTarget;
+}
+
+AddLogTarget :: (logger : *MultiLogger, data : *void, proc : Logger)
+{
+    ArrayPush (*logger.dispatch_targets, .{data, proc});
+}
+
+MultiLoggerProc :: (message : string, data : *void, info : Log_Info)
+{
+    using _ := cast (*MultiLogger) data;
+
+    for dispatch_targets
+    {
+        it.proc (message, it.data, info);
+    }
+}
+
 ConsoleLogger :: struct
 {
     report_filenames := false;
