@@ -175,7 +175,7 @@ RenderDrawData :: (draw_data : *ImGui.ImDrawData) #c_call
 
         for n : 0..draw_data.CmdListsCount - 1
         {
-            list := draw_data.CmdLists[n];
+            list := draw_data.CmdLists.Data[n];
 
             vtx_buffer_size := list.VtxBuffer.Size * size_of (ImDrawVert);
             idx_buffer_size := list.IdxBuffer.Size * size_of (ImDrawIdx);

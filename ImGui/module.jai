@@ -1,6 +1,6 @@
 #scope_module
 
-#import "Common";
+#import "Basic";
 Math :: #import "Math";
 Linalg :: #import "Linalg";
 
@@ -50,7 +50,7 @@ ImVector :: struct (T : Type)
             return;
 
         new_data := MemAlloc (xx (new_capacity * size_of (T)));
-        Assert (new_data != null);
+        assert (new_data != null);
 
         if Data
         {
@@ -73,10 +73,17 @@ ImVector :: struct (T : Type)
 
     Pop :: inline (using vec : *ImVector)
     {
-        Assert (Size > 0);
+        assert (Size > 0);
 
         Size -= 1;
     }
+}
+
+operator *[] :: inline (vec : *ImVector, index : s64) -> *vec.T #must
+{
+    assert (index >= 0 && index < vec.Size);
+
+    return *vec.Data[index];
 }
 
 ImDrawCallback :: #type (parent_list : *ImDrawList, cmd : *ImDrawCmd) #c_call;

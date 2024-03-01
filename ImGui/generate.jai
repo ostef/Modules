@@ -17,6 +17,10 @@ TYPES_TO_OMIT :: string.[
     "ImDrawCallback"
 ];
 
+Defines :: string.[
+"IMGUI_USE_WCHAR32",
+];
+
 ALWAYS_COMPILE_CPP_SOURCE :: true;
 COMPILE_DEBUG :: true;
 INCLUDE_DEMO  :: true;
@@ -59,6 +63,7 @@ compile_cpp_source :: () -> bool
     array_add (*src_files, tprint ("%/imgui_widgets.cpp", CPP_SOURCE_PATH));
     array_add (*src_files, tprint ("%/imgui_draw.cpp", CPP_SOURCE_PATH));
     array_add (*src_files, tprint ("%/imgui_tables.cpp", CPP_SOURCE_PATH));
+
     #if INCLUDE_DEMO
         array_add (*src_files, tprint ("%/imgui_demo.cpp", CPP_SOURCE_PATH));
 
@@ -66,15 +71,31 @@ compile_cpp_source :: () -> bool
     #if OS == .WINDOWS
     {
         make_directory_if_it_does_not_exist ("win");
-        success &&= build_cpp_dynamic_lib ("win/ImGui", ..src_files, extra = .["/DIMGUI_API=__declspec(dllexport)"], debug = COMPILE_DEBUG);
+
+        extra : [..]string;
+        array_add (*extra, tprint ("/I%", CPP_SOURCE_PATH));
+        array_add (*extra, "/DIMGUI_API=__declspec(dllexport)");
+        for Defines
+            array_add (*extra, tprint ("/D%", it));
+
+        success &&= build_cpp_dynamic_lib ("win/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
+
         // We set IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS. Otherwise all users of the ImGui module have to link against "imm32".
-        success &&= build_cpp_static_lib ("win/ImGui", ..src_files, extra = .["/DIMGUI_API=__declspec(dllexport)", "/DIMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS"], debug = COMPILE_DEBUG);
+        array_add (*extra, "/DIMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS");
+        success &&= build_cpp_static_lib ("win/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
     }
     else #if OS == .LINUX
     {
         make_directory_if_it_does_not_exist ("linux");
-        success &&= build_cpp_dynamic_lib ("linux/ImGui", ..src_files, debug = COMPILE_DEBUG);
-        success &&= build_cpp_static_lib ("linux/ImGui", ..src_files, extra = .["-fno-exceptions", "-fno-rtti", "-fno-threadsafe-statics"], debug = COMPILE_DEBUG);
+
+        extra : [..]string;
+        for Defines
+            array_add (*extra, tprint ("-D%", it));
+
+        success &&= build_cpp_dynamic_lib ("linux/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
+
+        array_add (*extra, "-fno-exceptions", "-fno-rtti", "-fno-threadsafe-statics");
+        success &&= build_cpp_static_lib ("linux/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
     }
 
     return success;
@@ -98,12 +119,17 @@ generate_bindings :: () -> bool
     array_add (*opts.system_include_paths, bdgen.GENERATOR_DEFAULT_SYSTEM_INCLUDE_PATH);
     array_add (*opts.include_paths, CPP_SOURCE_PATH);
     array_add (*opts.source_files, tprint ("%/imgui.h", CPP_SOURCE_PATH));
+    array_add (*opts.source_files, tprint ("%/misc/freetype/imgui_freetype.h", CPP_SOURCE_PATH));
+    // array_add (*opts.source_files, tprint ("%/imgui_internal.h", CPP_SOURCE_PATH));
+
     array_add (*opts.extra_clang_arguments, "-x", "c++");
+    for Defines
+        array_add (*opts.extra_clang_arguments, tprint ("-D%", it));
+
     array_add (*opts.flatten_namespaces, "ImGui");
     array_add (*opts.strip_prefixes, "ImGui");
     opts.auto_detect_enum_prefixes = false;
     opts.generate_compile_time_struct_checks = false;
-    opts.generate_printf_wrappers = false;	// @Todo (stefan): I'd like to generate printf wrappers that use Fmt
     opts.strip_flags |= .INLINED_FUNCTIONS;
 
     opts.visitor = visitor;
@@ -206,6 +232,11 @@ visitor :: (decl : *bdgen.Declaration, parent_decl : *bdgen.Declaration) -> bdge
         {
             if it_index == 0 || !ends_with (it.name, "_end")
                 continue;
+
+            // Ignore non string types
+            if !it.type.pointer_to || !(it.type.pointer_to.number_flags & ._8BIT)
+                continue;
+
             basename := slice (it.name, 0, it.name.count - "_end".count);
             if !basename
                 continue;
