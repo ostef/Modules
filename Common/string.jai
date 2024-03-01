@@ -76,20 +76,20 @@ StringLength :: inline (str : *u8) -> s64 #must
 StringCompare :: inline (a : string, b : string) -> int #must
 #no_abc
 {
-    if a.count < b.count
-        return -cast (int) b[a.count - 1];
-
-    if a.count > b.count
-        return cast (int) a[b.count - 1];
-
-    for i : 0..a.count - 1
+    n := Min (a.count, b.count);
+    for i : 0..n - 1
     {
         cmp := cast (int) a[i] - cast (int) b[i];
         if cmp != 0
             return cmp;
     }
 
-    return 0;
+    if a.count < b.count
+        return -cast (int) b[a.count];
+    else if a.count > b.count
+        return cast (int) a[b.count];
+    else
+        return 0;
 }
 
 StringClone :: inline (str : string) -> string #must
