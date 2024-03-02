@@ -2,30 +2,40 @@
 #import "File";
 #import "File_Utilities";
 #import "String";
-bdgen :: #import "Bindings_Generator";
+#import "Bindings_Generator";
 
 #if OS != .WINDOWS && OS != .LINUX
     #assert false "Only Windows and Linux are supported for now.";
 
-CPP_SOURCE_PATH :: "source";
+Cpp_Source_Path :: "source";
 
-TYPES_TO_OMIT :: string.[
-    "ImVec2",
-    "ImVec4",
-    "ImColor",
-    "ImVector",
-    "ImDrawCallback"
+FlagsForSpecificDeclaration :: struct
+{
+    name : string;
+    flags : Declaration_Flags;
+}
+
+Global_Declarations_Flags :: FlagsForSpecificDeclaration.[
+    .{"ImVec2", .OMIT_FROM_OUTPUT},
+    .{"ImVec4", .OMIT_FROM_OUTPUT},
+    .{"ImColor", .OMIT_FROM_OUTPUT},
+    .{"ImVector", .OMIT_FROM_OUTPUT},
+    .{"ImBitArray", .OMIT_FROM_OUTPUT},
+    .{"ImBitArrayForNamedKeys", .OMIT_FROM_OUTPUT},
+    .{"ImDrawCallback", .OMIT_FROM_OUTPUT},
+    .{"ImDrawCallback_ResetRenderState", .OMIT_FROM_OUTPUT},
+    .{"ImGuiContext", .TYPE_INFO_NONE},
 ];
 
 Defines :: string.[
-"IMGUI_USE_WCHAR32",
+    "IMGUI_USE_WCHAR32",
 ];
 
-ALWAYS_COMPILE_CPP_SOURCE :: true;
-COMPILE_DEBUG :: true;
-INCLUDE_DEMO  :: true;
+Always_Compile_Cpp_Source :: false;
+Compile_Debug :: true;
+Include_Demo  :: true;
 
-g_begin_end_string_args : [..]*bdgen.Declaration;
+g_begin_end_string_args : [..]*Declaration;
 
 #run
 {
@@ -34,38 +44,40 @@ g_begin_end_string_args : [..]*bdgen.Declaration;
     set_build_options_dc (.{do_output = false});
 
 #if OS == .WINDOWS
-    compile_source := ALWAYS_COMPILE_CPP_SOURCE || !file_exists ("win/ImGui.dll") || !file_exists ("win/ImGui.lib");
+    compile_source := Always_Compile_Cpp_Source
+        || !file_exists ("win/ImGui.dll") || !file_exists ("win/ImGui.lib");
 else #if OS == .LINUX
-    compile_source := ALWAYS_COMPILE_CPP_SOURCE || !file_exists ("linux/ImGui.so") || !file_exists ("linux/ImGui.a");
+    compile_source := Always_Compile_Cpp_Source
+        || !file_exists ("linux/ImGui.so") || !file_exists ("linux/ImGui.a");
 
     if compile_source
     {
-        if !compile_cpp_source ()
+        if !CompileCppSource ()
         {
             compiler_set_workspace_status (.FAILED);
             return;
         }
     }
 
-    if !generate_bindings ()
+    if !GenerateBindings ()
     {
         compiler_set_workspace_status (.FAILED);
         return;
     }
 }
 
-compile_cpp_source :: () -> bool
+CompileCppSource :: () -> bool
 {
     #import "BuildCpp";
 
     src_files : [..]string;
-    array_add (*src_files, tprint ("%/imgui.cpp", CPP_SOURCE_PATH));
-    array_add (*src_files, tprint ("%/imgui_widgets.cpp", CPP_SOURCE_PATH));
-    array_add (*src_files, tprint ("%/imgui_draw.cpp", CPP_SOURCE_PATH));
-    array_add (*src_files, tprint ("%/imgui_tables.cpp", CPP_SOURCE_PATH));
+    array_add (*src_files, tprint ("%/imgui.cpp", Cpp_Source_Path));
+    array_add (*src_files, tprint ("%/imgui_widgets.cpp", Cpp_Source_Path));
+    array_add (*src_files, tprint ("%/imgui_draw.cpp", Cpp_Source_Path));
+    array_add (*src_files, tprint ("%/imgui_tables.cpp", Cpp_Source_Path));
 
-    #if INCLUDE_DEMO
-        array_add (*src_files, tprint ("%/imgui_demo.cpp", CPP_SOURCE_PATH));
+    #if Include_Demo
+        array_add (*src_files, tprint ("%/imgui_demo.cpp", Cpp_Source_Path));
 
     success := true;
     #if OS == .WINDOWS
@@ -73,16 +85,16 @@ compile_cpp_source :: () -> bool
         make_directory_if_it_does_not_exist ("win");
 
         extra : [..]string;
-        array_add (*extra, tprint ("/I%", CPP_SOURCE_PATH));
+        array_add (*extra, tprint ("/I%", Cpp_Source_Path));
         array_add (*extra, "/DIMGUI_API=__declspec(dllexport)");
         for Defines
             array_add (*extra, tprint ("/D%", it));
 
-        success &&= build_cpp_dynamic_lib ("win/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
+        success &&= build_cpp_dynamic_lib ("win/ImGui", ..src_files, extra = extra, debug = Compile_Debug);
 
         // We set IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS. Otherwise all users of the ImGui module have to link against "imm32".
         array_add (*extra, "/DIMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS");
-        success &&= build_cpp_static_lib ("win/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
+        success &&= build_cpp_static_lib ("win/ImGui", ..src_files, extra = extra, debug = Compile_Debug);
     }
     else #if OS == .LINUX
     {
@@ -92,23 +104,23 @@ compile_cpp_source :: () -> bool
         for Defines
             array_add (*extra, tprint ("-D%", it));
 
-        success &&= build_cpp_dynamic_lib ("linux/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
+        success &&= build_cpp_dynamic_lib ("linux/ImGui", ..src_files, extra = extra, debug = Compile_Debug);
 
         array_add (*extra, "-fno-exceptions", "-fno-rtti", "-fno-threadsafe-statics");
-        success &&= build_cpp_static_lib ("linux/ImGui", ..src_files, extra = extra, debug = COMPILE_DEBUG);
+        success &&= build_cpp_static_lib ("linux/ImGui", ..src_files, extra = extra, debug = Compile_Debug);
     }
 
     return success;
 }
 
-generate_bindings :: () -> bool
+GenerateBindings :: () -> bool
 {
     #if OS == .WINDOWS
         output_filename := "windows.jai";
     else #if OS == .LINUX
         output_filename := "linux.jai";
 
-    opts : bdgen.Generate_Bindings_Options;
+    opts : Generate_Bindings_Options;
 
     #if OS == .WINDOWS
         array_add (*opts.libpaths, "win");
@@ -116,11 +128,10 @@ generate_bindings :: () -> bool
         array_add (*opts.libpaths, "linux");
 
     array_add (*opts.libnames, "ImGui");
-    array_add (*opts.system_include_paths, bdgen.GENERATOR_DEFAULT_SYSTEM_INCLUDE_PATH);
-    array_add (*opts.include_paths, CPP_SOURCE_PATH);
-    array_add (*opts.source_files, tprint ("%/imgui.h", CPP_SOURCE_PATH));
-    array_add (*opts.source_files, tprint ("%/misc/freetype/imgui_freetype.h", CPP_SOURCE_PATH));
-    // array_add (*opts.source_files, tprint ("%/imgui_internal.h", CPP_SOURCE_PATH));
+    array_add (*opts.system_include_paths, GENERATOR_DEFAULT_SYSTEM_INCLUDE_PATH);
+    array_add (*opts.include_paths, Cpp_Source_Path);
+    array_add (*opts.source_files, tprint ("%/imgui.h", Cpp_Source_Path));
+    array_add (*opts.source_files, tprint ("%/imgui_internal.h", Cpp_Source_Path));
 
     array_add (*opts.extra_clang_arguments, "-x", "c++");
     for Defines
@@ -132,19 +143,19 @@ generate_bindings :: () -> bool
     opts.generate_compile_time_struct_checks = false;
     opts.strip_flags |= .INLINED_FUNCTIONS;
 
-    opts.visitor = visitor;
-    opts.get_func_args_for_printing = get_func_args_for_printing;
+    opts.visitor = HandleDeclaration;
+    opts.get_func_args_for_printing = GetFuncArgsForPrinting;
 
-    return bdgen.generate_bindings (opts, output_filename);
+    return generate_bindings (opts, output_filename);
 }
 
 // This is a function that is called for each declaration, so the user
 // fine tune how to bindings are generated.
 // For ImGui, we handle enum types and const char * function argument pairs that
 // ends with _begin and _end.
-visitor :: (decl : *bdgen.Declaration, parent_decl : *bdgen.Declaration) -> bdgen.Declaration_Visit_Result
+HandleDeclaration :: (decl : *Declaration, parent_decl : *Declaration) -> Declaration_Visit_Result
 {
-    get_associated_enum_name :: (name : string) -> string
+    GetAssociatedEnumName :: (name : string) -> string
     {
         if name.count > 1 && name[name.count - 1] != #char "_"
             return tprint ("%_", name);
@@ -152,22 +163,60 @@ visitor :: (decl : *bdgen.Declaration, parent_decl : *bdgen.Declaration) -> bdge
         return name;
     }
 
-    // ImDrawCallback_ResetRenderState is a special value of ImDrawCallback, which
-    // is a function pointer. This does not get generated correctly, so we ignore it.
-    if decl.kind == .MACRO_DEFINITION && decl.name == "ImDrawCallback_ResetRenderState"
-    {
-        decl.decl_flags |= .OMIT_FROM_OUTPUT;
-        return .STOP;
-    }
-
     if !parent_decl
     {
-        if array_find (TYPES_TO_OMIT, decl.name)
+        for Global_Declarations_Flags
         {
-            decl.decl_flags |= .OMIT_FROM_OUTPUT;
+            if decl.name == it.name
+            {
+                decl.decl_flags |= it.flags;
 
-            return .STOP;
+                print ("% : %\n", decl.name, decl.decl_flags);
+
+                if decl.decl_flags | .OMIT_FROM_OUTPUT
+                    return .STOP;
+            }
         }
+    }
+
+    TypeContainsNamedType :: (type : *CType, name : string) -> bool
+    {
+        decl : *Declaration;
+
+        while true
+        {
+            if type.pointer_to
+                type = type.pointer_to;
+            else if type.array_element_type
+                type = type.array_element_type;
+            else
+                break;
+        }
+
+        if type.type_of_enum
+            decl = type.type_of_enum;
+        else if type.type_of_struct
+            decl = type.type_of_struct;
+        else if type.type_of_typedef
+            decl = type.type_of_typedef;
+
+        for type.template_instantiation_params
+        {
+            if TypeContainsNamedType (it, name)
+                return true;
+        }
+
+        if !decl
+            return false;
+
+        return name == decl.output_name;
+    }
+
+    // Avoid name clashing in a more sophisticated way that the default thing
+    if decl.kind == .DECLARATION && decl.type
+    {
+        if TypeContainsNamedType (decl.type, decl.output_name)
+            decl.output_name = sprint ("%_", decl.output_name);
     }
 
     // We want to generate the correct strongly typed enum,
@@ -181,14 +230,14 @@ visitor :: (decl : *bdgen.Declaration, parent_decl : *bdgen.Declaration) -> bdge
         old_name := decl.type.type_of_typedef.name;
         if !old_name
             return .RECURSE;
-        new_name := get_associated_enum_name (old_name);
+        new_name := GetAssociatedEnumName (old_name);
 
         for context.generator.global_scope.members
         {
             if it.kind != .ENUM || it.name != new_name
                 continue;
 
-            enum_decl := cast (*bdgen.Enum) it;
+            enum_decl := cast (*Enum) it;
 
             // Don't output the integer typedef
             decl.type.type_of_typedef.decl_flags |= .OMIT_FROM_OUTPUT;
@@ -213,13 +262,13 @@ visitor :: (decl : *bdgen.Declaration, parent_decl : *bdgen.Declaration) -> bdge
         // ImGui has lots of enums that should be enum flags. Luckily, they all end with "Flags_".
         if ends_with (decl.name, "Flags_")
         {
-            enum_decl := cast (*bdgen.Enum) decl;
+            enum_decl := cast (*Enum) decl;
             enum_decl.flags |= .IS_ENUM_FLAGS;
             enum_decl.flags |= .VALUES_IN_HEX;
         }
 
     case .FUNCTION;
-        func := cast (*bdgen.Function) decl;
+        func := cast (*Function) decl;
         type := func.type.type_of_function;
 
         // ImGui also has functions with pairs of arguments like "text_begin" and "text_end"
@@ -227,7 +276,7 @@ visitor :: (decl : *bdgen.Declaration, parent_decl : *bdgen.Declaration) -> bdge
         // those function which take a jai string.
         //
         // Here we collect pointers to "_begin" arguments, and use them in
-        // get_func_args_for_printing below.
+        // GetFuncArgsForPrinting below.
         for type.arguments
         {
             if it_index == 0 || !ends_with (it.name, "_end")
@@ -255,19 +304,9 @@ visitor :: (decl : *bdgen.Declaration, parent_decl : *bdgen.Declaration) -> bdge
     return .RECURSE;
 }
 
-get_func_args_for_printing :: (func : *bdgen.Function, type : *bdgen.Function_Type, mode : bdgen.Arg_Print_Mode) -> []*bdgen.Declaration
+GetFuncArgsForPrinting :: (func : *Function, type : *Function_Type, mode : Arg_Print_Mode) -> []*Declaration
 {
-    args : [..]*bdgen.Declaration;
-
-
-    // We disabled printf wrapper generation in the generator options, so we can't
-    // rely on func.decl_flags being NEEDS_PRINTF_WRAPPER
-    /*
-    if func.decl_flags & .NEEDS_PRINTF_WRAPPER
-        print ("Function % wants printf wrapper.\n", func.name);
-    */
-    if (type.flags & .VARIADIC) && bdgen.is_char_pointer_type(<<type.arguments[type.arguments.count - 1].type)
-        print ("Function % wants printf wrapper.\n", func.name);
+    args : [..]*Declaration;
 
     for type.arguments
     {
@@ -278,7 +317,7 @@ get_func_args_for_printing :: (func : *bdgen.Function, type : *bdgen.Function_Ty
             case .OUTER_WRAPPER;
                 // For the outer wrapper, remove any "_begin" part of the argument, and
                 // change its type to a jai string
-                new_arg := New (bdgen.Declaration);
+                new_arg := New (Declaration);
                 <<new_arg = <<it;
                 new_arg.type = context.generator.type_def_jai_string;
 
@@ -296,12 +335,12 @@ get_func_args_for_printing :: (func : *bdgen.Function, type : *bdgen.Function_Ty
                 if ends_with (basename, "_begin")
                     basename = slice (basename, 0, basename.count - "_begin".count);
 
-                first_arg := New (bdgen.Declaration);
+                first_arg := New (Declaration);
                 <<first_arg = <<it;
                 first_arg.output_name = tprint ("%.data", basename);
                 array_add (*args, first_arg);
 
-                second_arg := New (bdgen.Declaration);
+                second_arg := New (Declaration);
                 <<second_arg = <<it;
                 second_arg.output_name = tprint ("%.data + %.count", basename, basename);
                 array_add (*args, second_arg);

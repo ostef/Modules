@@ -25,11 +25,43 @@ IM_COL32_A_MASK :: 0xFF000000;
 
 IM_DRAWLIST_TEX_LINES_WIDTH_MAX :: 63;
 
-ImDrawListSharedData :: struct {}
+IMSTB_TEXTEDIT_STRING :: InputTextState;
+IMSTB_TEXTEDIT_CHARTYPE :: ImWchar;
+IMSTB_TEXTEDIT_GETWIDTH_NEWLINE :: -1.0;
+IMSTB_TEXTEDIT_UNDOSTATECOUNT :: 99;
+IMSTB_TEXTEDIT_UNDOCHARCOUNT :: 999;
 
-ImFontBuilderIO :: struct {}
+IMGUI_PAYLOAD_TYPE_WINDOW :: "_IMWINDOW";
 
-Context :: struct {}
+IM_PI :: 3.14159265358979323846;
+
+IM_NEWLINE :: "\r\n";
+
+IM_TABSIZE :: 4;
+
+IM_PRId64 :: "lld";
+IM_PRIu64 :: "llu";
+IM_PRIX64 :: "llX";
+
+IM_DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN :: 4;
+IM_DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX :: 512;
+
+IM_DRAWLIST_ARCFAST_TABLE_SIZE :: 48;
+
+IM_DRAWLIST_ARCFAST_SAMPLE_MAX :: IM_DRAWLIST_ARCFAST_TABLE_SIZE;
+
+ImGuiKey_LegacyNativeKey_BEGIN :: 0;
+ImGuiKey_LegacyNativeKey_END :: 512;
+
+ImGuiKeyOwner_Any :: cast(ID)0;
+ImGuiKeyOwner_None :: cast,trunc(ID)-1;
+
+ImGuiSelectionUserData_Invalid :: cast,trunc(SelectionUserData)-1;
+
+DOCKING_HOST_DRAW_CHANNEL_BG :: 0;
+DOCKING_HOST_DRAW_CHANNEL_FG :: 1;
+
+IMGUI_TABLE_MAX_COLUMNS :: 512;
 
 // Enumerations
 // - We don't use strongly typed enums much because they add constraints (can't extend in private code, can't store typed in bit fields, extra casting on iteration)
@@ -413,8 +445,6 @@ MouseSource :: enum s32 {
     ImGuiMouseSource_Pen         :: Pen;
     ImGuiMouseSource_COUNT       :: COUNT;
 }
-
-SortDirection :: s32;
 
 KeyChord :: s32;
 
@@ -1409,6 +1439,703 @@ ImageButton :: (user_texture_id: ImTextureID, size: ImVec2, uv0: ImVec2 = ImVec2
     return ImageButton(user_texture_id, *size, *uv0, *uv1, frame_padding, *bg_col, *tint_col);
 }
 
+FindWindowByID :: (id: ID) -> *Window #foreign imgui "?FindWindowByID@ImGui@@YAPEAUImGuiWindow@@I@Z";
+FindWindowByName :: (name: *u8) -> *Window #foreign imgui "?FindWindowByName@ImGui@@YAPEAUImGuiWindow@@PEBD@Z";
+UpdateWindowParentAndRootLinks :: (window: *Window, flags: WindowFlags, parent_window: *Window) -> void #foreign imgui "?UpdateWindowParentAndRootLinks@ImGui@@YAXPEAUImGuiWindow@@H0@Z";
+CalcWindowNextAutoFitSize :: (window: *Window) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?CalcWindowNextAutoFitSize@ImGui@@YA?AUImVec2@@PEAUImGuiWindow@@@Z";
+IsWindowChildOf :: (window: *Window, potential_parent: *Window, popup_hierarchy: bool, dock_hierarchy: bool) -> bool #foreign imgui "?IsWindowChildOf@ImGui@@YA_NPEAUImGuiWindow@@0_N1@Z";
+IsWindowWithinBeginStackOf :: (window: *Window, potential_parent: *Window) -> bool #foreign imgui "?IsWindowWithinBeginStackOf@ImGui@@YA_NPEAUImGuiWindow@@0@Z";
+IsWindowAbove :: (potential_above: *Window, potential_below: *Window) -> bool #foreign imgui "?IsWindowAbove@ImGui@@YA_NPEAUImGuiWindow@@0@Z";
+IsWindowNavFocusable :: (window: *Window) -> bool #foreign imgui "?IsWindowNavFocusable@ImGui@@YA_NPEAUImGuiWindow@@@Z";
+SetWindowPos :: (window: *Window, pos: *ImVec2, cond: Cond = .None) -> void #foreign imgui "?SetWindowPos@ImGui@@YAXPEAUImGuiWindow@@AEBUImVec2@@H@Z";
+SetWindowPos :: (window: *Window, pos: ImVec2, cond: Cond = .None) #no_context {
+    SetWindowPos(window, *pos, cond);
+}
+SetWindowSize :: (window: *Window, size: *ImVec2, cond: Cond = .None) -> void #foreign imgui "?SetWindowSize@ImGui@@YAXPEAUImGuiWindow@@AEBUImVec2@@H@Z";
+SetWindowSize :: (window: *Window, size: ImVec2, cond: Cond = .None) #no_context {
+    SetWindowSize(window, *size, cond);
+}
+SetWindowCollapsed :: (window: *Window, collapsed: bool, cond: Cond = .None) -> void #foreign imgui "?SetWindowCollapsed@ImGui@@YAXPEAUImGuiWindow@@_NH@Z";
+SetWindowHitTestHole :: (window: *Window, pos: *ImVec2, size: *ImVec2) -> void #foreign imgui "?SetWindowHitTestHole@ImGui@@YAXPEAUImGuiWindow@@AEBUImVec2@@1@Z";
+SetWindowHitTestHole :: (window: *Window, pos: ImVec2, size: ImVec2) #no_context {
+    SetWindowHitTestHole(window, *pos, *size);
+}
+SetWindowHiddenAndSkipItemsForCurrentFrame :: (window: *Window) -> void #foreign imgui "?SetWindowHiddenAndSkipItemsForCurrentFrame@ImGui@@YAXPEAUImGuiWindow@@@Z";
+
+// Windows: Display Order and Focus Order
+FocusWindow :: (window: *Window, flags: FocusRequestFlags = .None) -> void #foreign imgui "?FocusWindow@ImGui@@YAXPEAUImGuiWindow@@H@Z";
+FocusTopMostWindowUnderOne :: (under_this_window: *Window, ignore_window: *Window, filter_viewport: *Viewport, flags: FocusRequestFlags) -> void #foreign imgui "?FocusTopMostWindowUnderOne@ImGui@@YAXPEAUImGuiWindow@@0PEAUImGuiViewport@@H@Z";
+BringWindowToFocusFront :: (window: *Window) -> void #foreign imgui "?BringWindowToFocusFront@ImGui@@YAXPEAUImGuiWindow@@@Z";
+BringWindowToDisplayFront :: (window: *Window) -> void #foreign imgui "?BringWindowToDisplayFront@ImGui@@YAXPEAUImGuiWindow@@@Z";
+BringWindowToDisplayBack :: (window: *Window) -> void #foreign imgui "?BringWindowToDisplayBack@ImGui@@YAXPEAUImGuiWindow@@@Z";
+BringWindowToDisplayBehind :: (window: *Window, above_window: *Window) -> void #foreign imgui "?BringWindowToDisplayBehind@ImGui@@YAXPEAUImGuiWindow@@0@Z";
+FindWindowDisplayIndex :: (window: *Window) -> s32 #foreign imgui "?FindWindowDisplayIndex@ImGui@@YAHPEAUImGuiWindow@@@Z";
+FindBottomMostVisibleWindowWithinBeginStack :: (window: *Window) -> *Window #foreign imgui "?FindBottomMostVisibleWindowWithinBeginStack@ImGui@@YAPEAUImGuiWindow@@PEAU2@@Z";
+
+// Fonts, drawing
+SetCurrentFont :: (font: *ImFont) -> void #foreign imgui "?SetCurrentFont@ImGui@@YAXPEAUImFont@@@Z";
+
+AddDrawListToDrawDataEx :: (draw_data: *ImDrawData, out_list: *ImVector(*ImDrawList), draw_list: *ImDrawList) -> void #foreign imgui "?AddDrawListToDrawDataEx@ImGui@@YAXPEAUImDrawData@@PEAU?$ImVector@PEAUImDrawList@@@@PEAUImDrawList@@@Z";
+
+// Init
+Initialize :: () -> void #foreign imgui "?Initialize@ImGui@@YAXXZ";
+Shutdown :: () -> void #foreign imgui "?Shutdown@ImGui@@YAXXZ";
+
+// NewFrame
+UpdateInputEvents :: (trickle_fast_inputs: bool) -> void #foreign imgui "?UpdateInputEvents@ImGui@@YAX_N@Z";
+UpdateHoveredWindowAndCaptureFlags :: () -> void #foreign imgui "?UpdateHoveredWindowAndCaptureFlags@ImGui@@YAXXZ";
+StartMouseMovingWindow :: (window: *Window) -> void #foreign imgui "?StartMouseMovingWindow@ImGui@@YAXPEAUImGuiWindow@@@Z";
+StartMouseMovingWindowOrNode :: (window: *Window, node: *DockNode, undock: bool) -> void #foreign imgui "?StartMouseMovingWindowOrNode@ImGui@@YAXPEAUImGuiWindow@@PEAUImGuiDockNode@@_N@Z";
+UpdateMouseMovingWindowNewFrame :: () -> void #foreign imgui "?UpdateMouseMovingWindowNewFrame@ImGui@@YAXXZ";
+UpdateMouseMovingWindowEndFrame :: () -> void #foreign imgui "?UpdateMouseMovingWindowEndFrame@ImGui@@YAXXZ";
+
+// Generic context hooks
+AddContextHook :: (_context: *Context, hook: *ContextHook) -> ID #foreign imgui "?AddContextHook@ImGui@@YAIPEAUImGuiContext@@PEBUImGuiContextHook@@@Z";
+RemoveContextHook :: (_context: *Context, hook_to_remove: ID) -> void #foreign imgui "?RemoveContextHook@ImGui@@YAXPEAUImGuiContext@@I@Z";
+CallContextHooks :: (_context: *Context, type: ContextHookType) -> void #foreign imgui "?CallContextHooks@ImGui@@YAXPEAUImGuiContext@@W4ImGuiContextHookType@@@Z";
+
+// Viewports
+TranslateWindowsInViewport :: (viewport: *ViewportP, old_pos: *ImVec2, new_pos: *ImVec2) -> void #foreign imgui "?TranslateWindowsInViewport@ImGui@@YAXPEAUImGuiViewportP@@AEBUImVec2@@1@Z";
+TranslateWindowsInViewport :: (viewport: *ViewportP, old_pos: ImVec2, new_pos: ImVec2) #no_context {
+    TranslateWindowsInViewport(viewport, *old_pos, *new_pos);
+}
+ScaleWindowsInViewport :: (viewport: *ViewportP, scale: float) -> void #foreign imgui "?ScaleWindowsInViewport@ImGui@@YAXPEAUImGuiViewportP@@M@Z";
+DestroyPlatformWindow :: (viewport: *ViewportP) -> void #foreign imgui "?DestroyPlatformWindow@ImGui@@YAXPEAUImGuiViewportP@@@Z";
+SetWindowViewport :: (window: *Window, viewport: *ViewportP) -> void #foreign imgui "?SetWindowViewport@ImGui@@YAXPEAUImGuiWindow@@PEAUImGuiViewportP@@@Z";
+SetCurrentViewport :: (window: *Window, viewport: *ViewportP) -> void #foreign imgui "?SetCurrentViewport@ImGui@@YAXPEAUImGuiWindow@@PEAUImGuiViewportP@@@Z";
+GetViewportPlatformMonitor :: (viewport: *Viewport) -> *PlatformMonitor #foreign imgui "?GetViewportPlatformMonitor@ImGui@@YAPEBUImGuiPlatformMonitor@@PEAUImGuiViewport@@@Z";
+FindHoveredViewportFromPlatformWindowStack :: (mouse_platform_pos: *ImVec2) -> *ViewportP #foreign imgui "?FindHoveredViewportFromPlatformWindowStack@ImGui@@YAPEAUImGuiViewportP@@AEBUImVec2@@@Z";
+FindHoveredViewportFromPlatformWindowStack :: (mouse_platform_pos: ImVec2) -> *ViewportP #no_context {
+    return FindHoveredViewportFromPlatformWindowStack(*mouse_platform_pos);
+}
+
+// Settings
+MarkIniSettingsDirty :: () -> void #foreign imgui "?MarkIniSettingsDirty@ImGui@@YAXXZ";
+MarkIniSettingsDirty :: (window: *Window) -> void #foreign imgui "?MarkIniSettingsDirty@ImGui@@YAXPEAUImGuiWindow@@@Z";
+ClearIniSettings :: () -> void #foreign imgui "?ClearIniSettings@ImGui@@YAXXZ";
+AddSettingsHandler :: (handler: *SettingsHandler) -> void #foreign imgui "?AddSettingsHandler@ImGui@@YAXPEBUImGuiSettingsHandler@@@Z";
+RemoveSettingsHandler :: (type_name: *u8) -> void #foreign imgui "?RemoveSettingsHandler@ImGui@@YAXPEBD@Z";
+FindSettingsHandler :: (type_name: *u8) -> *SettingsHandler #foreign imgui "?FindSettingsHandler@ImGui@@YAPEAUImGuiSettingsHandler@@PEBD@Z";
+
+// Settings - Windows
+CreateNewWindowSettings :: (name: *u8) -> *WindowSettings #foreign imgui "?CreateNewWindowSettings@ImGui@@YAPEAUImGuiWindowSettings@@PEBD@Z";
+FindWindowSettingsByID :: (id: ID) -> *WindowSettings #foreign imgui "?FindWindowSettingsByID@ImGui@@YAPEAUImGuiWindowSettings@@I@Z";
+FindWindowSettingsByWindow :: (window: *Window) -> *WindowSettings #foreign imgui "?FindWindowSettingsByWindow@ImGui@@YAPEAUImGuiWindowSettings@@PEAUImGuiWindow@@@Z";
+ClearWindowSettings :: (name: *u8) -> void #foreign imgui "?ClearWindowSettings@ImGui@@YAXPEBD@Z";
+
+// Localization
+LocalizeRegisterEntries :: (entries: *LocEntry, count: s32) -> void #foreign imgui "?LocalizeRegisterEntries@ImGui@@YAXPEBUImGuiLocEntry@@H@Z";
+
+// Scrolling
+SetScrollX :: (window: *Window, scroll_x: float) -> void #foreign imgui "?SetScrollX@ImGui@@YAXPEAUImGuiWindow@@M@Z";
+SetScrollY :: (window: *Window, scroll_y: float) -> void #foreign imgui "?SetScrollY@ImGui@@YAXPEAUImGuiWindow@@M@Z";
+SetScrollFromPosX :: (window: *Window, local_x: float, center_x_ratio: float) -> void #foreign imgui "?SetScrollFromPosX@ImGui@@YAXPEAUImGuiWindow@@MM@Z";
+SetScrollFromPosY :: (window: *Window, local_y: float, center_y_ratio: float) -> void #foreign imgui "?SetScrollFromPosY@ImGui@@YAXPEAUImGuiWindow@@MM@Z";
+
+// Early work-in-progress API (ScrollToItem() will become public)
+ScrollToItem :: (flags: ScrollFlags = .None) -> void #foreign imgui "?ScrollToItem@ImGui@@YAXH@Z";
+ScrollToRect :: (window: *Window, rect: *ImRect, flags: ScrollFlags = .None) -> void #foreign imgui "?ScrollToRect@ImGui@@YAXPEAUImGuiWindow@@AEBUImRect@@H@Z";
+ScrollToRect :: (window: *Window, rect: ImRect, flags: ScrollFlags = .None) #no_context {
+    ScrollToRect(window, *rect, flags);
+}
+ScrollToRectEx :: (window: *Window, rect: *ImRect, flags: ScrollFlags = .None) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?ScrollToRectEx@ImGui@@YA?AUImVec2@@PEAUImGuiWindow@@AEBUImRect@@H@Z";
+ScrollToRectEx :: (window: *Window, rect: ImRect, flags: ScrollFlags = .None) -> ImVec2 #no_context {
+    return ScrollToRectEx(window, *rect, flags);
+}
+
+SetActiveID :: (id: ID, window: *Window) -> void #foreign imgui "?SetActiveID@ImGui@@YAXIPEAUImGuiWindow@@@Z";
+SetFocusID :: (id: ID, window: *Window) -> void #foreign imgui "?SetFocusID@ImGui@@YAXIPEAUImGuiWindow@@@Z";
+ClearActiveID :: () -> void #foreign imgui "?ClearActiveID@ImGui@@YAXXZ";
+GetHoveredID :: () -> ID #foreign imgui "?GetHoveredID@ImGui@@YAIXZ";
+SetHoveredID :: (id: ID) -> void #foreign imgui "?SetHoveredID@ImGui@@YAXI@Z";
+KeepAliveID :: (id: ID) -> void #foreign imgui "?KeepAliveID@ImGui@@YAXI@Z";
+MarkItemEdited :: (id: ID) -> void #foreign imgui "?MarkItemEdited@ImGui@@YAXI@Z";
+PushOverrideID :: (id: ID) -> void #foreign imgui "?PushOverrideID@ImGui@@YAXI@Z";
+GetIDWithSeed :: (str_id_begin: *u8, str_id_end: *u8, seed: ID) -> ID #foreign imgui "?GetIDWithSeed@ImGui@@YAIPEBD0I@Z";
+GetIDWithSeed :: (str_id: string, seed: ID) -> ID #no_context {
+    return GetIDWithSeed(str_id.data, str_id.data + str_id.count, seed);
+}
+GetIDWithSeed :: (n: s32, seed: ID) -> ID #foreign imgui "?GetIDWithSeed@ImGui@@YAIHI@Z";
+
+// Basic Helpers for widget code
+ItemSize :: (size: *ImVec2, text_baseline_y: float = -1.0) -> void #foreign imgui "?ItemSize@ImGui@@YAXAEBUImVec2@@M@Z";
+ItemSize :: (size: ImVec2, text_baseline_y: float = -1.0) #no_context {
+    ItemSize(*size, text_baseline_y);
+}
+
+ItemAdd :: (bb: *ImRect, id: ID, nav_bb: *ImRect = null, extra_flags: ItemFlags = .None) -> bool #foreign imgui "?ItemAdd@ImGui@@YA_NAEBUImRect@@IPEBU2@H@Z";
+ItemAdd :: (bb: ImRect, id: ID, nav_bb: *ImRect = null, extra_flags: ItemFlags = .None) -> bool #no_context {
+    return ItemAdd(*bb, id, nav_bb, extra_flags);
+}
+ItemHoverable :: (bb: *ImRect, id: ID, item_flags: ItemFlags) -> bool #foreign imgui "?ItemHoverable@ImGui@@YA_NAEBUImRect@@IH@Z";
+ItemHoverable :: (bb: ImRect, id: ID, item_flags: ItemFlags) -> bool #no_context {
+    return ItemHoverable(*bb, id, item_flags);
+}
+IsWindowContentHoverable :: (window: *Window, flags: HoveredFlags = .None) -> bool #foreign imgui "?IsWindowContentHoverable@ImGui@@YA_NPEAUImGuiWindow@@H@Z";
+IsClippedEx :: (bb: *ImRect, id: ID) -> bool #foreign imgui "?IsClippedEx@ImGui@@YA_NAEBUImRect@@I@Z";
+IsClippedEx :: (bb: ImRect, id: ID) -> bool #no_context {
+    return IsClippedEx(*bb, id);
+}
+SetLastItemData :: (item_id: ID, in_flags: ItemFlags, status_flags: ItemStatusFlags, item_rect: *ImRect) -> void #foreign imgui "?SetLastItemData@ImGui@@YAXIHHAEBUImRect@@@Z";
+SetLastItemData :: (item_id: ID, in_flags: ItemFlags, status_flags: ItemStatusFlags, item_rect: ImRect) #no_context {
+    SetLastItemData(item_id, in_flags, status_flags, *item_rect);
+}
+CalcItemSize :: (size: ImVec2, default_w: float, default_h: float) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?CalcItemSize@ImGui@@YA?AUImVec2@@U2@MM@Z";
+CalcWrapWidthForPos :: (pos: *ImVec2, wrap_pos_x: float) -> float #foreign imgui "?CalcWrapWidthForPos@ImGui@@YAMAEBUImVec2@@M@Z";
+CalcWrapWidthForPos :: (pos: ImVec2, wrap_pos_x: float) -> float #no_context {
+    return CalcWrapWidthForPos(*pos, wrap_pos_x);
+}
+PushMultiItemsWidths :: (components: s32, width_full: float) -> void #foreign imgui "?PushMultiItemsWidths@ImGui@@YAXHM@Z";
+IsItemToggledSelection :: () -> bool #foreign imgui "?IsItemToggledSelection@ImGui@@YA_NXZ";
+GetContentRegionMaxAbs :: () -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?GetContentRegionMaxAbs@ImGui@@YA?AUImVec2@@XZ";
+ShrinkWidths :: (items: *ShrinkWidthItem, count: s32, width_excess: float) -> void #foreign imgui "?ShrinkWidths@ImGui@@YAXPEAUImGuiShrinkWidthItem@@HM@Z";
+
+// Parameter stacks (shared)
+PushItemFlag :: (option: ItemFlags, enabled: bool) -> void #foreign imgui "?PushItemFlag@ImGui@@YAXH_N@Z";
+PopItemFlag :: () -> void #foreign imgui "?PopItemFlag@ImGui@@YAXXZ";
+GetStyleVarInfo :: (idx: StyleVar) -> *DataVarInfo #foreign imgui "?GetStyleVarInfo@ImGui@@YAPEBUImGuiDataVarInfo@@H@Z";
+
+// Logging/Capture
+LogBegin :: (type: LogType, auto_open_depth: s32) -> void #foreign imgui "?LogBegin@ImGui@@YAXW4ImGuiLogType@@H@Z";
+LogToBuffer :: (auto_open_depth: s32 = -1) -> void #foreign imgui "?LogToBuffer@ImGui@@YAXH@Z";
+LogRenderedText :: (ref_pos: *ImVec2, text: *u8, text_end: *u8 = null) -> void #foreign imgui "?LogRenderedText@ImGui@@YAXPEBUImVec2@@PEBD1@Z";
+LogRenderedText :: (ref_pos: *ImVec2, text: string) #no_context {
+    LogRenderedText(ref_pos, text.data, text.data + text.count);
+}
+LogSetNextTextDecoration :: (prefix: *u8, suffix: *u8) -> void #foreign imgui "?LogSetNextTextDecoration@ImGui@@YAXPEBD0@Z";
+
+// Popups, Modals, Tooltips
+BeginChildEx :: (name: *u8, id: ID, size_arg: *ImVec2, child_flags: ChildFlags, window_flags: WindowFlags) -> bool #foreign imgui "?BeginChildEx@ImGui@@YA_NPEBDIAEBUImVec2@@HH@Z";
+BeginChildEx :: (name: *u8, id: ID, size_arg: ImVec2, child_flags: ChildFlags, window_flags: WindowFlags) -> bool #no_context {
+    return BeginChildEx(name, id, *size_arg, child_flags, window_flags);
+}
+OpenPopupEx :: (id: ID, popup_flags: PopupFlags = .None) -> void #foreign imgui "?OpenPopupEx@ImGui@@YAXIH@Z";
+ClosePopupToLevel :: (remaining: s32, restore_focus_to_window_under_popup: bool) -> void #foreign imgui "?ClosePopupToLevel@ImGui@@YAXH_N@Z";
+ClosePopupsOverWindow :: (ref_window: *Window, restore_focus_to_window_under_popup: bool) -> void #foreign imgui "?ClosePopupsOverWindow@ImGui@@YAXPEAUImGuiWindow@@_N@Z";
+ClosePopupsExceptModals :: () -> void #foreign imgui "?ClosePopupsExceptModals@ImGui@@YAXXZ";
+IsPopupOpen :: (id: ID, popup_flags: PopupFlags) -> bool #foreign imgui "?IsPopupOpen@ImGui@@YA_NIH@Z";
+BeginPopupEx :: (id: ID, extra_flags: WindowFlags) -> bool #foreign imgui "?BeginPopupEx@ImGui@@YA_NIH@Z";
+BeginTooltipEx :: (tooltip_flags: TooltipFlags, extra_window_flags: WindowFlags) -> bool #foreign imgui "?BeginTooltipEx@ImGui@@YA_NHH@Z";
+BeginTooltipHidden :: () -> bool #foreign imgui "?BeginTooltipHidden@ImGui@@YA_NXZ";
+GetPopupAllowedExtentRect :: (window: *Window) -> ImRect #cpp_return_type_is_non_pod #foreign imgui "?GetPopupAllowedExtentRect@ImGui@@YA?AUImRect@@PEAUImGuiWindow@@@Z";
+GetTopMostPopupModal :: () -> *Window #foreign imgui "?GetTopMostPopupModal@ImGui@@YAPEAUImGuiWindow@@XZ";
+GetTopMostAndVisiblePopupModal :: () -> *Window #foreign imgui "?GetTopMostAndVisiblePopupModal@ImGui@@YAPEAUImGuiWindow@@XZ";
+FindBlockingModal :: (window: *Window) -> *Window #foreign imgui "?FindBlockingModal@ImGui@@YAPEAUImGuiWindow@@PEAU2@@Z";
+FindBestWindowPosForPopup :: (window: *Window) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?FindBestWindowPosForPopup@ImGui@@YA?AUImVec2@@PEAUImGuiWindow@@@Z";
+FindBestWindowPosForPopupEx :: (ref_pos: *ImVec2, size: *ImVec2, last_dir: *Dir, r_outer: *ImRect, r_avoid: *ImRect, policy: PopupPositionPolicy) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?FindBestWindowPosForPopupEx@ImGui@@YA?AUImVec2@@AEBU2@0PEAHAEBUImRect@@2W4ImGuiPopupPositionPolicy@@@Z";
+FindBestWindowPosForPopupEx :: (ref_pos: ImVec2, size: ImVec2, last_dir: *Dir, r_outer: ImRect, r_avoid: ImRect, policy: PopupPositionPolicy) -> ImVec2 #no_context {
+    return FindBestWindowPosForPopupEx(*ref_pos, *size, last_dir, *r_outer, *r_avoid, policy);
+}
+
+// Menus
+BeginViewportSideBar :: (name: *u8, viewport: *Viewport, dir: Dir, size: float, window_flags: WindowFlags) -> bool #foreign imgui "?BeginViewportSideBar@ImGui@@YA_NPEBDPEAUImGuiViewport@@HMH@Z";
+BeginMenuEx :: (label: *u8, icon: *u8, enabled := true) -> bool #foreign imgui "?BeginMenuEx@ImGui@@YA_NPEBD0_N@Z";
+MenuItemEx :: (label: *u8, icon: *u8, shortcut: *u8 = null, selected := false, enabled := true) -> bool #foreign imgui "?MenuItemEx@ImGui@@YA_NPEBD00_N1@Z";
+
+// Combos
+BeginComboPopup :: (popup_id: ID, bb: *ImRect, flags: ComboFlags) -> bool #foreign imgui "?BeginComboPopup@ImGui@@YA_NIAEBUImRect@@H@Z";
+BeginComboPopup :: (popup_id: ID, bb: ImRect, flags: ComboFlags) -> bool #no_context {
+    return BeginComboPopup(popup_id, *bb, flags);
+}
+BeginComboPreview :: () -> bool #foreign imgui "?BeginComboPreview@ImGui@@YA_NXZ";
+EndComboPreview :: () -> void #foreign imgui "?EndComboPreview@ImGui@@YAXXZ";
+
+// Gamepad/Keyboard Navigation
+NavInitWindow :: (window: *Window, force_reinit: bool) -> void #foreign imgui "?NavInitWindow@ImGui@@YAXPEAUImGuiWindow@@_N@Z";
+NavInitRequestApplyResult :: () -> void #foreign imgui "?NavInitRequestApplyResult@ImGui@@YAXXZ";
+NavMoveRequestButNoResultYet :: () -> bool #foreign imgui "?NavMoveRequestButNoResultYet@ImGui@@YA_NXZ";
+NavMoveRequestSubmit :: (move_dir: Dir, clip_dir: Dir, move_flags: NavMoveFlags, scroll_flags: ScrollFlags) -> void #foreign imgui "?NavMoveRequestSubmit@ImGui@@YAXHHHH@Z";
+NavMoveRequestForward :: (move_dir: Dir, clip_dir: Dir, move_flags: NavMoveFlags, scroll_flags: ScrollFlags) -> void #foreign imgui "?NavMoveRequestForward@ImGui@@YAXHHHH@Z";
+NavMoveRequestResolveWithLastItem :: (result: *NavItemData) -> void #foreign imgui "?NavMoveRequestResolveWithLastItem@ImGui@@YAXPEAUImGuiNavItemData@@@Z";
+NavMoveRequestResolveWithPastTreeNode :: (result: *NavItemData, tree_node_data: *NavTreeNodeData) -> void #foreign imgui "?NavMoveRequestResolveWithPastTreeNode@ImGui@@YAXPEAUImGuiNavItemData@@PEAUImGuiNavTreeNodeData@@@Z";
+NavMoveRequestCancel :: () -> void #foreign imgui "?NavMoveRequestCancel@ImGui@@YAXXZ";
+NavMoveRequestApplyResult :: () -> void #foreign imgui "?NavMoveRequestApplyResult@ImGui@@YAXXZ";
+NavMoveRequestTryWrapping :: (window: *Window, move_flags: NavMoveFlags) -> void #foreign imgui "?NavMoveRequestTryWrapping@ImGui@@YAXPEAUImGuiWindow@@H@Z";
+NavHighlightActivated :: (id: ID) -> void #foreign imgui "?NavHighlightActivated@ImGui@@YAXI@Z";
+NavClearPreferredPosForAxis :: (axis: Axis) -> void #foreign imgui "?NavClearPreferredPosForAxis@ImGui@@YAXW4ImGuiAxis@@@Z";
+NavRestoreHighlightAfterMove :: () -> void #foreign imgui "?NavRestoreHighlightAfterMove@ImGui@@YAXXZ";
+NavUpdateCurrentWindowIsScrollPushableX :: () -> void #foreign imgui "?NavUpdateCurrentWindowIsScrollPushableX@ImGui@@YAXXZ";
+SetNavWindow :: (window: *Window) -> void #foreign imgui "?SetNavWindow@ImGui@@YAXPEAUImGuiWindow@@@Z";
+SetNavID :: (id: ID, nav_layer: NavLayer, focus_scope_id: ID, rect_rel: *ImRect) -> void #foreign imgui "?SetNavID@ImGui@@YAXIW4ImGuiNavLayer@@IAEBUImRect@@@Z";
+SetNavID :: (id: ID, nav_layer: NavLayer, focus_scope_id: ID, rect_rel: ImRect) #no_context {
+    SetNavID(id, nav_layer, focus_scope_id, *rect_rel);
+}
+SetNavFocusScope :: (focus_scope_id: ID) -> void #foreign imgui "?SetNavFocusScope@ImGui@@YAXI@Z";
+
+// Focus/Activation
+// This should be part of a larger set of API: FocusItem(offset = -1), FocusItemByID(id), ActivateItem(offset = -1), ActivateItemByID(id) etc. which are
+// much harder to design and implement than expected. I have a couple of private branches on this matter but it's not simple. For now implementing the easy ones.
+FocusItem :: () -> void #foreign imgui "?FocusItem@ImGui@@YAXXZ";
+ActivateItemByID :: (id: ID) -> void #foreign imgui "?ActivateItemByID@ImGui@@YAXI@Z";
+
+GetKeyData :: (ctx: *Context, key: Key) -> *KeyData #foreign imgui "?GetKeyData@ImGui@@YAPEAUImGuiKeyData@@PEAUImGuiContext@@W4ImGuiKey@@@Z";
+
+GetKeyChordName :: (key_chord: KeyChord) -> *u8 #foreign imgui "?GetKeyChordName@ImGui@@YAPEBDH@Z";
+
+IsMouseDragPastThreshold :: (button: MouseButton, lock_threshold: float = -1.0) -> bool #foreign imgui "?IsMouseDragPastThreshold@ImGui@@YA_NHM@Z";
+GetKeyMagnitude2d :: (key_left: Key, key_right: Key, key_up: Key, key_down: Key) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?GetKeyMagnitude2d@ImGui@@YA?AUImVec2@@W4ImGuiKey@@000@Z";
+GetNavTweakPressedAmount :: (axis: Axis) -> float #foreign imgui "?GetNavTweakPressedAmount@ImGui@@YAMW4ImGuiAxis@@@Z";
+CalcTypematicRepeatAmount :: (t0: float, t1: float, repeat_delay: float, repeat_rate: float) -> s32 #foreign imgui "?CalcTypematicRepeatAmount@ImGui@@YAHMMMM@Z";
+GetTypematicRepeatRate :: (flags: InputFlags, repeat_delay: *float, repeat_rate: *float) -> void #foreign imgui "?GetTypematicRepeatRate@ImGui@@YAXHPEAM0@Z";
+TeleportMousePos :: (pos: *ImVec2) -> void #foreign imgui "?TeleportMousePos@ImGui@@YAXAEBUImVec2@@@Z";
+TeleportMousePos :: (pos: ImVec2) #no_context {
+    TeleportMousePos(*pos);
+}
+SetActiveIdUsingAllKeyboardKeys :: () -> void #foreign imgui "?SetActiveIdUsingAllKeyboardKeys@ImGui@@YAXXZ";
+
+// [EXPERIMENTAL] Low-Level: Key/Input Ownership
+// - The idea is that instead of "eating" a given input, we can link to an owner id.
+// - Ownership is most often claimed as a result of reacting to a press/down event (but occasionally may be claimed ahead).
+// - Input queries can then read input by specifying ImGuiKeyOwner_Any (== 0), ImGuiKeyOwner_None (== -1) or a custom ID.
+// - Legacy input queries (without specifying an owner or _Any or _None) are equivalent to using ImGuiKeyOwner_Any (== 0).
+// - Input ownership is automatically released on the frame after a key is released. Therefore:
+//   - for ownership registration happening as a result of a down/press event, the SetKeyOwner() call may be done once (common case).
+//   - for ownership registration happening ahead of a down/press event, the SetKeyOwner() call needs to be made every frame (happens if e.g. claiming ownership on hover).
+// - SetItemKeyOwner() is a shortcut for common simple case. A custom widget will probably want to call SetKeyOwner() multiple times directly based on its interaction state.
+// - This is marked experimental because not all widgets are fully honoring the Set/Test idioms. We will need to move forward step by step.
+//   Please open a GitHub Issue to submit your usage scenario or if there's a use case you need solved.
+GetKeyOwner :: (key: Key) -> ID #foreign imgui "?GetKeyOwner@ImGui@@YAIW4ImGuiKey@@@Z";
+SetKeyOwner :: (key: Key, owner_id: ID, flags: InputFlags = .None) -> void #foreign imgui "?SetKeyOwner@ImGui@@YAXW4ImGuiKey@@IH@Z";
+SetKeyOwnersForKeyChord :: (key: KeyChord, owner_id: ID, flags: InputFlags = .None) -> void #foreign imgui "?SetKeyOwnersForKeyChord@ImGui@@YAXHIH@Z";
+SetItemKeyOwner :: (key: Key, flags: InputFlags = .None) -> void #foreign imgui "?SetItemKeyOwner@ImGui@@YAXW4ImGuiKey@@H@Z";
+TestKeyOwner :: (key: Key, owner_id: ID) -> bool #foreign imgui "?TestKeyOwner@ImGui@@YA_NW4ImGuiKey@@I@Z";
+
+// [EXPERIMENTAL] High-Level: Input Access functions w/ support for Key/Input Ownership
+// - Important: legacy IsKeyPressed(ImGuiKey, bool repeat=true) _DEFAULTS_ to repeat, new IsKeyPressed() requires _EXPLICIT_ ImGuiInputFlags_Repeat flag.
+// - Expected to be later promoted to public API, the prototypes are designed to replace existing ones (since owner_id can default to Any == 0)
+// - Specifying a value for 'ImGuiID owner' will test that EITHER the key is NOT owned (UNLESS locked), EITHER the key is owned by 'owner'.
+//   Legacy functions use ImGuiKeyOwner_Any meaning that they typically ignore ownership, unless a call to SetKeyOwner() explicitly used ImGuiInputFlags_LockThisFrame or ImGuiInputFlags_LockUntilRelease.
+// - Binding generators may want to ignore those for now, or suffix them with Ex() until we decide if this gets moved into public API.
+IsKeyDown :: (key: Key, owner_id: ID) -> bool #foreign imgui "?IsKeyDown@ImGui@@YA_NW4ImGuiKey@@I@Z";
+IsKeyPressed :: (key: Key, owner_id: ID, flags: InputFlags = .None) -> bool #foreign imgui "?IsKeyPressed@ImGui@@YA_NW4ImGuiKey@@IH@Z";
+IsKeyReleased :: (key: Key, owner_id: ID) -> bool #foreign imgui "?IsKeyReleased@ImGui@@YA_NW4ImGuiKey@@I@Z";
+IsMouseDown :: (button: MouseButton, owner_id: ID) -> bool #foreign imgui "?IsMouseDown@ImGui@@YA_NHI@Z";
+IsMouseClicked :: (button: MouseButton, owner_id: ID, flags: InputFlags = .None) -> bool #foreign imgui "?IsMouseClicked@ImGui@@YA_NHIH@Z";
+IsMouseReleased :: (button: MouseButton, owner_id: ID) -> bool #foreign imgui "?IsMouseReleased@ImGui@@YA_NHI@Z";
+IsMouseDoubleClicked :: (button: MouseButton, owner_id: ID) -> bool #foreign imgui "?IsMouseDoubleClicked@ImGui@@YA_NHI@Z";
+
+// [EXPERIMENTAL] Shortcut Routing
+// - ImGuiKeyChord = a ImGuiKey optionally OR-red with ImGuiMod_Alt/ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Super.
+//     ImGuiKey_C                 (accepted by functions taking ImGuiKey or ImGuiKeyChord)
+//     ImGuiKey_C | ImGuiMod_Ctrl (accepted by functions taking ImGuiKeyChord)
+//   ONLY ImGuiMod_XXX values are legal to 'OR' with an ImGuiKey. You CANNOT 'OR' two ImGuiKey values.
+// - When using one of the routing flags (e.g. ImGuiInputFlags_RouteFocused): routes requested ahead of time given a chord (key + modifiers) and a routing policy.
+// - Routes are resolved during NewFrame(): if keyboard modifiers are matching current ones: SetKeyOwner() is called + route is granted for the frame.
+// - Route is granted to a single owner. When multiple requests are made we have policies to select the winning route.
+// - Multiple read sites may use the same owner id and will all get the granted route.
+// - For routing: when owner_id is 0 we use the current Focus Scope ID as a default owner in order to identify our location.
+// - TL;DR;
+//   - IsKeyChordPressed() compares mods + call IsKeyPressed() -> function has no side-effect.
+//   - Shortcut() submits a route then if currently can be routed calls IsKeyChordPressed() -> function has (desirable) side-effects.
+IsKeyChordPressed :: (key_chord: KeyChord, owner_id: ID, flags: InputFlags = .None) -> bool #foreign imgui "?IsKeyChordPressed@ImGui@@YA_NHIH@Z";
+SetNextItemShortcut :: (key_chord: KeyChord) -> void #foreign imgui "?SetNextItemShortcut@ImGui@@YAXH@Z";
+Shortcut :: (key_chord: KeyChord, owner_id: ID = 0, flags: InputFlags = .None) -> bool #foreign imgui "?Shortcut@ImGui@@YA_NHIH@Z";
+SetShortcutRouting :: (key_chord: KeyChord, owner_id: ID, flags: InputFlags = .None) -> bool #foreign imgui "?SetShortcutRouting@ImGui@@YA_NHIH@Z";
+TestShortcutRouting :: (key_chord: KeyChord, owner_id: ID) -> bool #foreign imgui "?TestShortcutRouting@ImGui@@YA_NHI@Z";
+GetShortcutRoutingData :: (key_chord: KeyChord) -> *KeyRoutingData #foreign imgui "?GetShortcutRoutingData@ImGui@@YAPEAUImGuiKeyRoutingData@@H@Z";
+
+// Docking
+// (some functions are only declared in imgui.cpp, see Docking section)
+DockContextInitialize :: (ctx: *Context) -> void #foreign imgui "?DockContextInitialize@ImGui@@YAXPEAUImGuiContext@@@Z";
+DockContextShutdown :: (ctx: *Context) -> void #foreign imgui "?DockContextShutdown@ImGui@@YAXPEAUImGuiContext@@@Z";
+DockContextClearNodes :: (ctx: *Context, root_id: ID, clear_settings_refs: bool) -> void #foreign imgui "?DockContextClearNodes@ImGui@@YAXPEAUImGuiContext@@I_N@Z";
+DockContextRebuildNodes :: (ctx: *Context) -> void #foreign imgui "?DockContextRebuildNodes@ImGui@@YAXPEAUImGuiContext@@@Z";
+DockContextNewFrameUpdateUndocking :: (ctx: *Context) -> void #foreign imgui "?DockContextNewFrameUpdateUndocking@ImGui@@YAXPEAUImGuiContext@@@Z";
+DockContextNewFrameUpdateDocking :: (ctx: *Context) -> void #foreign imgui "?DockContextNewFrameUpdateDocking@ImGui@@YAXPEAUImGuiContext@@@Z";
+DockContextEndFrame :: (ctx: *Context) -> void #foreign imgui "?DockContextEndFrame@ImGui@@YAXPEAUImGuiContext@@@Z";
+DockContextGenNodeID :: (ctx: *Context) -> ID #foreign imgui "?DockContextGenNodeID@ImGui@@YAIPEAUImGuiContext@@@Z";
+DockContextQueueDock :: (ctx: *Context, target: *Window, target_node: *DockNode, payload: *Window, split_dir: Dir, split_ratio: float, split_outer: bool) -> void #foreign imgui "?DockContextQueueDock@ImGui@@YAXPEAUImGuiContext@@PEAUImGuiWindow@@PEAUImGuiDockNode@@1HM_N@Z";
+DockContextQueueUndockWindow :: (ctx: *Context, window: *Window) -> void #foreign imgui "?DockContextQueueUndockWindow@ImGui@@YAXPEAUImGuiContext@@PEAUImGuiWindow@@@Z";
+DockContextQueueUndockNode :: (ctx: *Context, node: *DockNode) -> void #foreign imgui "?DockContextQueueUndockNode@ImGui@@YAXPEAUImGuiContext@@PEAUImGuiDockNode@@@Z";
+DockContextProcessUndockWindow :: (ctx: *Context, window: *Window, clear_persistent_docking_ref := true) -> void #foreign imgui "?DockContextProcessUndockWindow@ImGui@@YAXPEAUImGuiContext@@PEAUImGuiWindow@@_N@Z";
+DockContextProcessUndockNode :: (ctx: *Context, node: *DockNode) -> void #foreign imgui "?DockContextProcessUndockNode@ImGui@@YAXPEAUImGuiContext@@PEAUImGuiDockNode@@@Z";
+DockContextCalcDropPosForDocking :: (target: *Window, target_node: *DockNode, payload_window: *Window, payload_node: *DockNode, split_dir: Dir, split_outer: bool, out_pos: *ImVec2) -> bool #foreign imgui "?DockContextCalcDropPosForDocking@ImGui@@YA_NPEAUImGuiWindow@@PEAUImGuiDockNode@@01H_NPEAUImVec2@@@Z";
+DockContextFindNodeByID :: (ctx: *Context, id: ID) -> *DockNode #foreign imgui "?DockContextFindNodeByID@ImGui@@YAPEAUImGuiDockNode@@PEAUImGuiContext@@I@Z";
+DockNodeWindowMenuHandler_Default :: (ctx: *Context, node: *DockNode, tab_bar: *TabBar) -> void #foreign imgui "?DockNodeWindowMenuHandler_Default@ImGui@@YAXPEAUImGuiContext@@PEAUImGuiDockNode@@PEAUImGuiTabBar@@@Z";
+DockNodeBeginAmendTabBar :: (node: *DockNode) -> bool #foreign imgui "?DockNodeBeginAmendTabBar@ImGui@@YA_NPEAUImGuiDockNode@@@Z";
+DockNodeEndAmendTabBar :: () -> void #foreign imgui "?DockNodeEndAmendTabBar@ImGui@@YAXXZ";
+
+GetWindowAlwaysWantOwnTabBar :: (window: *Window) -> bool #foreign imgui "?GetWindowAlwaysWantOwnTabBar@ImGui@@YA_NPEAUImGuiWindow@@@Z";
+BeginDocked :: (window: *Window, p_open: *bool) -> void #foreign imgui "?BeginDocked@ImGui@@YAXPEAUImGuiWindow@@PEA_N@Z";
+BeginDockableDragDropSource :: (window: *Window) -> void #foreign imgui "?BeginDockableDragDropSource@ImGui@@YAXPEAUImGuiWindow@@@Z";
+BeginDockableDragDropTarget :: (window: *Window) -> void #foreign imgui "?BeginDockableDragDropTarget@ImGui@@YAXPEAUImGuiWindow@@@Z";
+SetWindowDock :: (window: *Window, dock_id: ID, cond: Cond) -> void #foreign imgui "?SetWindowDock@ImGui@@YAXPEAUImGuiWindow@@IH@Z";
+
+// Docking - Builder function needs to be generally called before the node is used/submitted.
+// - The DockBuilderXXX functions are designed to _eventually_ become a public API, but it is too early to expose it and guarantee stability.
+// - Do not hold on ImGuiDockNode* pointers! They may be invalidated by any split/merge/remove operation and every frame.
+// - To create a DockSpace() node, make sure to set the ImGuiDockNodeFlags_DockSpace flag when calling DockBuilderAddNode().
+//   You can create dockspace nodes (attached to a window) _or_ floating nodes (carry its own window) with this API.
+// - DockBuilderSplitNode() create 2 child nodes within 1 node. The initial node becomes a parent node.
+// - If you intend to split the node immediately after creation using DockBuilderSplitNode(), make sure
+//   to call DockBuilderSetNodeSize() beforehand. If you don't, the resulting split sizes may not be reliable.
+// - Call DockBuilderFinish() after you are done.
+DockBuilderDockWindow :: (window_name: *u8, node_id: ID) -> void #foreign imgui "?DockBuilderDockWindow@ImGui@@YAXPEBDI@Z";
+DockBuilderGetNode :: (node_id: ID) -> *DockNode #foreign imgui "?DockBuilderGetNode@ImGui@@YAPEAUImGuiDockNode@@I@Z";
+
+DockBuilderAddNode :: (node_id: ID = 0, flags: DockNodeFlags = .None) -> ID #foreign imgui "?DockBuilderAddNode@ImGui@@YAIIH@Z";
+DockBuilderRemoveNode :: (node_id: ID) -> void #foreign imgui "?DockBuilderRemoveNode@ImGui@@YAXI@Z";
+DockBuilderRemoveNodeDockedWindows :: (node_id: ID, clear_settings_refs := true) -> void #foreign imgui "?DockBuilderRemoveNodeDockedWindows@ImGui@@YAXI_N@Z";
+DockBuilderRemoveNodeChildNodes :: (node_id: ID) -> void #foreign imgui "?DockBuilderRemoveNodeChildNodes@ImGui@@YAXI@Z";
+DockBuilderSetNodePos :: (node_id: ID, pos: ImVec2) -> void #foreign imgui "?DockBuilderSetNodePos@ImGui@@YAXIUImVec2@@@Z";
+DockBuilderSetNodeSize :: (node_id: ID, size: ImVec2) -> void #foreign imgui "?DockBuilderSetNodeSize@ImGui@@YAXIUImVec2@@@Z";
+DockBuilderSplitNode :: (node_id: ID, split_dir: Dir, size_ratio_for_node_at_dir: float, out_id_at_dir: *ID, out_id_at_opposite_dir: *ID) -> ID #foreign imgui "?DockBuilderSplitNode@ImGui@@YAIIHMPEAI0@Z";
+DockBuilderCopyDockSpace :: (src_dockspace_id: ID, dst_dockspace_id: ID, in_window_remap_pairs: *ImVector(*u8)) -> void #foreign imgui "?DockBuilderCopyDockSpace@ImGui@@YAXIIPEAU?$ImVector@PEBD@@@Z";
+DockBuilderCopyNode :: (src_node_id: ID, dst_node_id: ID, out_node_remap_pairs: *ImVector(ID)) -> void #foreign imgui "?DockBuilderCopyNode@ImGui@@YAXIIPEAU?$ImVector@I@@@Z";
+DockBuilderCopyWindowSettings :: (src_name: *u8, dst_name: *u8) -> void #foreign imgui "?DockBuilderCopyWindowSettings@ImGui@@YAXPEBD0@Z";
+DockBuilderFinish :: (node_id: ID) -> void #foreign imgui "?DockBuilderFinish@ImGui@@YAXI@Z";
+
+// [EXPERIMENTAL] Focus Scope
+// This is generally used to identify a unique input location (for e.g. a selection set)
+// There is one per window (automatically set in Begin), but:
+// - Selection patterns generally need to react (e.g. clear a selection) when landing on one item of the set.
+//   So in order to identify a set multiple lists in same window may each need a focus scope.
+//   If you imagine an hypothetical BeginSelectionGroup()/EndSelectionGroup() api, it would likely call PushFocusScope()/EndFocusScope()
+// - Shortcut routing also use focus scope as a default location identifier if an owner is not provided.
+// We don't use the ID Stack for this as it is common to want them separate.
+PushFocusScope :: (id: ID) -> void #foreign imgui "?PushFocusScope@ImGui@@YAXI@Z";
+PopFocusScope :: () -> void #foreign imgui "?PopFocusScope@ImGui@@YAXXZ";
+
+// Drag and Drop
+IsDragDropActive :: () -> bool #foreign imgui "?IsDragDropActive@ImGui@@YA_NXZ";
+BeginDragDropTargetCustom :: (bb: *ImRect, id: ID) -> bool #foreign imgui "?BeginDragDropTargetCustom@ImGui@@YA_NAEBUImRect@@I@Z";
+BeginDragDropTargetCustom :: (bb: ImRect, id: ID) -> bool #no_context {
+    return BeginDragDropTargetCustom(*bb, id);
+}
+ClearDragDrop :: () -> void #foreign imgui "?ClearDragDrop@ImGui@@YAXXZ";
+IsDragDropPayloadBeingAccepted :: () -> bool #foreign imgui "?IsDragDropPayloadBeingAccepted@ImGui@@YA_NXZ";
+RenderDragDropTargetRect :: (bb: *ImRect, item_clip_rect: *ImRect) -> void #foreign imgui "?RenderDragDropTargetRect@ImGui@@YAXAEBUImRect@@0@Z";
+RenderDragDropTargetRect :: (bb: ImRect, item_clip_rect: ImRect) #no_context {
+    RenderDragDropTargetRect(*bb, *item_clip_rect);
+}
+
+// Typing-Select API
+GetTypingSelectRequest :: (flags: TypingSelectFlags = .None) -> *TypingSelectRequest #foreign imgui "?GetTypingSelectRequest@ImGui@@YAPEAUImGuiTypingSelectRequest@@H@Z";
+TypingSelectFindMatch :: (req: *TypingSelectRequest, items_count: s32, get_item_name_func: #type (unknown0: *void, unknown1: s32) -> *u8 #c_call, user_data: *void, nav_item_idx: s32) -> s32 #foreign imgui "?TypingSelectFindMatch@ImGui@@YAHPEAUImGuiTypingSelectRequest@@HP6APEBDPEAXH@Z1H@Z";
+TypingSelectFindNextSingleCharMatch :: (req: *TypingSelectRequest, items_count: s32, get_item_name_func: #type (unknown0: *void, unknown1: s32) -> *u8 #c_call, user_data: *void, nav_item_idx: s32) -> s32 #foreign imgui "?TypingSelectFindNextSingleCharMatch@ImGui@@YAHPEAUImGuiTypingSelectRequest@@HP6APEBDPEAXH@Z1H@Z";
+TypingSelectFindBestLeadingMatch :: (req: *TypingSelectRequest, items_count: s32, get_item_name_func: #type (unknown0: *void, unknown1: s32) -> *u8 #c_call, user_data: *void) -> s32 #foreign imgui "?TypingSelectFindBestLeadingMatch@ImGui@@YAHPEAUImGuiTypingSelectRequest@@HP6APEBDPEAXH@Z1@Z";
+
+// Internal Columns API (this is not exposed because we will encourage transitioning to the Tables API)
+SetWindowClipRectBeforeSetChannel :: (window: *Window, clip_rect: *ImRect) -> void #foreign imgui "?SetWindowClipRectBeforeSetChannel@ImGui@@YAXPEAUImGuiWindow@@AEBUImRect@@@Z";
+SetWindowClipRectBeforeSetChannel :: (window: *Window, clip_rect: ImRect) #no_context {
+    SetWindowClipRectBeforeSetChannel(window, *clip_rect);
+}
+BeginColumns :: (str_id: *u8, count: s32, flags: OldColumnFlags = .None) -> void #foreign imgui "?BeginColumns@ImGui@@YAXPEBDHH@Z";
+EndColumns :: () -> void #foreign imgui "?EndColumns@ImGui@@YAXXZ";
+PushColumnClipRect :: (column_index: s32) -> void #foreign imgui "?PushColumnClipRect@ImGui@@YAXH@Z";
+PushColumnsBackground :: () -> void #foreign imgui "?PushColumnsBackground@ImGui@@YAXXZ";
+PopColumnsBackground :: () -> void #foreign imgui "?PopColumnsBackground@ImGui@@YAXXZ";
+GetColumnsID :: (str_id: *u8, count: s32) -> ID #foreign imgui "?GetColumnsID@ImGui@@YAIPEBDH@Z";
+FindOrCreateColumns :: (window: *Window, id: ID) -> *OldColumns #foreign imgui "?FindOrCreateColumns@ImGui@@YAPEAUImGuiOldColumns@@PEAUImGuiWindow@@I@Z";
+GetColumnOffsetFromNorm :: (columns: *OldColumns, offset_norm: float) -> float #foreign imgui "?GetColumnOffsetFromNorm@ImGui@@YAMPEBUImGuiOldColumns@@M@Z";
+GetColumnNormFromOffset :: (columns: *OldColumns, offset: float) -> float #foreign imgui "?GetColumnNormFromOffset@ImGui@@YAMPEBUImGuiOldColumns@@M@Z";
+
+// Tables: Candidates for public API
+TableOpenContextMenu :: (column_n: s32 = -1) -> void #foreign imgui "?TableOpenContextMenu@ImGui@@YAXH@Z";
+TableSetColumnWidth :: (column_n: s32, width: float) -> void #foreign imgui "?TableSetColumnWidth@ImGui@@YAXHM@Z";
+TableSetColumnSortDirection :: (column_n: s32, sort_direction: SortDirection, append_to_sort_specs: bool) -> void #foreign imgui "?TableSetColumnSortDirection@ImGui@@YAXHH_N@Z";
+TableGetHoveredColumn :: () -> s32 #foreign imgui "?TableGetHoveredColumn@ImGui@@YAHXZ";
+TableGetHoveredRow :: () -> s32 #foreign imgui "?TableGetHoveredRow@ImGui@@YAHXZ";
+TableGetHeaderRowHeight :: () -> float #foreign imgui "?TableGetHeaderRowHeight@ImGui@@YAMXZ";
+TableGetHeaderAngledMaxLabelWidth :: () -> float #foreign imgui "?TableGetHeaderAngledMaxLabelWidth@ImGui@@YAMXZ";
+TablePushBackgroundChannel :: () -> void #foreign imgui "?TablePushBackgroundChannel@ImGui@@YAXXZ";
+TablePopBackgroundChannel :: () -> void #foreign imgui "?TablePopBackgroundChannel@ImGui@@YAXXZ";
+TableAngledHeadersRowEx :: (angle: float, max_label_width: float = 0.0) -> void #foreign imgui "?TableAngledHeadersRowEx@ImGui@@YAXMM@Z";
+
+TableFindByID :: (id: ID) -> *Table #foreign imgui "?TableFindByID@ImGui@@YAPEAUImGuiTable@@I@Z";
+BeginTableEx :: (name: *u8, id: ID, columns_count: s32, flags: TableFlags = .None, outer_size: *ImVec2, inner_width: float = 0.0) -> bool #foreign imgui "?BeginTableEx@ImGui@@YA_NPEBDIHHAEBUImVec2@@M@Z";
+BeginTableEx :: (name: *u8, id: ID, columns_count: s32, flags: TableFlags = .None, outer_size: ImVec2 = ImVec2.{0, 0}, inner_width: float = 0.0) -> bool #no_context {
+    return BeginTableEx(name, id, columns_count, flags, *outer_size, inner_width);
+}
+TableBeginInitMemory :: (table: *Table, columns_count: s32) -> void #foreign imgui "?TableBeginInitMemory@ImGui@@YAXPEAUImGuiTable@@H@Z";
+TableBeginApplyRequests :: (table: *Table) -> void #foreign imgui "?TableBeginApplyRequests@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableSetupDrawChannels :: (table: *Table) -> void #foreign imgui "?TableSetupDrawChannels@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableUpdateLayout :: (table: *Table) -> void #foreign imgui "?TableUpdateLayout@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableUpdateBorders :: (table: *Table) -> void #foreign imgui "?TableUpdateBorders@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableUpdateColumnsWeightFromWidth :: (table: *Table) -> void #foreign imgui "?TableUpdateColumnsWeightFromWidth@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableDrawBorders :: (table: *Table) -> void #foreign imgui "?TableDrawBorders@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableDrawDefaultContextMenu :: (table: *Table, flags_for_section_to_display: TableFlags) -> void #foreign imgui "?TableDrawDefaultContextMenu@ImGui@@YAXPEAUImGuiTable@@H@Z";
+TableBeginContextMenuPopup :: (table: *Table) -> bool #foreign imgui "?TableBeginContextMenuPopup@ImGui@@YA_NPEAUImGuiTable@@@Z";
+TableMergeDrawChannels :: (table: *Table) -> void #foreign imgui "?TableMergeDrawChannels@ImGui@@YAXPEAUImGuiTable@@@Z";
+
+TableSortSpecsSanitize :: (table: *Table) -> void #foreign imgui "?TableSortSpecsSanitize@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableSortSpecsBuild :: (table: *Table) -> void #foreign imgui "?TableSortSpecsBuild@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableGetColumnNextSortDirection :: (column: *TableColumn) -> SortDirection #foreign imgui "?TableGetColumnNextSortDirection@ImGui@@YAHPEAUImGuiTableColumn@@@Z";
+TableFixColumnSortDirection :: (table: *Table, column: *TableColumn) -> void #foreign imgui "?TableFixColumnSortDirection@ImGui@@YAXPEAUImGuiTable@@PEAUImGuiTableColumn@@@Z";
+TableGetColumnWidthAuto :: (table: *Table, column: *TableColumn) -> float #foreign imgui "?TableGetColumnWidthAuto@ImGui@@YAMPEAUImGuiTable@@PEAUImGuiTableColumn@@@Z";
+TableBeginRow :: (table: *Table) -> void #foreign imgui "?TableBeginRow@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableEndRow :: (table: *Table) -> void #foreign imgui "?TableEndRow@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableBeginCell :: (table: *Table, column_n: s32) -> void #foreign imgui "?TableBeginCell@ImGui@@YAXPEAUImGuiTable@@H@Z";
+TableEndCell :: (table: *Table) -> void #foreign imgui "?TableEndCell@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableGetCellBgRect :: (table: *Table, column_n: s32) -> ImRect #cpp_return_type_is_non_pod #foreign imgui "?TableGetCellBgRect@ImGui@@YA?AUImRect@@PEBUImGuiTable@@H@Z";
+TableGetColumnName :: (table: *Table, column_n: s32) -> *u8 #foreign imgui "?TableGetColumnName@ImGui@@YAPEBDPEBUImGuiTable@@H@Z";
+TableGetColumnResizeID :: (table: *Table, column_n: s32, instance_no: s32 = 0) -> ID #foreign imgui "?TableGetColumnResizeID@ImGui@@YAIPEAUImGuiTable@@HH@Z";
+TableGetMaxColumnWidth :: (table: *Table, column_n: s32) -> float #foreign imgui "?TableGetMaxColumnWidth@ImGui@@YAMPEBUImGuiTable@@H@Z";
+TableSetColumnWidthAutoSingle :: (table: *Table, column_n: s32) -> void #foreign imgui "?TableSetColumnWidthAutoSingle@ImGui@@YAXPEAUImGuiTable@@H@Z";
+TableSetColumnWidthAutoAll :: (table: *Table) -> void #foreign imgui "?TableSetColumnWidthAutoAll@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableRemove :: (table: *Table) -> void #foreign imgui "?TableRemove@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableGcCompactTransientBuffers :: (table: *Table) -> void #foreign imgui "?TableGcCompactTransientBuffers@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableGcCompactTransientBuffers :: (table: *TableTempData) -> void #foreign imgui "?TableGcCompactTransientBuffers@ImGui@@YAXPEAUImGuiTableTempData@@@Z";
+TableGcCompactSettings :: () -> void #foreign imgui "?TableGcCompactSettings@ImGui@@YAXXZ";
+
+// Tables: Settings
+TableLoadSettings :: (table: *Table) -> void #foreign imgui "?TableLoadSettings@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableSaveSettings :: (table: *Table) -> void #foreign imgui "?TableSaveSettings@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableResetSettings :: (table: *Table) -> void #foreign imgui "?TableResetSettings@ImGui@@YAXPEAUImGuiTable@@@Z";
+TableGetBoundSettings :: (table: *Table) -> *TableSettings #foreign imgui "?TableGetBoundSettings@ImGui@@YAPEAUImGuiTableSettings@@PEAUImGuiTable@@@Z";
+TableSettingsAddSettingsHandler :: () -> void #foreign imgui "?TableSettingsAddSettingsHandler@ImGui@@YAXXZ";
+TableSettingsCreate :: (id: ID, columns_count: s32) -> *TableSettings #foreign imgui "?TableSettingsCreate@ImGui@@YAPEAUImGuiTableSettings@@IH@Z";
+TableSettingsFindByID :: (id: ID) -> *TableSettings #foreign imgui "?TableSettingsFindByID@ImGui@@YAPEAUImGuiTableSettings@@I@Z";
+
+BeginTabBarEx :: (tab_bar: *TabBar, bb: *ImRect, flags: TabBarFlags) -> bool #foreign imgui "?BeginTabBarEx@ImGui@@YA_NPEAUImGuiTabBar@@AEBUImRect@@H@Z";
+BeginTabBarEx :: (tab_bar: *TabBar, bb: ImRect, flags: TabBarFlags) -> bool #no_context {
+    return BeginTabBarEx(tab_bar, *bb, flags);
+}
+TabBarFindTabByID :: (tab_bar: *TabBar, tab_id: ID) -> *TabItem #foreign imgui "?TabBarFindTabByID@ImGui@@YAPEAUImGuiTabItem@@PEAUImGuiTabBar@@I@Z";
+TabBarFindTabByOrder :: (tab_bar: *TabBar, order: s32) -> *TabItem #foreign imgui "?TabBarFindTabByOrder@ImGui@@YAPEAUImGuiTabItem@@PEAUImGuiTabBar@@H@Z";
+TabBarFindMostRecentlySelectedTabForActiveWindow :: (tab_bar: *TabBar) -> *TabItem #foreign imgui "?TabBarFindMostRecentlySelectedTabForActiveWindow@ImGui@@YAPEAUImGuiTabItem@@PEAUImGuiTabBar@@@Z";
+TabBarGetCurrentTab :: (tab_bar: *TabBar) -> *TabItem #foreign imgui "?TabBarGetCurrentTab@ImGui@@YAPEAUImGuiTabItem@@PEAUImGuiTabBar@@@Z";
+
+TabBarGetTabName :: (tab_bar: *TabBar, tab: *TabItem) -> *u8 #foreign imgui "?TabBarGetTabName@ImGui@@YAPEBDPEAUImGuiTabBar@@PEAUImGuiTabItem@@@Z";
+TabBarAddTab :: (tab_bar: *TabBar, tab_flags: TabItemFlags, window: *Window) -> void #foreign imgui "?TabBarAddTab@ImGui@@YAXPEAUImGuiTabBar@@HPEAUImGuiWindow@@@Z";
+TabBarRemoveTab :: (tab_bar: *TabBar, tab_id: ID) -> void #foreign imgui "?TabBarRemoveTab@ImGui@@YAXPEAUImGuiTabBar@@I@Z";
+TabBarCloseTab :: (tab_bar: *TabBar, tab: *TabItem) -> void #foreign imgui "?TabBarCloseTab@ImGui@@YAXPEAUImGuiTabBar@@PEAUImGuiTabItem@@@Z";
+TabBarQueueFocus :: (tab_bar: *TabBar, tab: *TabItem) -> void #foreign imgui "?TabBarQueueFocus@ImGui@@YAXPEAUImGuiTabBar@@PEAUImGuiTabItem@@@Z";
+TabBarQueueReorder :: (tab_bar: *TabBar, tab: *TabItem, offset: s32) -> void #foreign imgui "?TabBarQueueReorder@ImGui@@YAXPEAUImGuiTabBar@@PEAUImGuiTabItem@@H@Z";
+TabBarQueueReorderFromMousePos :: (tab_bar: *TabBar, tab: *TabItem, mouse_pos: ImVec2) -> void #foreign imgui "?TabBarQueueReorderFromMousePos@ImGui@@YAXPEAUImGuiTabBar@@PEAUImGuiTabItem@@UImVec2@@@Z";
+TabBarProcessReorder :: (tab_bar: *TabBar) -> bool #foreign imgui "?TabBarProcessReorder@ImGui@@YA_NPEAUImGuiTabBar@@@Z";
+TabItemEx :: (tab_bar: *TabBar, label: *u8, p_open: *bool, flags: TabItemFlags, docked_window: *Window) -> bool #foreign imgui "?TabItemEx@ImGui@@YA_NPEAUImGuiTabBar@@PEBDPEA_NHPEAUImGuiWindow@@@Z";
+TabItemCalcSize :: (label: *u8, has_close_button_or_unsaved_marker: bool) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?TabItemCalcSize@ImGui@@YA?AUImVec2@@PEBD_N@Z";
+TabItemCalcSize :: (window: *Window) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?TabItemCalcSize@ImGui@@YA?AUImVec2@@PEAUImGuiWindow@@@Z";
+TabItemBackground :: (draw_list: *ImDrawList, bb: *ImRect, flags: TabItemFlags, col: ImU32) -> void #foreign imgui "?TabItemBackground@ImGui@@YAXPEAUImDrawList@@AEBUImRect@@HI@Z";
+TabItemBackground :: (draw_list: *ImDrawList, bb: ImRect, flags: TabItemFlags, col: ImU32) #no_context {
+    TabItemBackground(draw_list, *bb, flags, col);
+}
+TabItemLabelAndCloseButton :: (draw_list: *ImDrawList, bb: *ImRect, flags: TabItemFlags, frame_padding: ImVec2, label: *u8, tab_id: ID, close_button_id: ID, is_contents_visible: bool, out_just_closed: *bool, out_text_clipped: *bool) -> void #foreign imgui "?TabItemLabelAndCloseButton@ImGui@@YAXPEAUImDrawList@@AEBUImRect@@HUImVec2@@PEBDII_NPEA_N5@Z";
+TabItemLabelAndCloseButton :: (draw_list: *ImDrawList, bb: ImRect, flags: TabItemFlags, frame_padding: ImVec2, label: *u8, tab_id: ID, close_button_id: ID, is_contents_visible: bool, out_just_closed: *bool, out_text_clipped: *bool) #no_context {
+    TabItemLabelAndCloseButton(draw_list, *bb, flags, frame_padding, label, tab_id, close_button_id, is_contents_visible, out_just_closed, out_text_clipped);
+}
+
+// Render helpers
+// AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
+// NB: All position are in absolute pixels coordinates (we are never using window coordinates internally)
+RenderText :: (pos: ImVec2, text: *u8, text_end: *u8 = null, hide_text_after_hash := true) -> void #foreign imgui "?RenderText@ImGui@@YAXUImVec2@@PEBD1_N@Z";
+RenderText :: (pos: ImVec2, text: string, hide_text_after_hash := true) #no_context {
+    RenderText(pos, text.data, text.data + text.count, hide_text_after_hash);
+}
+RenderTextWrapped :: (pos: ImVec2, text: *u8, text_end: *u8, wrap_width: float) -> void #foreign imgui "?RenderTextWrapped@ImGui@@YAXUImVec2@@PEBD1M@Z";
+RenderTextWrapped :: (pos: ImVec2, text: string, wrap_width: float) #no_context {
+    RenderTextWrapped(pos, text.data, text.data + text.count, wrap_width);
+}
+RenderTextClipped :: (pos_min: *ImVec2, pos_max: *ImVec2, text: *u8, text_end: *u8, text_size_if_known: *ImVec2, align: *ImVec2, clip_rect: *ImRect = null) -> void #foreign imgui "?RenderTextClipped@ImGui@@YAXAEBUImVec2@@0PEBD1PEBU2@0PEBUImRect@@@Z";
+RenderTextClipped :: (pos_min: ImVec2, pos_max: ImVec2, text: string, text_size_if_known: *ImVec2, align: ImVec2 = ImVec2.{0, 0}, clip_rect: *ImRect = null) #no_context {
+    RenderTextClipped(*pos_min, *pos_max, text.data, text.data + text.count, text_size_if_known, *align, clip_rect);
+}
+RenderTextClippedEx :: (draw_list: *ImDrawList, pos_min: *ImVec2, pos_max: *ImVec2, text: *u8, text_end: *u8, text_size_if_known: *ImVec2, align: *ImVec2, clip_rect: *ImRect = null) -> void #foreign imgui "?RenderTextClippedEx@ImGui@@YAXPEAUImDrawList@@AEBUImVec2@@1PEBD2PEBU3@1PEBUImRect@@@Z";
+RenderTextClippedEx :: (draw_list: *ImDrawList, pos_min: ImVec2, pos_max: ImVec2, text: string, text_size_if_known: *ImVec2, align: ImVec2 = ImVec2.{0, 0}, clip_rect: *ImRect = null) #no_context {
+    RenderTextClippedEx(draw_list, *pos_min, *pos_max, text.data, text.data + text.count, text_size_if_known, *align, clip_rect);
+}
+RenderTextEllipsis :: (draw_list: *ImDrawList, pos_min: *ImVec2, pos_max: *ImVec2, clip_max_x: float, ellipsis_max_x: float, text: *u8, text_end: *u8, text_size_if_known: *ImVec2) -> void #foreign imgui "?RenderTextEllipsis@ImGui@@YAXPEAUImDrawList@@AEBUImVec2@@1MMPEBD2PEBU3@@Z";
+RenderTextEllipsis :: (draw_list: *ImDrawList, pos_min: ImVec2, pos_max: ImVec2, clip_max_x: float, ellipsis_max_x: float, text: string, text_size_if_known: *ImVec2) #no_context {
+    RenderTextEllipsis(draw_list, *pos_min, *pos_max, clip_max_x, ellipsis_max_x, text.data, text.data + text.count, text_size_if_known);
+}
+RenderFrame :: (p_min: ImVec2, p_max: ImVec2, fill_col: ImU32, border := true, rounding: float = 0.0) -> void #foreign imgui "?RenderFrame@ImGui@@YAXUImVec2@@0I_NM@Z";
+RenderFrameBorder :: (p_min: ImVec2, p_max: ImVec2, rounding: float = 0.0) -> void #foreign imgui "?RenderFrameBorder@ImGui@@YAXUImVec2@@0M@Z";
+RenderColorRectWithAlphaCheckerboard :: (draw_list: *ImDrawList, p_min: ImVec2, p_max: ImVec2, fill_col: ImU32, grid_step: float, grid_off: ImVec2, rounding: float = 0.0, flags: ImDrawFlags = .None) -> void #foreign imgui "?RenderColorRectWithAlphaCheckerboard@ImGui@@YAXPEAUImDrawList@@UImVec2@@1IM1MH@Z";
+RenderNavHighlight :: (bb: *ImRect, id: ID, flags: NavHighlightFlags = .None) -> void #foreign imgui "?RenderNavHighlight@ImGui@@YAXAEBUImRect@@IH@Z";
+RenderNavHighlight :: (bb: ImRect, id: ID, flags: NavHighlightFlags = .None) #no_context {
+    RenderNavHighlight(*bb, id, flags);
+}
+FindRenderedTextEnd :: (text: *u8, text_end: *u8 = null) -> *u8 #foreign imgui "?FindRenderedTextEnd@ImGui@@YAPEBDPEBD0@Z";
+FindRenderedTextEnd :: (text: string) -> *u8 #no_context {
+    return FindRenderedTextEnd(text.data, text.data + text.count);
+}
+RenderMouseCursor :: (pos: ImVec2, scale: float, mouse_cursor: MouseCursor, col_fill: ImU32, col_border: ImU32, col_shadow: ImU32) -> void #foreign imgui "?RenderMouseCursor@ImGui@@YAXUImVec2@@MHIII@Z";
+
+// Render helpers (those functions don't access any ImGui state!)
+RenderArrow :: (draw_list: *ImDrawList, pos: ImVec2, col: ImU32, dir: Dir, scale: float = 1.0) -> void #foreign imgui "?RenderArrow@ImGui@@YAXPEAUImDrawList@@UImVec2@@IHM@Z";
+RenderBullet :: (draw_list: *ImDrawList, pos: ImVec2, col: ImU32) -> void #foreign imgui "?RenderBullet@ImGui@@YAXPEAUImDrawList@@UImVec2@@I@Z";
+RenderCheckMark :: (draw_list: *ImDrawList, pos: ImVec2, col: ImU32, sz: float) -> void #foreign imgui "?RenderCheckMark@ImGui@@YAXPEAUImDrawList@@UImVec2@@IM@Z";
+RenderArrowPointingAt :: (draw_list: *ImDrawList, pos: ImVec2, half_sz: ImVec2, direction: Dir, col: ImU32) -> void #foreign imgui "?RenderArrowPointingAt@ImGui@@YAXPEAUImDrawList@@UImVec2@@1HI@Z";
+RenderArrowDockMenu :: (draw_list: *ImDrawList, p_min: ImVec2, sz: float, col: ImU32) -> void #foreign imgui "?RenderArrowDockMenu@ImGui@@YAXPEAUImDrawList@@UImVec2@@MI@Z";
+RenderRectFilledRangeH :: (draw_list: *ImDrawList, rect: *ImRect, col: ImU32, x_start_norm: float, x_end_norm: float, rounding: float) -> void #foreign imgui "?RenderRectFilledRangeH@ImGui@@YAXPEAUImDrawList@@AEBUImRect@@IMMM@Z";
+RenderRectFilledRangeH :: (draw_list: *ImDrawList, rect: ImRect, col: ImU32, x_start_norm: float, x_end_norm: float, rounding: float) #no_context {
+    RenderRectFilledRangeH(draw_list, *rect, col, x_start_norm, x_end_norm, rounding);
+}
+RenderRectFilledWithHole :: (draw_list: *ImDrawList, outer: *ImRect, inner: *ImRect, col: ImU32, rounding: float) -> void #foreign imgui "?RenderRectFilledWithHole@ImGui@@YAXPEAUImDrawList@@AEBUImRect@@1IM@Z";
+RenderRectFilledWithHole :: (draw_list: *ImDrawList, outer: ImRect, inner: ImRect, col: ImU32, rounding: float) #no_context {
+    RenderRectFilledWithHole(draw_list, *outer, *inner, col, rounding);
+}
+CalcRoundingFlagsForRectInRect :: (r_in: *ImRect, r_outer: *ImRect, threshold: float) -> ImDrawFlags #foreign imgui "?CalcRoundingFlagsForRectInRect@ImGui@@YAHAEBUImRect@@0M@Z";
+CalcRoundingFlagsForRectInRect :: (r_in: ImRect, r_outer: ImRect, threshold: float) -> ImDrawFlags #no_context {
+    return CalcRoundingFlagsForRectInRect(*r_in, *r_outer, threshold);
+}
+
+// Widgets
+TextEx :: (text: *u8, text_end: *u8 = null, flags: TextFlags = .None) -> void #foreign imgui "?TextEx@ImGui@@YAXPEBD0H@Z";
+TextEx :: (text: string, flags: TextFlags = .None) #no_context {
+    TextEx(text.data, text.data + text.count, flags);
+}
+ButtonEx :: (label: *u8, size_arg: *ImVec2, flags: ButtonFlags = .None) -> bool #foreign imgui "?ButtonEx@ImGui@@YA_NPEBDAEBUImVec2@@H@Z";
+ButtonEx :: (label: *u8, size_arg: ImVec2 = ImVec2.{0, 0}, flags: ButtonFlags = .None) -> bool #no_context {
+    return ButtonEx(label, *size_arg, flags);
+}
+ArrowButtonEx :: (str_id: *u8, dir: Dir, size_arg: ImVec2, flags: ButtonFlags = .None) -> bool #foreign imgui "?ArrowButtonEx@ImGui@@YA_NPEBDHUImVec2@@H@Z";
+ImageButtonEx :: (id: ID, texture_id: ImTextureID, image_size: *ImVec2, uv0: *ImVec2, uv1: *ImVec2, bg_col: *ImVec4, tint_col: *ImVec4, flags: ButtonFlags = .None) -> bool #foreign imgui "?ImageButtonEx@ImGui@@YA_NIPEAXAEBUImVec2@@11AEBUImVec4@@2H@Z";
+ImageButtonEx :: (id: ID, texture_id: ImTextureID, image_size: ImVec2, uv0: ImVec2, uv1: ImVec2, bg_col: ImVec4, tint_col: ImVec4, flags: ButtonFlags = .None) -> bool #no_context {
+    return ImageButtonEx(id, texture_id, *image_size, *uv0, *uv1, *bg_col, *tint_col, flags);
+}
+SeparatorEx :: (flags: SeparatorFlags, thickness: float = 1.0) -> void #foreign imgui "?SeparatorEx@ImGui@@YAXHM@Z";
+SeparatorTextEx :: (id: ID, label: *u8, label_end: *u8, extra_width: float) -> void #foreign imgui "?SeparatorTextEx@ImGui@@YAXIPEBD0M@Z";
+SeparatorTextEx :: (id: ID, label: string, extra_width: float) #no_context {
+    SeparatorTextEx(id, label.data, label.data + label.count, extra_width);
+}
+CheckboxFlags :: (label: *u8, flags: *ImS64, flags_value: ImS64) -> bool #foreign imgui "?CheckboxFlags@ImGui@@YA_NPEBDPEA_J_J@Z";
+CheckboxFlags :: (label: *u8, flags: *ImU64, flags_value: ImU64) -> bool #foreign imgui "?CheckboxFlags@ImGui@@YA_NPEBDPEA_K_K@Z";
+
+// Widgets: Window Decorations
+CloseButton :: (id: ID, pos: *ImVec2) -> bool #foreign imgui "?CloseButton@ImGui@@YA_NIAEBUImVec2@@@Z";
+CloseButton :: (id: ID, pos: ImVec2) -> bool #no_context {
+    return CloseButton(id, *pos);
+}
+CollapseButton :: (id: ID, pos: *ImVec2, dock_node: *DockNode) -> bool #foreign imgui "?CollapseButton@ImGui@@YA_NIAEBUImVec2@@PEAUImGuiDockNode@@@Z";
+CollapseButton :: (id: ID, pos: ImVec2, dock_node: *DockNode) -> bool #no_context {
+    return CollapseButton(id, *pos, dock_node);
+}
+Scrollbar :: (axis: Axis) -> void #foreign imgui "?Scrollbar@ImGui@@YAXW4ImGuiAxis@@@Z";
+ScrollbarEx :: (bb: *ImRect, id: ID, axis: Axis, p_scroll_v: *ImS64, avail_v: ImS64, contents_v: ImS64, flags: ImDrawFlags) -> bool #foreign imgui "?ScrollbarEx@ImGui@@YA_NAEBUImRect@@IW4ImGuiAxis@@PEA_J_J3H@Z";
+ScrollbarEx :: (bb: ImRect, id: ID, axis: Axis, p_scroll_v: *ImS64, avail_v: ImS64, contents_v: ImS64, flags: ImDrawFlags) -> bool #no_context {
+    return ScrollbarEx(*bb, id, axis, p_scroll_v, avail_v, contents_v, flags);
+}
+GetWindowScrollbarRect :: (window: *Window, axis: Axis) -> ImRect #cpp_return_type_is_non_pod #foreign imgui "?GetWindowScrollbarRect@ImGui@@YA?AUImRect@@PEAUImGuiWindow@@W4ImGuiAxis@@@Z";
+GetWindowScrollbarID :: (window: *Window, axis: Axis) -> ID #foreign imgui "?GetWindowScrollbarID@ImGui@@YAIPEAUImGuiWindow@@W4ImGuiAxis@@@Z";
+GetWindowResizeCornerID :: (window: *Window, n: s32) -> ID #foreign imgui "?GetWindowResizeCornerID@ImGui@@YAIPEAUImGuiWindow@@H@Z";
+GetWindowResizeBorderID :: (window: *Window, dir: Dir) -> ID #foreign imgui "?GetWindowResizeBorderID@ImGui@@YAIPEAUImGuiWindow@@H@Z";
+
+// Widgets low-level behaviors
+ButtonBehavior :: (bb: *ImRect, id: ID, out_hovered: *bool, out_held: *bool, flags: ButtonFlags = .None) -> bool #foreign imgui "?ButtonBehavior@ImGui@@YA_NAEBUImRect@@IPEA_N1H@Z";
+ButtonBehavior :: (bb: ImRect, id: ID, out_hovered: *bool, out_held: *bool, flags: ButtonFlags = .None) -> bool #no_context {
+    return ButtonBehavior(*bb, id, out_hovered, out_held, flags);
+}
+DragBehavior :: (id: ID, data_type: DataType, p_v: *void, v_speed: float, p_min: *void, p_max: *void, format: *u8, flags: SliderFlags) -> bool #foreign imgui "?DragBehavior@ImGui@@YA_NIHPEAXMPEBX1PEBDH@Z";
+SliderBehavior :: (bb: *ImRect, id: ID, data_type: DataType, p_v: *void, p_min: *void, p_max: *void, format: *u8, flags: SliderFlags, out_grab_bb: *ImRect) -> bool #foreign imgui "?SliderBehavior@ImGui@@YA_NAEBUImRect@@IHPEAXPEBX2PEBDHPEAU2@@Z";
+SliderBehavior :: (bb: ImRect, id: ID, data_type: DataType, p_v: *void, p_min: *void, p_max: *void, format: *u8, flags: SliderFlags, out_grab_bb: *ImRect) -> bool #no_context {
+    return SliderBehavior(*bb, id, data_type, p_v, p_min, p_max, format, flags, out_grab_bb);
+}
+SplitterBehavior :: (bb: *ImRect, id: ID, axis: Axis, size1: *float, size2: *float, min_size1: float, min_size2: float, hover_extend: float = 0.0, hover_visibility_delay: float = 0.0, bg_col: ImU32 = 0) -> bool #foreign imgui "?SplitterBehavior@ImGui@@YA_NAEBUImRect@@IW4ImGuiAxis@@PEAM2MMMMI@Z";
+SplitterBehavior :: (bb: ImRect, id: ID, axis: Axis, size1: *float, size2: *float, min_size1: float, min_size2: float, hover_extend: float = 0.0, hover_visibility_delay: float = 0.0, bg_col: ImU32 = 0) -> bool #no_context {
+    return SplitterBehavior(*bb, id, axis, size1, size2, min_size1, min_size2, hover_extend, hover_visibility_delay, bg_col);
+}
+TreeNodeBehavior :: (id: ID, flags: TreeNodeFlags, label: *u8, label_end: *u8 = null) -> bool #foreign imgui "?TreeNodeBehavior@ImGui@@YA_NIHPEBD0@Z";
+TreeNodeBehavior :: (id: ID, flags: TreeNodeFlags, label: string) -> bool #no_context {
+    return TreeNodeBehavior(id, flags, label.data, label.data + label.count);
+}
+TreePushOverrideID :: (id: ID) -> void #foreign imgui "?TreePushOverrideID@ImGui@@YAXI@Z";
+TreeNodeSetOpen :: (id: ID, open: bool) -> void #foreign imgui "?TreeNodeSetOpen@ImGui@@YAXI_N@Z";
+TreeNodeUpdateNextOpen :: (id: ID, flags: TreeNodeFlags) -> bool #foreign imgui "?TreeNodeUpdateNextOpen@ImGui@@YA_NIH@Z";
+SetNextItemSelectionUserData :: (selection_user_data: SelectionUserData) -> void #foreign imgui "?SetNextItemSelectionUserData@ImGui@@YAX_J@Z";
+
+// Data type helpers
+DataTypeGetInfo :: (data_type: DataType) -> *DataTypeInfo #foreign imgui "?DataTypeGetInfo@ImGui@@YAPEBUImGuiDataTypeInfo@@H@Z";
+DataTypeFormatString :: (buf: *u8, buf_size: s32, data_type: DataType, p_data: *void, format: *u8) -> s32 #foreign imgui "?DataTypeFormatString@ImGui@@YAHPEADHHPEBXPEBD@Z";
+DataTypeApplyOp :: (data_type: DataType, op: s32, output: *void, arg_1: *void, arg_2: *void) -> void #foreign imgui "?DataTypeApplyOp@ImGui@@YAXHHPEAXPEBX1@Z";
+DataTypeApplyFromText :: (buf: *u8, data_type: DataType, p_data: *void, format: *u8) -> bool #foreign imgui "?DataTypeApplyFromText@ImGui@@YA_NPEBDHPEAX0@Z";
+DataTypeCompare :: (data_type: DataType, arg_1: *void, arg_2: *void) -> s32 #foreign imgui "?DataTypeCompare@ImGui@@YAHHPEBX0@Z";
+DataTypeClamp :: (data_type: DataType, p_data: *void, p_min: *void, p_max: *void) -> bool #foreign imgui "?DataTypeClamp@ImGui@@YA_NHPEAXPEBX1@Z";
+
+// InputText
+InputTextEx :: (label: *u8, hint: *u8, buf: *u8, buf_size: s32, size_arg: *ImVec2, flags: InputTextFlags, callback: InputTextCallback = null, user_data: *void = null) -> bool #foreign imgui "?InputTextEx@ImGui@@YA_NPEBD0PEADHAEBUImVec2@@HP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z";
+InputTextEx :: (label: *u8, hint: *u8, buf: *u8, buf_size: s32, size_arg: ImVec2, flags: InputTextFlags, callback: InputTextCallback = null, user_data: *void = null) -> bool #no_context {
+    return InputTextEx(label, hint, buf, buf_size, *size_arg, flags, callback, user_data);
+}
+InputTextDeactivateHook :: (id: ID) -> void #foreign imgui "?InputTextDeactivateHook@ImGui@@YAXI@Z";
+TempInputText :: (bb: *ImRect, id: ID, label: *u8, buf: *u8, buf_size: s32, flags: InputTextFlags) -> bool #foreign imgui "?TempInputText@ImGui@@YA_NAEBUImRect@@IPEBDPEADHH@Z";
+TempInputText :: (bb: ImRect, id: ID, label: *u8, buf: *u8, buf_size: s32, flags: InputTextFlags) -> bool #no_context {
+    return TempInputText(*bb, id, label, buf, buf_size, flags);
+}
+TempInputScalar :: (bb: *ImRect, id: ID, label: *u8, data_type: DataType, p_data: *void, format: *u8, p_clamp_min: *void = null, p_clamp_max: *void = null) -> bool #foreign imgui "?TempInputScalar@ImGui@@YA_NAEBUImRect@@IPEBDHPEAX1PEBX3@Z";
+TempInputScalar :: (bb: ImRect, id: ID, label: *u8, data_type: DataType, p_data: *void, format: *u8, p_clamp_min: *void = null, p_clamp_max: *void = null) -> bool #no_context {
+    return TempInputScalar(*bb, id, label, data_type, p_data, format, p_clamp_min, p_clamp_max);
+}
+
+// Color
+ColorTooltip :: (text: *u8, col: *float, flags: ColorEditFlags) -> void #foreign imgui "?ColorTooltip@ImGui@@YAXPEBDPEBMH@Z";
+ColorEditOptionsPopup :: (col: *float, flags: ColorEditFlags) -> void #foreign imgui "?ColorEditOptionsPopup@ImGui@@YAXPEBMH@Z";
+ColorPickerOptionsPopup :: (ref_col: *float, flags: ColorEditFlags) -> void #foreign imgui "?ColorPickerOptionsPopup@ImGui@@YAXPEBMH@Z";
+
+// Plot
+PlotEx :: (plot_type: PlotType, label: *u8, values_getter: #type (data: *void, idx: s32) -> float #c_call, data: *void, values_count: s32, values_offset: s32, overlay_text: *u8, scale_min: float, scale_max: float, size_arg: *ImVec2) -> s32 #foreign imgui "?PlotEx@ImGui@@YAHW4ImGuiPlotType@@PEBDP6AMPEAXH@Z2HH1MMAEBUImVec2@@@Z";
+PlotEx :: (plot_type: PlotType, label: *u8, values_getter: #type (data: *void, idx: s32) -> float #c_call, data: *void, values_count: s32, values_offset: s32, overlay_text: *u8, scale_min: float, scale_max: float, size_arg: ImVec2) -> s32 #no_context {
+    return PlotEx(plot_type, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, *size_arg);
+}
+
+// Shade functions (write over already created vertices)
+ShadeVertsLinearColorGradientKeepAlpha :: (draw_list: *ImDrawList, vert_start_idx: s32, vert_end_idx: s32, gradient_p0: ImVec2, gradient_p1: ImVec2, col0: ImU32, col1: ImU32) -> void #foreign imgui "?ShadeVertsLinearColorGradientKeepAlpha@ImGui@@YAXPEAUImDrawList@@HHUImVec2@@1II@Z";
+ShadeVertsLinearUV :: (draw_list: *ImDrawList, vert_start_idx: s32, vert_end_idx: s32, a: *ImVec2, b: *ImVec2, uv_a: *ImVec2, uv_b: *ImVec2, clamp: bool) -> void #foreign imgui "?ShadeVertsLinearUV@ImGui@@YAXPEAUImDrawList@@HHAEBUImVec2@@111_N@Z";
+ShadeVertsLinearUV :: (draw_list: *ImDrawList, vert_start_idx: s32, vert_end_idx: s32, a: ImVec2, b: ImVec2, uv_a: ImVec2, uv_b: ImVec2, clamp: bool) #no_context {
+    ShadeVertsLinearUV(draw_list, vert_start_idx, vert_end_idx, *a, *b, *uv_a, *uv_b, clamp);
+}
+ShadeVertsTransformPos :: (draw_list: *ImDrawList, vert_start_idx: s32, vert_end_idx: s32, pivot_in: *ImVec2, cos_a: float, sin_a: float, pivot_out: *ImVec2) -> void #foreign imgui "?ShadeVertsTransformPos@ImGui@@YAXPEAUImDrawList@@HHAEBUImVec2@@MM1@Z";
+ShadeVertsTransformPos :: (draw_list: *ImDrawList, vert_start_idx: s32, vert_end_idx: s32, pivot_in: ImVec2, cos_a: float, sin_a: float, pivot_out: ImVec2) #no_context {
+    ShadeVertsTransformPos(draw_list, vert_start_idx, vert_end_idx, *pivot_in, cos_a, sin_a, *pivot_out);
+}
+
+// Garbage collection
+GcCompactTransientMiscBuffers :: () -> void #foreign imgui "?GcCompactTransientMiscBuffers@ImGui@@YAXXZ";
+GcCompactTransientWindowBuffers :: (window: *Window) -> void #foreign imgui "?GcCompactTransientWindowBuffers@ImGui@@YAXPEAUImGuiWindow@@@Z";
+GcAwakeTransientWindowBuffers :: (window: *Window) -> void #foreign imgui "?GcAwakeTransientWindowBuffers@ImGui@@YAXPEAUImGuiWindow@@@Z";
+
+// Debug Log
+DebugLog_CFormat :: (fmt: *u8, __args: ..Any) -> void #foreign imgui "?DebugLog@ImGui@@YAXPEBDZZ";
+DebugLog :: (fmt: string, __args: ..Any) {
+    push_allocator(temp);
+    formatted_text_builder: String_Builder;
+    print_to_builder(*formatted_text_builder, fmt, ..__args);
+    append(*formatted_text_builder, "\0");
+    formatted_text := builder_to_string(*formatted_text_builder);
+    DebugLog_CFormat("%s", formatted_text.data);
+} @PrintLike
+
+DebugAllocHook :: (info: *DebugAllocInfo, frame_count: s32, ptr: *void, size: u64) -> void #foreign imgui "?DebugAllocHook@ImGui@@YAXPEAUImGuiDebugAllocInfo@@HPEAX_K@Z";
+
+// Debug Tools
+ErrorCheckEndFrameRecover :: (log_callback: ErrorLogCallback, user_data: *void = null) -> void #foreign imgui "?ErrorCheckEndFrameRecover@ImGui@@YAXP6AXPEAXPEBDZZ0@Z";
+ErrorCheckEndWindowRecover :: (log_callback: ErrorLogCallback, user_data: *void = null) -> void #foreign imgui "?ErrorCheckEndWindowRecover@ImGui@@YAXP6AXPEAXPEBDZZ0@Z";
+ErrorCheckUsingSetCursorPosToExtendParentBoundaries :: () -> void #foreign imgui "?ErrorCheckUsingSetCursorPosToExtendParentBoundaries@ImGui@@YAXXZ";
+DebugDrawCursorPos :: (col: ImU32 = 4278190335) -> void #foreign imgui "?DebugDrawCursorPos@ImGui@@YAXI@Z";
+DebugDrawLineExtents :: (col: ImU32 = 4278190335) -> void #foreign imgui "?DebugDrawLineExtents@ImGui@@YAXI@Z";
+DebugDrawItemRect :: (col: ImU32 = 4278190335) -> void #foreign imgui "?DebugDrawItemRect@ImGui@@YAXI@Z";
+DebugLocateItem :: (target_id: ID) -> void #foreign imgui "?DebugLocateItem@ImGui@@YAXI@Z";
+DebugLocateItemOnHover :: (target_id: ID) -> void #foreign imgui "?DebugLocateItemOnHover@ImGui@@YAXI@Z";
+DebugLocateItemResolveWithLastItem :: () -> void #foreign imgui "?DebugLocateItemResolveWithLastItem@ImGui@@YAXXZ";
+DebugBreakClearData :: () -> void #foreign imgui "?DebugBreakClearData@ImGui@@YAXXZ";
+DebugBreakButton :: (label: *u8, description_of_location: *u8) -> bool #foreign imgui "?DebugBreakButton@ImGui@@YA_NPEBD0@Z";
+DebugBreakButtonTooltip :: (keyboard_only: bool, description_of_location: *u8) -> void #foreign imgui "?DebugBreakButtonTooltip@ImGui@@YAX_NPEBD@Z";
+ShowFontAtlas :: (atlas: *ImFontAtlas) -> void #foreign imgui "?ShowFontAtlas@ImGui@@YAXPEAUImFontAtlas@@@Z";
+DebugHookIdInfo :: (id: ID, data_type: DataType, data_id: *void, data_id_end: *void) -> void #foreign imgui "?DebugHookIdInfo@ImGui@@YAXIHPEBX0@Z";
+DebugNodeColumns :: (columns: *OldColumns) -> void #foreign imgui "?DebugNodeColumns@ImGui@@YAXPEAUImGuiOldColumns@@@Z";
+DebugNodeDockNode :: (node: *DockNode, label: *u8) -> void #foreign imgui "?DebugNodeDockNode@ImGui@@YAXPEAUImGuiDockNode@@PEBD@Z";
+DebugNodeDrawList :: (window: *Window, viewport: *ViewportP, draw_list: *ImDrawList, label: *u8) -> void #foreign imgui "?DebugNodeDrawList@ImGui@@YAXPEAUImGuiWindow@@PEAUImGuiViewportP@@PEBUImDrawList@@PEBD@Z";
+DebugNodeDrawCmdShowMeshAndBoundingBox :: (out_draw_list: *ImDrawList, draw_list: *ImDrawList, draw_cmd: *ImDrawCmd, show_mesh: bool, show_aabb: bool) -> void #foreign imgui "?DebugNodeDrawCmdShowMeshAndBoundingBox@ImGui@@YAXPEAUImDrawList@@PEBU2@PEBUImDrawCmd@@_N3@Z";
+DebugNodeFont :: (font: *ImFont) -> void #foreign imgui "?DebugNodeFont@ImGui@@YAXPEAUImFont@@@Z";
+DebugNodeFontGlyph :: (font: *ImFont, glyph: *ImFontGlyph) -> void #foreign imgui "?DebugNodeFontGlyph@ImGui@@YAXPEAUImFont@@PEBUImFontGlyph@@@Z";
+DebugNodeStorage :: (storage: *Storage, label: *u8) -> void #foreign imgui "?DebugNodeStorage@ImGui@@YAXPEAUImGuiStorage@@PEBD@Z";
+DebugNodeTabBar :: (tab_bar: *TabBar, label: *u8) -> void #foreign imgui "?DebugNodeTabBar@ImGui@@YAXPEAUImGuiTabBar@@PEBD@Z";
+DebugNodeTable :: (table: *Table) -> void #foreign imgui "?DebugNodeTable@ImGui@@YAXPEAUImGuiTable@@@Z";
+DebugNodeTableSettings :: (settings: *TableSettings) -> void #foreign imgui "?DebugNodeTableSettings@ImGui@@YAXPEAUImGuiTableSettings@@@Z";
+DebugNodeInputTextState :: (state: *InputTextState) -> void #foreign imgui "?DebugNodeInputTextState@ImGui@@YAXPEAUImGuiInputTextState@@@Z";
+DebugNodeTypingSelectState :: (state: *TypingSelectState) -> void #foreign imgui "?DebugNodeTypingSelectState@ImGui@@YAXPEAUImGuiTypingSelectState@@@Z";
+DebugNodeWindow :: (window: *Window, label: *u8) -> void #foreign imgui "?DebugNodeWindow@ImGui@@YAXPEAUImGuiWindow@@PEBD@Z";
+DebugNodeWindowSettings :: (settings: *WindowSettings) -> void #foreign imgui "?DebugNodeWindowSettings@ImGui@@YAXPEAUImGuiWindowSettings@@@Z";
+DebugNodeWindowsList :: (windows: *ImVector(*Window), label: *u8) -> void #foreign imgui "?DebugNodeWindowsList@ImGui@@YAXPEAU?$ImVector@PEAUImGuiWindow@@@@PEBD@Z";
+DebugNodeWindowsListByBeginStackParent :: (windows: **Window, windows_size: s32, parent_in_begin_stack: *Window) -> void #foreign imgui "?DebugNodeWindowsListByBeginStackParent@ImGui@@YAXPEAPEAUImGuiWindow@@HPEAU2@@Z";
+DebugNodeViewport :: (viewport: *ViewportP) -> void #foreign imgui "?DebugNodeViewport@ImGui@@YAXPEAUImGuiViewportP@@@Z";
+DebugRenderKeyboardPreview :: (draw_list: *ImDrawList) -> void #foreign imgui "?DebugRenderKeyboardPreview@ImGui@@YAXPEAUImDrawList@@@Z";
+DebugRenderViewportThumbnail :: (draw_list: *ImDrawList, viewport: *ViewportP, bb: *ImRect) -> void #foreign imgui "?DebugRenderViewportThumbnail@ImGui@@YAXPEAUImDrawList@@PEAUImGuiViewportP@@AEBUImRect@@@Z";
+DebugRenderViewportThumbnail :: (draw_list: *ImDrawList, viewport: *ViewportP, bb: ImRect) #no_context {
+    DebugRenderViewportThumbnail(draw_list, viewport, *bb);
+}
+
 // Flags for ImGui::Begin()
 // (Those are per-window flags. There are shared flags in ImGuiIO: io.ConfigWindowsResizeFromEdges and io.ConfigWindowsMoveFromTitleBarOnly)
 WindowFlags :: enum_flags s32 {
@@ -1926,7 +2653,7 @@ Dir :: enum s32 {
 }
 
 // A sorting direction
-SortDirection_ :: enum s32 {
+SortDirection :: enum s32 {
     None       :: 0;
     Ascending  :: 1;
     Descending :: 2;
@@ -3474,7 +4201,23 @@ ImFontAtlasFlags :: enum_flags s32 {
     ImFontAtlasFlags_NoBakedLines       :: NoBakedLines;
 }
 
-// Forward declarations
+// Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
+//  - One or more fonts.
+//  - Custom graphics data needed to render the shapes needed by Dear ImGui.
+//  - Mouse cursor shapes for software cursor rendering (unless setting 'Flags |= ImFontAtlasFlags_NoMouseCursors' in the font atlas).
+// It is the user-code responsibility to setup/build the atlas, then upload the pixel data into a texture accessible by your graphics api.
+//  - Optionally, call any of the AddFont*** functions. If you don't call any, the default font embedded in the code will be loaded for you.
+//  - Call GetTexDataAsAlpha8() or GetTexDataAsRGBA32() to build and retrieve pixels data.
+//  - Upload the pixels data into a texture within your graphics system (see imgui_impl_xxxx.cpp examples)
+//  - Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture in a format natural to your graphics API.
+//    This value will be passed back to you during rendering to identify the texture. Read FAQ entry about ImTextureID for more details.
+// Common pitfalls:
+// - If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persist up until the
+//   atlas is build (when calling GetTexData*** or Build()). We only copy the pointer, not the data.
+// - Important: By default, AddFontFromMemoryTTF() takes ownership of the data. Even though we are not writing to it, we will free the pointer on destruction.
+//   You can set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed,
+// - Even though many functions are suffixed with "TTF", OTF data is supported just as well.
+// - This is an old API and it is currently awkward for those and various other reasons! We will address them in the future!
 ImFontAtlas :: struct {
     Constructor :: (this: *ImFontAtlas) -> void #cpp_method #foreign imgui "??0ImFontAtlas@@QEAA@XZ";
     Destructor :: (this: *ImFontAtlas) -> void #cpp_method #foreign imgui "??1ImFontAtlas@@QEAA@XZ";
@@ -3751,36 +4494,2481 @@ ModFlags_ :: enum_flags s32 {
     ImGuiModFlags_Super :: Super;
 }
 
-// Hinting greatly impacts visuals (and glyph sizes).
-// - By default, hinting is enabled and the font's native hinter is preferred over the auto-hinter.
-// - When disabled, FreeType generates blurrier glyphs, more or less matches the stb_truetype.h
-// - The Default hinting mode usually looks good, but may distort glyphs in an unusual way.
-// - The Light hinting mode generates fuzzier glyphs but better matches Microsoft's rasterizer.
-// You can set those flags globaly in ImFontAtlas::FontBuilderFlags
-// You can set those flags on a per font basis in ImFontConfig::FontBuilderFlags
-FreeTypeBuilderFlags :: enum s32 {
-    NoHinting     :: 1;
-    NoAutoHint    :: 2;
-    ForceAutoHint :: 4;
-    LightHinting  :: 8;
-    MonoHinting   :: 16;
-    Bold          :: 32;
-    Oblique       :: 64;
-    Monochrome    :: 128;
-    LoadColor     :: 256;
-    Bitmap        :: 512;
+DockRequest :: struct {}
 
-    ImGuiFreeTypeBuilderFlags_NoHinting     :: NoHinting;
-    ImGuiFreeTypeBuilderFlags_NoAutoHint    :: NoAutoHint;
-    ImGuiFreeTypeBuilderFlags_ForceAutoHint :: ForceAutoHint;
-    ImGuiFreeTypeBuilderFlags_LightHinting  :: LightHinting;
-    ImGuiFreeTypeBuilderFlags_MonoHinting   :: MonoHinting;
-    ImGuiFreeTypeBuilderFlags_Bold          :: Bold;
-    ImGuiFreeTypeBuilderFlags_Oblique       :: Oblique;
-    ImGuiFreeTypeBuilderFlags_Monochrome    :: Monochrome;
-    ImGuiFreeTypeBuilderFlags_LoadColor     :: LoadColor;
-    ImGuiFreeTypeBuilderFlags_Bitmap        :: Bitmap;
+DockNodeSettings :: struct {}
+
+InputTextDeactivateData :: struct {}
+
+TableColumnsSettings :: struct {}
+
+// Enumerations
+// Use your programming IDE "Go to definition" facility on the names of the center columns to find the actual flags/enum lists.
+LocKey :: enum s32 {
+    VersionStr                    :: 0;
+    TableSizeOne                  :: 1;
+    TableSizeAllFit               :: 2;
+    TableSizeAllDefault           :: 3;
+    TableResetOrder               :: 4;
+    WindowingMainMenuBar          :: 5;
+    WindowingPopup                :: 6;
+    WindowingUntitled             :: 7;
+    DockingHideTabBar             :: 8;
+    DockingHoldShiftToDock        :: 9;
+    DockingDragToUndockOrMoveNode :: 10;
+    COUNT                         :: 11;
+
+    ImGuiLocKey_VersionStr                    :: VersionStr;
+    ImGuiLocKey_TableSizeOne                  :: TableSizeOne;
+    ImGuiLocKey_TableSizeAllFit               :: TableSizeAllFit;
+    ImGuiLocKey_TableSizeAllDefault           :: TableSizeAllDefault;
+    ImGuiLocKey_TableResetOrder               :: TableResetOrder;
+    ImGuiLocKey_WindowingMainMenuBar          :: WindowingMainMenuBar;
+    ImGuiLocKey_WindowingPopup                :: WindowingPopup;
+    ImGuiLocKey_WindowingUntitled             :: WindowingUntitled;
+    ImGuiLocKey_DockingHideTabBar             :: DockingHideTabBar;
+    ImGuiLocKey_DockingHoldShiftToDock        :: DockingHoldShiftToDock;
+    ImGuiLocKey_DockingDragToUndockOrMoveNode :: DockingDragToUndockOrMoveNode;
+    ImGuiLocKey_COUNT                         :: COUNT;
 }
+
+DataAuthority :: s32;
+
+// Flags
+ActivateFlags :: s32;
+DebugLogFlags :: s32;
+
+ErrorLogCallback :: #type (user_data: *void, fmt: *u8, __args: ..Any) -> void #c_call;
+
+GImGui: *Context #elsewhere imgui "?GImGui@@3PEAUImGuiContext@@EA"; // Current implicit context pointer
+
+//-------------------------------------------------------------------------
+// [SECTION] STB libraries includes
+//-------------------------------------------------------------------------
+ImStb :: struct {
+    StbUndoRecord :: struct {
+        // private data
+        where:         s32;
+        insert_length: s32;
+        delete_length: s32;
+        char_storage:  s32;
+    }
+
+    StbUndoState :: struct {
+        // private data
+        undo_rec:        [99] StbUndoRecord;
+        undo_char:       [999] ImWchar;
+        undo_point:      s16;
+        redo_point:      s16;
+        undo_char_point: s32;
+        redo_char_point: s32;
+    }
+
+    STB_TexteditState :: struct {
+        /////////////////////
+        //
+        // public data
+        //
+        cursor:                s32;
+
+        select_start:          s32; // selection start point
+        select_end:            s32;
+
+        // selection start and end point in characters; if equal, no selection.
+        // note that start may be less than or greater than end (e.g. when
+        // dragging the mouse, start is where the initial click was, and you
+        // can drag in either direction)
+        insert_mode:           u8;
+
+        // each textfield keeps its own insert mode state. to keep an app-wide
+        // insert mode, copy this value in/out of the app state
+        row_count_per_page:    s32;
+
+        cursor_at_end_of_line: u8; // not implemented yet
+        initialized:           u8;
+        has_preferred_x:       u8;
+        single_line:           u8;
+        padding1:              u8;
+        padding2:              u8;
+        padding3:              u8;
+        preferred_x:           float; // this determines where the cursor up/down tries to seek to along x
+        undostate:             StbUndoState;
+    }
+
+    // result of layout query
+    StbTexteditRow :: struct {
+        x0:               float; // starting x location, end x location (allows for align=right, etc)
+        x1:               float; // starting x location, end x location (allows for align=right, etc)
+        baseline_y_delta: float; // position of baseline relative to previous row's baseline
+        ymin:             float; // height of row above and below baseline
+        ymax:             float; // height of row above and below baseline
+        num_chars:        s32;
+    }
+}
+
+// Helpers: Hashing
+ImHashData :: (data: *void, data_size: u64, seed: ID = 0) -> ID #foreign imgui "?ImHashData@@YAIPEBX_KI@Z";
+ImHashStr :: (data: *u8, data_size: u64 = 0, seed: ID = 0) -> ID #foreign imgui "?ImHashStr@@YAIPEBD_KI@Z";
+
+// Helpers: Color Blending
+ImAlphaBlendColors :: (col_a: ImU32, col_b: ImU32) -> ImU32 #foreign imgui "?ImAlphaBlendColors@@YAIII@Z";
+
+// Helpers: String
+ImStricmp :: (str1: *u8, str2: *u8) -> s32 #foreign imgui "?ImStricmp@@YAHPEBD0@Z";
+ImStrnicmp :: (str1: *u8, str2: *u8, count: u64) -> s32 #foreign imgui "?ImStrnicmp@@YAHPEBD0_K@Z";
+ImStrncpy :: (dst: *u8, src: *u8, count: u64) -> void #foreign imgui "?ImStrncpy@@YAXPEADPEBD_K@Z";
+ImStrdup :: (str: *u8) -> *u8 #foreign imgui "?ImStrdup@@YAPEADPEBD@Z";
+ImStrdupcpy :: (dst: *u8, p_dst_size: *u64, str: *u8) -> *u8 #foreign imgui "?ImStrdupcpy@@YAPEADPEADPEA_KPEBD@Z";
+ImStrchrRange :: (str_begin: *u8, str_end: *u8, c: u8) -> *u8 #foreign imgui "?ImStrchrRange@@YAPEBDPEBD0D@Z";
+ImStrchrRange :: (str: string, c: u8) -> *u8 #no_context {
+    return ImStrchrRange(str.data, str.data + str.count, c);
+}
+ImStreolRange :: (str: *u8, str_end: *u8) -> *u8 #foreign imgui "?ImStreolRange@@YAPEBDPEBD0@Z";
+ImStreolRange :: (str: string) -> *u8 #no_context {
+    return ImStreolRange(str.data, str.data + str.count);
+}
+ImStristr :: (haystack: *u8, haystack_end: *u8, needle: *u8, needle_end: *u8) -> *u8 #foreign imgui "?ImStristr@@YAPEBDPEBD000@Z";
+ImStristr :: (haystack: string, needle: string) -> *u8 #no_context {
+    return ImStristr(haystack.data, haystack.data + haystack.count, needle.data, needle.data + needle.count);
+}
+ImStrTrimBlanks :: (str: *u8) -> void #foreign imgui "?ImStrTrimBlanks@@YAXPEAD@Z";
+ImStrSkipBlank :: (str: *u8) -> *u8 #foreign imgui "?ImStrSkipBlank@@YAPEBDPEBD@Z";
+ImStrlenW :: (str: *ImWchar) -> s32 #foreign imgui "?ImStrlenW@@YAHPEBI@Z";
+ImStrbolW :: (buf_mid_line: *ImWchar, buf_begin: *ImWchar) -> *ImWchar #foreign imgui "?ImStrbolW@@YAPEBIPEBI0@Z";
+
+// Helpers: Formatting
+ImFormatString_CFormat :: (buf: *u8, buf_size: u64, fmt: *u8, __args: ..Any) -> s32 #foreign imgui "?ImFormatString@@YAHPEAD_KPEBDZZ";
+ImFormatString :: (buf: *u8, buf_size: u64, fmt: string, __args: ..Any) -> s32 {
+    push_allocator(temp);
+    formatted_text_builder: String_Builder;
+    print_to_builder(*formatted_text_builder, fmt, ..__args);
+    append(*formatted_text_builder, "\0");
+    formatted_text := builder_to_string(*formatted_text_builder);
+    return ImFormatString_CFormat(buf, buf_size, "%s", formatted_text.data);
+} @PrintLike
+
+ImFormatStringToTempBuffer_CFormat :: (out_buf: **u8, out_buf_end: **u8, fmt: *u8, __args: ..Any) -> void #foreign imgui "?ImFormatStringToTempBuffer@@YAXPEAPEBD0PEBDZZ";
+ImFormatStringToTempBuffer :: (out_buf: **u8, out_buf_end: **u8, fmt: string, __args: ..Any) {
+    push_allocator(temp);
+    formatted_text_builder: String_Builder;
+    print_to_builder(*formatted_text_builder, fmt, ..__args);
+    append(*formatted_text_builder, "\0");
+    formatted_text := builder_to_string(*formatted_text_builder);
+    ImFormatStringToTempBuffer_CFormat(out_buf, out_buf_end, "%s", formatted_text.data);
+} @PrintLike
+
+ImParseFormatFindStart :: (format: *u8) -> *u8 #foreign imgui "?ImParseFormatFindStart@@YAPEBDPEBD@Z";
+ImParseFormatFindEnd :: (format: *u8) -> *u8 #foreign imgui "?ImParseFormatFindEnd@@YAPEBDPEBD@Z";
+ImParseFormatTrimDecorations :: (format: *u8, buf: *u8, buf_size: u64) -> *u8 #foreign imgui "?ImParseFormatTrimDecorations@@YAPEBDPEBDPEAD_K@Z";
+ImParseFormatSanitizeForPrinting :: (fmt_in: *u8, fmt_out: *u8, fmt_out_size: u64) -> void #foreign imgui "?ImParseFormatSanitizeForPrinting@@YAXPEBDPEAD_K@Z";
+ImParseFormatSanitizeForScanning :: (fmt_in: *u8, fmt_out: *u8, fmt_out_size: u64) -> *u8 #foreign imgui "?ImParseFormatSanitizeForScanning@@YAPEBDPEBDPEAD_K@Z";
+ImParseFormatPrecision :: (format: *u8, default_value: s32) -> s32 #foreign imgui "?ImParseFormatPrecision@@YAHPEBDH@Z";
+
+// Helpers: UTF-8 <> wchar conversions
+ImTextCharToUtf8 :: (out_buf: *[5] u8, c: u32) -> *u8 #foreign imgui "?ImTextCharToUtf8@@YAPEBDQEADI@Z";
+ImTextStrToUtf8 :: (out_buf: *u8, out_buf_size: s32, in_text: *ImWchar, in_text_end: *ImWchar) -> s32 #foreign imgui "?ImTextStrToUtf8@@YAHPEADHPEBI1@Z";
+ImTextCharFromUtf8 :: (out_char: *u32, in_text: *u8, in_text_end: *u8) -> s32 #foreign imgui "?ImTextCharFromUtf8@@YAHPEAIPEBD1@Z";
+ImTextCharFromUtf8 :: (out_char: *u32, in_text: string) -> s32 #no_context {
+    return ImTextCharFromUtf8(out_char, in_text.data, in_text.data + in_text.count);
+}
+ImTextStrFromUtf8 :: (out_buf: *ImWchar, out_buf_size: s32, in_text: *u8, in_text_end: *u8, in_remaining: **u8 = null) -> s32 #foreign imgui "?ImTextStrFromUtf8@@YAHPEAIHPEBD1PEAPEBD@Z";
+ImTextStrFromUtf8 :: (out_buf: *ImWchar, out_buf_size: s32, in_text: string, in_remaining: **u8 = null) -> s32 #no_context {
+    return ImTextStrFromUtf8(out_buf, out_buf_size, in_text.data, in_text.data + in_text.count, in_remaining);
+}
+ImTextCountCharsFromUtf8 :: (in_text: *u8, in_text_end: *u8) -> s32 #foreign imgui "?ImTextCountCharsFromUtf8@@YAHPEBD0@Z";
+ImTextCountCharsFromUtf8 :: (in_text: string) -> s32 #no_context {
+    return ImTextCountCharsFromUtf8(in_text.data, in_text.data + in_text.count);
+}
+ImTextCountUtf8BytesFromChar :: (in_text: *u8, in_text_end: *u8) -> s32 #foreign imgui "?ImTextCountUtf8BytesFromChar@@YAHPEBD0@Z";
+ImTextCountUtf8BytesFromChar :: (in_text: string) -> s32 #no_context {
+    return ImTextCountUtf8BytesFromChar(in_text.data, in_text.data + in_text.count);
+}
+ImTextCountUtf8BytesFromStr :: (in_text: *ImWchar, in_text_end: *ImWchar) -> s32 #foreign imgui "?ImTextCountUtf8BytesFromStr@@YAHPEBI0@Z";
+ImTextFindPreviousUtf8Codepoint :: (in_text_start: *u8, in_text_curr: *u8) -> *u8 #foreign imgui "?ImTextFindPreviousUtf8Codepoint@@YAPEBDPEBD0@Z";
+
+ImFileHandle :: *FILE;
+ImFileOpen :: (filename: *u8, mode: *u8) -> ImFileHandle #foreign imgui "?ImFileOpen@@YAPEAU_iobuf@@PEBD0@Z";
+ImFileClose :: (file: ImFileHandle) -> bool #foreign imgui "?ImFileClose@@YA_NPEAU_iobuf@@@Z";
+ImFileGetSize :: (file: ImFileHandle) -> ImU64 #foreign imgui "?ImFileGetSize@@YA_KPEAU_iobuf@@@Z";
+ImFileRead :: (data: *void, size: ImU64, count: ImU64, file: ImFileHandle) -> ImU64 #foreign imgui "?ImFileRead@@YA_KPEAX_K1PEAU_iobuf@@@Z";
+ImFileWrite :: (data: *void, size: ImU64, count: ImU64, file: ImFileHandle) -> ImU64 #foreign imgui "?ImFileWrite@@YA_KPEBX_K1PEAU_iobuf@@@Z";
+
+ImFileLoadToMemory :: (filename: *u8, mode: *u8, out_file_size: *u64 = null, padding_bytes: s32 = 0) -> *void #foreign imgui "?ImFileLoadToMemory@@YAPEAXPEBD0PEA_KH@Z";
+
+// Helpers: Geometry
+ImBezierCubicCalc :: (p1: *ImVec2, p2: *ImVec2, p3: *ImVec2, p4: *ImVec2, t: float) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?ImBezierCubicCalc@@YA?AUImVec2@@AEBU1@000M@Z";
+ImBezierCubicCalc :: (p1: ImVec2, p2: ImVec2, p3: ImVec2, p4: ImVec2, t: float) -> ImVec2 #no_context {
+    return ImBezierCubicCalc(*p1, *p2, *p3, *p4, t);
+}
+ImBezierCubicClosestPoint :: (p1: *ImVec2, p2: *ImVec2, p3: *ImVec2, p4: *ImVec2, p: *ImVec2, num_segments: s32) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?ImBezierCubicClosestPoint@@YA?AUImVec2@@AEBU1@0000H@Z";
+ImBezierCubicClosestPoint :: (p1: ImVec2, p2: ImVec2, p3: ImVec2, p4: ImVec2, p: ImVec2, num_segments: s32) -> ImVec2 #no_context {
+    return ImBezierCubicClosestPoint(*p1, *p2, *p3, *p4, *p, num_segments);
+}
+ImBezierCubicClosestPointCasteljau :: (p1: *ImVec2, p2: *ImVec2, p3: *ImVec2, p4: *ImVec2, p: *ImVec2, tess_tol: float) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?ImBezierCubicClosestPointCasteljau@@YA?AUImVec2@@AEBU1@0000M@Z";
+ImBezierCubicClosestPointCasteljau :: (p1: ImVec2, p2: ImVec2, p3: ImVec2, p4: ImVec2, p: ImVec2, tess_tol: float) -> ImVec2 #no_context {
+    return ImBezierCubicClosestPointCasteljau(*p1, *p2, *p3, *p4, *p, tess_tol);
+}
+ImBezierQuadraticCalc :: (p1: *ImVec2, p2: *ImVec2, p3: *ImVec2, t: float) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?ImBezierQuadraticCalc@@YA?AUImVec2@@AEBU1@00M@Z";
+ImBezierQuadraticCalc :: (p1: ImVec2, p2: ImVec2, p3: ImVec2, t: float) -> ImVec2 #no_context {
+    return ImBezierQuadraticCalc(*p1, *p2, *p3, t);
+}
+ImLineClosestPoint :: (a: *ImVec2, b: *ImVec2, p: *ImVec2) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?ImLineClosestPoint@@YA?AUImVec2@@AEBU1@00@Z";
+ImLineClosestPoint :: (a: ImVec2, b: ImVec2, p: ImVec2) -> ImVec2 #no_context {
+    return ImLineClosestPoint(*a, *b, *p);
+}
+ImTriangleContainsPoint :: (a: *ImVec2, b: *ImVec2, c: *ImVec2, p: *ImVec2) -> bool #foreign imgui "?ImTriangleContainsPoint@@YA_NAEBUImVec2@@000@Z";
+ImTriangleContainsPoint :: (a: ImVec2, b: ImVec2, c: ImVec2, p: ImVec2) -> bool #no_context {
+    return ImTriangleContainsPoint(*a, *b, *c, *p);
+}
+ImTriangleClosestPoint :: (a: *ImVec2, b: *ImVec2, c: *ImVec2, p: *ImVec2) -> ImVec2 #cpp_return_type_is_non_pod #foreign imgui "?ImTriangleClosestPoint@@YA?AUImVec2@@AEBU1@000@Z";
+ImTriangleClosestPoint :: (a: ImVec2, b: ImVec2, c: ImVec2, p: ImVec2) -> ImVec2 #no_context {
+    return ImTriangleClosestPoint(*a, *b, *c, *p);
+}
+ImTriangleBarycentricCoords :: (a: *ImVec2, b: *ImVec2, c: *ImVec2, p: *ImVec2, out_u: *float, out_v: *float, out_w: *float) -> void #foreign imgui "?ImTriangleBarycentricCoords@@YAXAEBUImVec2@@000AEAM11@Z";
+ImTriangleBarycentricCoords :: (a: ImVec2, b: ImVec2, c: ImVec2, p: ImVec2, out_u: *float, out_v: *float, out_w: *float) #no_context {
+    ImTriangleBarycentricCoords(*a, *b, *c, *p, out_u, out_v, out_w);
+}
+
+// Helper: ImVec1 (1D vector)
+// (this odd construct is used to facilitate the transition between 1D and 2D, and the maintenance of some branches/patches)
+ImVec1 :: struct {
+    x: float;
+}
+
+// Helper: ImVec2ih (2D vector, half-size integer, for long-term packed storage)
+ImVec2ih :: struct {
+    x: s16;
+    y: s16;
+}
+
+// Helper: ImRect (2D axis aligned bounding-box)
+// NB: we can't rely on ImVec2 math operators being available here!
+ImRect :: struct {
+    Min: ImVec2; // Upper-left
+    Max: ImVec2; // Lower-right
+}
+
+ImBitArrayPtr :: *ImU32;
+
+//-----------------------------------------------------------------------------
+// [SECTION] Forward declarations
+//-----------------------------------------------------------------------------
+ImBitVector :: struct {
+    Storage: ImVector(ImU32);
+}
+
+// Helper: ImSpan<>
+// Pointing to a span of data we don't own.
+ImSpan :: struct(T: Type) {
+    Data:    *T;
+    DataEnd: *T;
+}
+
+// Helper: ImSpanAllocator<>
+// Facilitate storing multiple chunks into a single large block (the "arena")
+// - Usage: call Reserve() N times, allocate GetArenaSizeInBytes() worth, pass it to SetArenaBasePtr(), call GetSpan() N times to retrieve the aligned ranges.
+ImSpanAllocator :: struct(CHUNKS: s32) {
+    BasePtr: *u8;
+    CurrOff: s32;
+    CurrIdx: s32;
+    Offsets: [CHUNKS] s32;
+    Sizes:   [CHUNKS] s32;
+}
+
+// Helper: ImPool<>
+// Basic keyed storage for contiguous instances, slow/amortized insertion, O(1) indexable, O(Log N) queries by ID over a dense/hot buffer,
+// Honor constructor/destructor. Add/remove invalidate all pointers. Indexes have the same lifetime as the associated object.
+ImPoolIdx :: s32;
+
+ImPool :: struct(T: Type) {
+    Buf:        ImVector(T); // Contiguous data
+    Map:        Storage; // ID->Index
+    FreeIdx:    ImPoolIdx; // Next free idx to use
+    AliveCount: ImPoolIdx; // Number of active/alive items (for display purpose)
+}
+
+// Helper: ImChunkStream<>
+// Build and iterate a contiguous stream of variable-sized structures.
+// This is used by Settings to store persistent data while reducing allocation count.
+// We store the chunk size first, and align the final size on 4 bytes boundaries.
+// The tedious/zealous amount of casting is to avoid -Wcast-align warnings.
+ImChunkStream :: struct(T: Type) {
+    Buf: ImVector(u8);
+}
+
+// Helper: ImGuiTextIndex<>
+// Maintain a line index for a text buffer. This is a strong candidate to be moved into the public API.
+TextIndex :: struct {
+    LineOffsets: ImVector(s32);
+    EndOffset:   s32 = 0; // Because we don't own text buffer we need to maintain EndOffset (may bake in LineOffsets?)
+}
+
+// Data shared between all ImDrawList instances
+// You may want to create your own instance of this if you want to use ImDrawList completely without ImGui. In that case, watch out for future changes to this structure.
+ImDrawListSharedData :: struct {
+    TexUvWhitePixel:       ImVec2; // UV of white pixel in the atlas
+    Font:                  *ImFont; // Current/default font (optional, for simplified AddText overload)
+    FontSize:              float; // Current/default font size (optional, for simplified AddText overload)
+    CurveTessellationTol:  float; // Tessellation tolerance when using PathBezierCurveTo()
+    CircleSegmentMaxError: float; // Number of circle segments to use per pixel of radius for AddCircle() etc
+    ClipRectFullscreen:    ImVec4; // Value for PushClipRectFullscreen()
+    InitialFlags:          ImDrawListFlags; // Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards)
+
+    // [Internal] Temp write buffer
+    TempBuffer:            ImVector(ImVec2);
+
+    ArcFastVtx:            [48] ImVec2; // Sample points on the quarter of the circle.
+    ArcFastRadiusCutoff:   float; // Cutoff radius after which arc drawing will fallback to slower PathArcTo()
+    CircleSegmentCounts:   [64] ImU8; // Precomputed segment count for given radius before we calculate it dynamically (to avoid calculation overhead)
+    TexUvLines:            *ImVec4; // UV of anti-aliased lines in the atlas
+
+    Constructor :: (this: *ImDrawListSharedData) -> void #cpp_method #foreign imgui "??0ImDrawListSharedData@@QEAA@XZ";
+    SetCircleTessellationMaxError :: (this: *ImDrawListSharedData, max_error: float) -> void #cpp_method #foreign imgui "?SetCircleTessellationMaxError@ImDrawListSharedData@@QEAAXM@Z";
+}
+
+ImDrawDataBuilder :: struct {
+    Layers:     [2] *ImVector(*ImDrawList); // Pointers to global layers for: regular, tooltip. LayersP[0] is owned by DrawData.
+    LayerData1: ImVector(*ImDrawList);
+}
+
+// Flags used by upcoming items
+// - input: PushItemFlag() manipulates g.CurrentItemFlags, ItemAdd() calls may add extra flags.
+// - output: stored in g.LastItemData.InFlags
+// Current window shared by all windows.
+// This is going to be exposed in imgui.h when stabilized enough.
+ItemFlags :: enum_flags s32 {
+    None                     :: 0x0;
+    NoTabStop                :: 0x1;
+    ButtonRepeat             :: 0x2;
+    Disabled                 :: 0x4;
+    NoNav                    :: 0x8;
+    NoNavDefaultFocus        :: 0x10;
+    SelectableDontClosePopup :: 0x20;
+    MixedValue               :: 0x40;
+    ReadOnly                 :: 0x80;
+    NoWindowHoverableCheck   :: 0x100;
+    AllowOverlap             :: 0x200;
+
+    Inputable                :: 0x400;
+    HasSelectionUserData     :: 0x800;
+
+    ImGuiItemFlags_None                     :: None;
+    ImGuiItemFlags_NoTabStop                :: NoTabStop;
+    ImGuiItemFlags_ButtonRepeat             :: ButtonRepeat;
+    ImGuiItemFlags_Disabled                 :: Disabled;
+    ImGuiItemFlags_NoNav                    :: NoNav;
+    ImGuiItemFlags_NoNavDefaultFocus        :: NoNavDefaultFocus;
+    ImGuiItemFlags_SelectableDontClosePopup :: SelectableDontClosePopup;
+    ImGuiItemFlags_MixedValue               :: MixedValue;
+    ImGuiItemFlags_ReadOnly                 :: ReadOnly;
+    ImGuiItemFlags_NoWindowHoverableCheck   :: NoWindowHoverableCheck;
+    ImGuiItemFlags_AllowOverlap             :: AllowOverlap;
+
+    ImGuiItemFlags_Inputable                :: Inputable;
+    ImGuiItemFlags_HasSelectionUserData     :: HasSelectionUserData;
+}
+
+// Status flags for an already submitted item
+// - output: stored in g.LastItemData.StatusFlags
+ItemStatusFlags :: enum_flags s32 {
+    None             :: 0x0;
+    HoveredRect      :: 0x1;
+    HasDisplayRect   :: 0x2;
+    Edited           :: 0x4;
+    ToggledSelection :: 0x8;
+    ToggledOpen      :: 0x10;
+    HasDeactivated   :: 0x20;
+    Deactivated      :: 0x40;
+    HoveredWindow    :: 0x80;
+    Visible          :: 0x100;
+    HasClipRect      :: 0x200;
+
+    ImGuiItemStatusFlags_None             :: None;
+    ImGuiItemStatusFlags_HoveredRect      :: HoveredRect;
+    ImGuiItemStatusFlags_HasDisplayRect   :: HasDisplayRect;
+    ImGuiItemStatusFlags_Edited           :: Edited;
+    ImGuiItemStatusFlags_ToggledSelection :: ToggledSelection;
+    ImGuiItemStatusFlags_ToggledOpen      :: ToggledOpen;
+    ImGuiItemStatusFlags_HasDeactivated   :: HasDeactivated;
+    ImGuiItemStatusFlags_Deactivated      :: Deactivated;
+    ImGuiItemStatusFlags_HoveredWindow    :: HoveredWindow;
+    ImGuiItemStatusFlags_Visible          :: Visible;
+    ImGuiItemStatusFlags_HasClipRect      :: HasClipRect;
+}
+
+// Extend ImGuiHoveredFlags_
+HoveredFlagsPrivate_ :: enum s32 {
+    HoveredFlags_DelayMask_                    :: 245760;
+    HoveredFlags_AllowedMaskForIsWindowHovered :: 12479;
+    HoveredFlags_AllowedMaskForIsItemHovered   :: 262048;
+
+    ImGuiHoveredFlags_DelayMask_                    :: HoveredFlags_DelayMask_;
+    ImGuiHoveredFlags_AllowedMaskForIsWindowHovered :: HoveredFlags_AllowedMaskForIsWindowHovered;
+    ImGuiHoveredFlags_AllowedMaskForIsItemHovered   :: HoveredFlags_AllowedMaskForIsItemHovered;
+}
+
+// Extend ImGuiInputTextFlags_
+InputTextFlagsPrivate_ :: enum s32 {
+    InputTextFlags_Multiline    :: 67108864;
+    InputTextFlags_NoMarkEdited :: 134217728;
+    InputTextFlags_MergedItem   :: 268435456;
+
+    ImGuiInputTextFlags_Multiline    :: InputTextFlags_Multiline;
+    ImGuiInputTextFlags_NoMarkEdited :: InputTextFlags_NoMarkEdited;
+    ImGuiInputTextFlags_MergedItem   :: InputTextFlags_MergedItem;
+}
+
+// Extend ImGuiButtonFlags_
+ButtonFlagsPrivate_ :: enum s32 {
+    ButtonFlags_PressedOnClick                :: 16;
+    ButtonFlags_PressedOnClickRelease         :: 32;
+    ButtonFlags_PressedOnClickReleaseAnywhere :: 64;
+    ButtonFlags_PressedOnRelease              :: 128;
+    ButtonFlags_PressedOnDoubleClick          :: 256;
+    ButtonFlags_PressedOnDragDropHold         :: 512;
+    ButtonFlags_Repeat                        :: 1024;
+    ButtonFlags_FlattenChildren               :: 2048;
+    ButtonFlags_AllowOverlap                  :: 4096;
+    ButtonFlags_DontClosePopups               :: 8192;
+
+    ButtonFlags_AlignTextBaseLine             :: 32768;
+    ButtonFlags_NoKeyModifiers                :: 65536;
+    ButtonFlags_NoHoldingActiveId             :: 131072;
+    ButtonFlags_NoNavFocus                    :: 262144;
+    ButtonFlags_NoHoveredOnFocus              :: 524288;
+    ButtonFlags_NoSetKeyOwner                 :: 1048576;
+    ButtonFlags_NoTestKeyOwner                :: 2097152;
+    ButtonFlags_PressedOnMask_                :: 1008;
+    ButtonFlags_PressedOnDefault_             :: 32;
+
+    ImGuiButtonFlags_PressedOnClick                :: ButtonFlags_PressedOnClick;
+    ImGuiButtonFlags_PressedOnClickRelease         :: ButtonFlags_PressedOnClickRelease;
+    ImGuiButtonFlags_PressedOnClickReleaseAnywhere :: ButtonFlags_PressedOnClickReleaseAnywhere;
+    ImGuiButtonFlags_PressedOnRelease              :: ButtonFlags_PressedOnRelease;
+    ImGuiButtonFlags_PressedOnDoubleClick          :: ButtonFlags_PressedOnDoubleClick;
+    ImGuiButtonFlags_PressedOnDragDropHold         :: ButtonFlags_PressedOnDragDropHold;
+    ImGuiButtonFlags_Repeat                        :: ButtonFlags_Repeat;
+    ImGuiButtonFlags_FlattenChildren               :: ButtonFlags_FlattenChildren;
+    ImGuiButtonFlags_AllowOverlap                  :: ButtonFlags_AllowOverlap;
+    ImGuiButtonFlags_DontClosePopups               :: ButtonFlags_DontClosePopups;
+
+    ImGuiButtonFlags_AlignTextBaseLine             :: ButtonFlags_AlignTextBaseLine;
+    ImGuiButtonFlags_NoKeyModifiers                :: ButtonFlags_NoKeyModifiers;
+    ImGuiButtonFlags_NoHoldingActiveId             :: ButtonFlags_NoHoldingActiveId;
+    ImGuiButtonFlags_NoNavFocus                    :: ButtonFlags_NoNavFocus;
+    ImGuiButtonFlags_NoHoveredOnFocus              :: ButtonFlags_NoHoveredOnFocus;
+    ImGuiButtonFlags_NoSetKeyOwner                 :: ButtonFlags_NoSetKeyOwner;
+    ImGuiButtonFlags_NoTestKeyOwner                :: ButtonFlags_NoTestKeyOwner;
+    ImGuiButtonFlags_PressedOnMask_                :: ButtonFlags_PressedOnMask_;
+    ImGuiButtonFlags_PressedOnDefault_             :: ButtonFlags_PressedOnDefault_;
+}
+
+// Extend ImGuiComboFlags_
+ComboFlagsPrivate_ :: enum s32 {
+    ComboFlags_CustomPreview :: 1048576;
+    ImGuiComboFlags_CustomPreview :: ComboFlags_CustomPreview;
+}
+
+// Extend ImGuiSliderFlags_
+SliderFlagsPrivate_ :: enum s32 {
+    SliderFlags_Vertical :: 1048576;
+    SliderFlags_ReadOnly :: 2097152;
+
+    ImGuiSliderFlags_Vertical :: SliderFlags_Vertical;
+    ImGuiSliderFlags_ReadOnly :: SliderFlags_ReadOnly;
+}
+
+// Extend ImGuiSelectableFlags_
+SelectableFlagsPrivate_ :: enum s32 {
+    SelectableFlags_NoHoldingActiveID    :: 1048576;
+    SelectableFlags_SelectOnNav          :: 2097152;
+    SelectableFlags_SelectOnClick        :: 4194304;
+    SelectableFlags_SelectOnRelease      :: 8388608;
+    SelectableFlags_SpanAvailWidth       :: 16777216;
+    SelectableFlags_SetNavIdOnHover      :: 33554432;
+    SelectableFlags_NoPadWithHalfSpacing :: 67108864;
+    SelectableFlags_NoSetKeyOwner        :: 134217728;
+
+    ImGuiSelectableFlags_NoHoldingActiveID    :: SelectableFlags_NoHoldingActiveID;
+    ImGuiSelectableFlags_SelectOnNav          :: SelectableFlags_SelectOnNav;
+    ImGuiSelectableFlags_SelectOnClick        :: SelectableFlags_SelectOnClick;
+    ImGuiSelectableFlags_SelectOnRelease      :: SelectableFlags_SelectOnRelease;
+    ImGuiSelectableFlags_SpanAvailWidth       :: SelectableFlags_SpanAvailWidth;
+    ImGuiSelectableFlags_SetNavIdOnHover      :: SelectableFlags_SetNavIdOnHover;
+    ImGuiSelectableFlags_NoPadWithHalfSpacing :: SelectableFlags_NoPadWithHalfSpacing;
+    ImGuiSelectableFlags_NoSetKeyOwner        :: SelectableFlags_NoSetKeyOwner;
+}
+
+// Extend ImGuiTreeNodeFlags_
+TreeNodeFlagsPrivate_ :: enum s32 {
+    TreeNodeFlags_ClipLabelForTrailingButton :: 1048576;
+    TreeNodeFlags_UpsideDownArrow            :: 2097152;
+
+    ImGuiTreeNodeFlags_ClipLabelForTrailingButton :: TreeNodeFlags_ClipLabelForTrailingButton;
+    ImGuiTreeNodeFlags_UpsideDownArrow            :: TreeNodeFlags_UpsideDownArrow;
+}
+
+SeparatorFlags :: enum_flags s32 {
+    None           :: 0x0;
+    Horizontal     :: 0x1;
+    Vertical       :: 0x2;
+    SpanAllColumns :: 0x4;
+
+    ImGuiSeparatorFlags_None           :: None;
+    ImGuiSeparatorFlags_Horizontal     :: Horizontal;
+    ImGuiSeparatorFlags_Vertical       :: Vertical;
+    ImGuiSeparatorFlags_SpanAllColumns :: SpanAllColumns;
+}
+
+// Flags for FocusWindow(). This is not called ImGuiFocusFlags to avoid confusion with public-facing ImGuiFocusedFlags.
+// FIXME: Once we finishing replacing more uses of GetTopMostPopupModal()+IsWindowWithinBeginStackOf()
+// and FindBlockingModal() with this, we may want to change the flag to be opt-out instead of opt-in.
+FocusRequestFlags :: enum_flags s32 {
+    None                :: 0x0;
+    RestoreFocusedChild :: 0x1;
+    UnlessBelowModal    :: 0x2;
+
+    ImGuiFocusRequestFlags_None                :: None;
+    ImGuiFocusRequestFlags_RestoreFocusedChild :: RestoreFocusedChild;
+    ImGuiFocusRequestFlags_UnlessBelowModal    :: UnlessBelowModal;
+}
+
+TextFlags :: enum_flags s32 {
+    None                       :: 0x0;
+    NoWidthForLargeClippedText :: 0x1;
+
+    ImGuiTextFlags_None                       :: None;
+    ImGuiTextFlags_NoWidthForLargeClippedText :: NoWidthForLargeClippedText;
+}
+
+TooltipFlags :: enum_flags s32 {
+    None             :: 0x0;
+    OverridePrevious :: 0x2;
+
+    ImGuiTooltipFlags_None             :: None;
+    ImGuiTooltipFlags_OverridePrevious :: OverridePrevious;
+}
+
+// FIXME: this is in development, not exposed/functional as a generic feature yet.
+// Horizontal/Vertical enums are fixed to 0/1 so they may be used to index ImVec2
+LayoutType :: enum s32 {
+    Horizontal :: 0;
+    Vertical   :: 1;
+
+    ImGuiLayoutType_Horizontal :: Horizontal;
+    ImGuiLayoutType_Vertical   :: Vertical;
+}
+
+LogType :: enum s32 {
+    None      :: 0;
+    TTY       :: 1;
+    File      :: 2;
+    Buffer    :: 3;
+    Clipboard :: 4;
+
+    ImGuiLogType_None      :: None;
+    ImGuiLogType_TTY       :: TTY;
+    ImGuiLogType_File      :: File;
+    ImGuiLogType_Buffer    :: Buffer;
+    ImGuiLogType_Clipboard :: Clipboard;
+}
+
+// X/Y enums are fixed to 0/1 so they may be used to index ImVec2
+Axis :: enum s32 {
+    None :: -1;
+    X    :: 0;
+    Y    :: 1;
+
+    ImGuiAxis_None :: None;
+    ImGuiAxis_X    :: X;
+    ImGuiAxis_Y    :: Y;
+}
+
+PlotType :: enum s32 {
+    Lines     :: 0;
+    Histogram :: 1;
+
+    ImGuiPlotType_Lines     :: Lines;
+    ImGuiPlotType_Histogram :: Histogram;
+}
+
+// Stacked color modifier, backup of modified data so we can restore it
+ColorMod :: struct {
+    Col_:        Col;
+    BackupValue: ImVec4;
+}
+
+// Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable.
+StyleMod :: struct {
+    VarIdx: StyleVar;
+    union {
+        BackupInt:   [2] s32;
+        BackupFloat: [2] float;
+    }
+}
+
+// Storage data for BeginComboPreview()/EndComboPreview()
+ComboPreviewData :: struct {
+    PreviewRect:                  ImRect;
+    BackupCursorPos:              ImVec2;
+    BackupCursorMaxPos:           ImVec2;
+    BackupCursorPosPrevLine:      ImVec2;
+    BackupPrevLineTextBaseOffset: float;
+    BackupLayout:                 LayoutType;
+}
+
+// Stacked storage data for BeginGroup()/EndGroup()
+GroupData :: struct {
+    WindowID:                           ID;
+    BackupCursorPos:                    ImVec2;
+    BackupCursorMaxPos:                 ImVec2;
+    BackupCursorPosPrevLine:            ImVec2;
+    BackupIndent:                       ImVec1;
+    BackupGroupOffset:                  ImVec1;
+    BackupCurrLineSize:                 ImVec2;
+    BackupCurrLineTextBaseOffset:       float;
+    BackupActiveIdIsAlive:              ID;
+    BackupActiveIdPreviousFrameIsAlive: bool;
+    BackupHoveredIdIsAlive:             bool;
+    BackupIsSameLine:                   bool;
+    EmitItem:                           bool;
+}
+
+// Simple column measurement, currently used for MenuItem() only.. This is very short-sighted/throw-away code and NOT a generic helper.
+MenuColumns :: struct {
+    TotalWidth:     ImU32;
+    NextTotalWidth: ImU32;
+    Spacing:        ImU16;
+    OffsetIcon:     ImU16; // Always zero for now
+    OffsetLabel:    ImU16; // Offsets are locked in Update()
+    OffsetShortcut: ImU16;
+    OffsetMark:     ImU16;
+    Widths:         [4] ImU16; // Width of:   Icon, Label, Shortcut, Mark  (accumulators for current frame)
+
+    Update :: (this: *MenuColumns, spacing: float, window_reappearing: bool) -> void #cpp_method #foreign imgui "?Update@ImGuiMenuColumns@@QEAAXM_N@Z";
+    DeclColumns :: (this: *MenuColumns, w_icon: float, w_label: float, w_shortcut: float, w_mark: float) -> float #cpp_method #foreign imgui "?DeclColumns@ImGuiMenuColumns@@QEAAMMMMM@Z";
+    CalcNextTotalWidth :: (this: *MenuColumns, update_offsets: bool) -> void #cpp_method #foreign imgui "?CalcNextTotalWidth@ImGuiMenuColumns@@QEAAX_N@Z";
+}
+
+// Internal temporary state for deactivating InputText() instances.
+InputTextDeactivatedState :: struct {
+    ID_:   ID; // widget id owning the text state (which just got deactivated)
+    TextA: ImVector(u8); // text buffer
+}
+
+// Internal state of the currently focused/edited text input box
+// For a given item ID, access with ImGui::GetInputTextState()
+InputTextState :: struct {
+    Ctx:                  *Context; // parent UI context (needs to be set explicitly by parent).
+    ID_:                  ID; // widget id owning the text state
+    CurLenW:              s32; // we need to maintain our buffer length in both UTF-8 and wchar format. UTF-8 length is valid even if TextA is not.
+    CurLenA:              s32; // we need to maintain our buffer length in both UTF-8 and wchar format. UTF-8 length is valid even if TextA is not.
+    TextW:                ImVector(ImWchar); // edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer. so we copy into own buffer.
+    TextA:                ImVector(u8); // temporary UTF8 buffer for callbacks and other operations. this is not updated in every code-path! size=capacity.
+    InitialTextA:         ImVector(u8); // value to revert to when pressing Escape = backup of end-user buffer at the time of focus (in UTF-8, unaltered)
+    TextAIsValid:         bool; // temporary UTF8 buffer is not initially valid before we make the widget active (until then we pull the data from user argument)
+    BufCapacityA:         s32; // end-user buffer capacity
+    ScrollX:              float; // horizontal scrolling/offset
+    Stb:                  ImStb.STB_TexteditState; // state for stb_textedit.h
+    CursorAnim:           float; // timer for cursor blink, reset on every user action so the cursor reappears immediately
+    CursorFollow:         bool; // set when we want scrolling to follow the current cursor position (not always!)
+    SelectedAllMouseLock: bool; // after a double-click to select all, we ignore further mouse drags to update selection
+    Edited:               bool; // edited this frame
+    Flags:                InputTextFlags; // copy of InputText() flags. may be used to check if e.g. ImGuiInputTextFlags_Password is set.
+    ReloadUserBuf:        bool; // force a reload of user buf so it may be modified externally. may be automatic in future version.
+    ReloadSelectionStart: s32; // POSITIONS ARE IN IMWCHAR units *NOT* UTF-8 this is why this is not exposed yet.
+    ReloadSelectionEnd:   s32;
+
+    OnKeyPressed :: (this: *InputTextState, key: s32) -> void #cpp_method #foreign imgui "?OnKeyPressed@ImGuiInputTextState@@QEAAXH@Z";
+}
+
+NextWindowDataFlags :: enum_flags s32 {
+    None              :: 0x0;
+    HasPos            :: 0x1;
+    HasSize           :: 0x2;
+    HasContentSize    :: 0x4;
+    HasCollapsed      :: 0x8;
+    HasSizeConstraint :: 0x10;
+    HasFocus          :: 0x20;
+    HasBgAlpha        :: 0x40;
+    HasScroll         :: 0x80;
+    HasChildFlags     :: 0x100;
+    HasViewport       :: 0x200;
+    HasDock           :: 0x400;
+    HasWindowClass    :: 0x800;
+
+    ImGuiNextWindowDataFlags_None              :: None;
+    ImGuiNextWindowDataFlags_HasPos            :: HasPos;
+    ImGuiNextWindowDataFlags_HasSize           :: HasSize;
+    ImGuiNextWindowDataFlags_HasContentSize    :: HasContentSize;
+    ImGuiNextWindowDataFlags_HasCollapsed      :: HasCollapsed;
+    ImGuiNextWindowDataFlags_HasSizeConstraint :: HasSizeConstraint;
+    ImGuiNextWindowDataFlags_HasFocus          :: HasFocus;
+    ImGuiNextWindowDataFlags_HasBgAlpha        :: HasBgAlpha;
+    ImGuiNextWindowDataFlags_HasScroll         :: HasScroll;
+    ImGuiNextWindowDataFlags_HasChildFlags     :: HasChildFlags;
+    ImGuiNextWindowDataFlags_HasViewport       :: HasViewport;
+    ImGuiNextWindowDataFlags_HasDock           :: HasDock;
+    ImGuiNextWindowDataFlags_HasWindowClass    :: HasWindowClass;
+}
+
+// Storage for SetNexWindow** functions
+NextWindowData :: struct {
+    Flags:                NextWindowDataFlags;
+    PosCond:              Cond;
+    SizeCond:             Cond;
+    CollapsedCond:        Cond;
+    DockCond:             Cond;
+    PosVal:               ImVec2;
+    PosPivotVal:          ImVec2;
+    SizeVal:              ImVec2;
+    ContentSizeVal:       ImVec2;
+    ScrollVal:            ImVec2;
+    ChildFlags_:          ChildFlags;
+    PosUndock:            bool;
+    CollapsedVal:         bool;
+    SizeConstraintRect:   ImRect;
+    SizeCallback_:        SizeCallback;
+    SizeCallbackUserData: *void;
+    BgAlphaVal:           float; // Override background alpha
+    ViewportId:           ID;
+    DockId:               ID;
+    WindowClass_:         WindowClass;
+    MenuBarOffsetMinVal:  ImVec2; // (Always on) This is not exposed publicly, so we don't clear it and it doesn't have a corresponding flag (could we? for consistency?)
+}
+
+// Multi-Selection item index or identifier when using SetNextItemSelectionUserData()/BeginMultiSelect()
+// (Most users are likely to use this store an item INDEX but this may be used to store a POINTER as well.)
+SelectionUserData :: ImS64;
+
+NextItemDataFlags :: enum_flags s32 {
+    None        :: 0x0;
+    HasWidth    :: 0x1;
+    HasOpen     :: 0x2;
+    HasShortcut :: 0x4;
+
+    ImGuiNextItemDataFlags_None        :: None;
+    ImGuiNextItemDataFlags_HasWidth    :: HasWidth;
+    ImGuiNextItemDataFlags_HasOpen     :: HasOpen;
+    ImGuiNextItemDataFlags_HasShortcut :: HasShortcut;
+}
+
+NextItemData :: struct {
+    Flags:              NextItemDataFlags;
+    ItemFlags_:         ItemFlags; // Currently only tested/used for ImGuiItemFlags_AllowOverlap.
+
+    SelectionUserData_: SelectionUserData; // Set by SetNextItemSelectionUserData() (note that NULL/0 is a valid value, we use -1 == ImGuiSelectionUserData_Invalid to mark invalid values)
+    Width:              float; // Set by SetNextItemWidth()
+    Shortcut:           KeyChord; // Set by SetNextItemShortcut()
+    OpenVal:            bool; // Set by SetNextItemOpen()
+    OpenCond:           u8;
+}
+
+// Status storage for the last submitted item
+LastItemData :: struct {
+    ID_:         ID;
+    InFlags:     ItemFlags; // See ImGuiItemFlags_
+    StatusFlags: ItemStatusFlags; // See ImGuiItemStatusFlags_
+    Rect:        ImRect; // Full rectangle
+    NavRect:     ImRect; // Navigation scoring rectangle (not displayed)
+
+    DisplayRect: ImRect; // Display rectangle (ONLY VALID IF ImGuiItemStatusFlags_HasDisplayRect is set)
+    ClipRect:    ImRect; // Clip rectangle at the time of submitting item (ONLY VALID IF ImGuiItemStatusFlags_HasClipRect is set)
+}
+
+// Store data emitted by TreeNode() for usage by TreePop() to implement ImGuiTreeNodeFlags_NavLeftJumpsBackHere.
+// This is the minimum amount of data that we need to perform the equivalent of NavApplyItemToResult() and which we can't infer in TreePop()
+// Only stored when the node is a potential candidate for landing on a Left arrow jump.
+NavTreeNodeData :: struct {
+    ID_:     ID;
+    InFlags: ItemFlags;
+    NavRect: ImRect;
+}
+
+StackSizes :: struct {
+    SizeOfIDStack:         s16;
+    SizeOfColorStack:      s16;
+    SizeOfStyleVarStack:   s16;
+    SizeOfFontStack:       s16;
+    SizeOfFocusScopeStack: s16;
+    SizeOfGroupStack:      s16;
+    SizeOfItemFlagsStack:  s16;
+    SizeOfBeginPopupStack: s16;
+    SizeOfDisabledStack:   s16;
+
+    SetToContextState :: (this: *StackSizes, ctx: *Context) -> void #cpp_method #foreign imgui "?SetToContextState@ImGuiStackSizes@@QEAAXPEAUImGuiContext@@@Z";
+    CompareWithContextState :: (this: *StackSizes, ctx: *Context) -> void #cpp_method #foreign imgui "?CompareWithContextState@ImGuiStackSizes@@QEAAXPEAUImGuiContext@@@Z";
+}
+
+// Data saved for each window pushed into the stack
+WindowStackData :: struct {
+    Window_:                  *Window;
+    ParentLastItemDataBackup: LastItemData;
+    StackSizesOnBegin:        StackSizes; // Store size of various stacks for asserting
+}
+
+ShrinkWidthItem :: struct {
+    Index:        s32;
+    Width:        float;
+    InitialWidth: float;
+}
+
+PtrOrIndex :: struct {
+    Ptr:   *void; // Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool.
+    Index: s32; // Usually index in a main pool.
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] Data types support
+//-----------------------------------------------------------------------------
+DataVarInfo :: struct {
+    Type:   DataType;
+    Count:  ImU32; // 1+
+    Offset: ImU32; // Offset in parent structure
+}
+
+DataTypeTempStorage :: struct {
+    Data: [8] ImU8; // Can fit any data up to ImGuiDataType_COUNT
+}
+
+// Type information associated to one ImGuiDataType. Retrieve with DataTypeGetInfo().
+DataTypeInfo :: struct {
+    Size:     u64; // Size in bytes
+    Name:     *u8; // Short descriptive name for the type, for debugging
+    PrintFmt: *u8; // Default printf format for the type
+    ScanFmt:  *u8; // Default scanf format for the type
+}
+
+// Extend ImGuiDataType_
+DataTypePrivate_ :: enum s32 {
+    DataType_String  :: 11;
+    DataType_Pointer :: 12;
+    DataType_ID      :: 13;
+
+    ImGuiDataType_String  :: DataType_String;
+    ImGuiDataType_Pointer :: DataType_Pointer;
+    ImGuiDataType_ID      :: DataType_ID;
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] Popup support
+//-----------------------------------------------------------------------------
+PopupPositionPolicy :: enum s32 {
+    Default  :: 0;
+    ComboBox :: 1;
+    Tooltip  :: 2;
+
+    ImGuiPopupPositionPolicy_Default  :: Default;
+    ImGuiPopupPositionPolicy_ComboBox :: ComboBox;
+    ImGuiPopupPositionPolicy_Tooltip  :: Tooltip;
+}
+
+// Storage for popup stacks (g.OpenPopupStack and g.BeginPopupStack)
+PopupData :: struct {
+    PopupId:         ID; // Set on OpenPopup()
+    Window_:         *Window; // Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()
+    BackupNavWindow: *Window; // Set on OpenPopup(), a NavWindow that will be restored on popup close
+    ParentNavLayer:  s32; // Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to -1 which is not part of an enum, but serves well-enough as "not any of layers" value
+    OpenFrameCount:  s32; // Set on OpenPopup()
+    OpenParentId:    ID; // Set on OpenPopup(), we need this to differentiate multiple menu sets from each others (e.g. inside menu bar vs loose menu items)
+    OpenPopupPos:    ImVec2; // Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)
+    OpenMousePos:    ImVec2; // Set on OpenPopup(), copy of mouse position at the time of opening popup
+}
+
+InputEventType :: enum s32 {
+    None          :: 0;
+    MousePos      :: 1;
+    MouseWheel    :: 2;
+    MouseButton   :: 3;
+    MouseViewport :: 4;
+    Key           :: 5;
+    Text          :: 6;
+    Focus         :: 7;
+    COUNT         :: 8;
+
+    ImGuiInputEventType_None          :: None;
+    ImGuiInputEventType_MousePos      :: MousePos;
+    ImGuiInputEventType_MouseWheel    :: MouseWheel;
+    ImGuiInputEventType_MouseButton   :: MouseButton;
+    ImGuiInputEventType_MouseViewport :: MouseViewport;
+    ImGuiInputEventType_Key           :: Key;
+    ImGuiInputEventType_Text          :: Text;
+    ImGuiInputEventType_Focus         :: Focus;
+    ImGuiInputEventType_COUNT         :: COUNT;
+}
+
+InputSource :: enum s32 {
+    None      :: 0;
+    Mouse     :: 1;
+    Keyboard  :: 2;
+    Gamepad   :: 3;
+    Clipboard :: 4;
+    COUNT     :: 5;
+
+    ImGuiInputSource_None      :: None;
+    ImGuiInputSource_Mouse     :: Mouse;
+    ImGuiInputSource_Keyboard  :: Keyboard;
+    ImGuiInputSource_Gamepad   :: Gamepad;
+    ImGuiInputSource_Clipboard :: Clipboard;
+    ImGuiInputSource_COUNT     :: COUNT;
+}
+
+// FIXME: Structures in the union below need to be declared as anonymous unions appears to be an extension?
+// Using ImVec2() would fail on Clang 'union member 'MousePos' has a non-trivial default constructor'
+InputEventMousePos :: struct {
+    PosX:         float;
+    PosY:         float;
+    MouseSource_: MouseSource;
+}
+InputEventMouseWheel :: struct {
+    WheelX:       float;
+    WheelY:       float;
+    MouseSource_: MouseSource;
+}
+InputEventMouseButton :: struct {
+    Button:       s32;
+    Down:         bool;
+    MouseSource_: MouseSource;
+}
+InputEventMouseViewport :: struct {
+    HoveredViewportID: ID;
+}
+InputEventKey :: struct {
+    Key_:        Key;
+    Down:        bool;
+    AnalogValue: float;
+}
+InputEventText :: struct {
+    Char: u32;
+}
+InputEventAppFocused :: struct {
+    Focused: bool;
+}
+
+InputEvent :: struct {
+    Type:              InputEventType;
+    Source:            InputSource;
+    EventId:           ImU32; // Unique, sequential increasing integer to identify an event (if you need to correlate them to other data).
+    union {
+        MousePos:      InputEventMousePos; // if Type == ImGuiInputEventType_MousePos
+        MouseWheel:    InputEventMouseWheel; // if Type == ImGuiInputEventType_MouseWheel
+        MouseButton:   InputEventMouseButton; // if Type == ImGuiInputEventType_MouseButton
+        MouseViewport: InputEventMouseViewport; // if Type == ImGuiInputEventType_MouseViewport
+        Key:           InputEventKey; // if Type == ImGuiInputEventType_Key
+        Text:          InputEventText; // if Type == ImGuiInputEventType_Text
+        AppFocused:    InputEventAppFocused; // if Type == ImGuiInputEventType_Focus
+    }
+
+    AddedByTestEngine: bool;
+}
+
+KeyRoutingIndex :: ImS16;
+
+// Routing table entry (sizeof() == 16 bytes)
+KeyRoutingData :: struct {
+    NextEntryIndex:   KeyRoutingIndex;
+    Mods:             ImU16; // Technically we'd only need 4-bits but for simplify we store ImGuiMod_ values which need 16-bits. ImGuiMod_Shortcut is already translated to Ctrl/Super.
+    RoutingCurrScore: ImU8; // [DEBUG] For debug display
+    RoutingNextScore: ImU8; // Lower is better (0: perfect score)
+    RoutingCurr:      ID;
+    RoutingNext:      ID;
+}
+
+// Routing table: maintain a desired owner for each possible key-chord (key + mods), and setup owner in NewFrame() when mods are matching.
+// Stored in main context (1 instance)
+KeyRoutingTable :: struct {
+    Index:       [154] KeyRoutingIndex; // Index of first entry in Entries[]
+    Entries:     ImVector(KeyRoutingData);
+    EntriesNext: ImVector(KeyRoutingData); // Double-buffer to avoid reallocation (could use a shared buffer)
+}
+
+// This extends ImGuiKeyData but only for named keys (legacy keys don't support the new features)
+// Stored in main context (1 per named key). In the future it might be merged into ImGuiKeyData.
+KeyOwnerData :: struct {
+    OwnerCurr:        ID;
+    OwnerNext:        ID;
+    LockThisFrame:    bool; // Reading this key requires explicit owner id (until end of frame). Set by ImGuiInputFlags_LockThisFrame.
+    LockUntilRelease: bool; // Reading this key requires explicit owner id (until key is released). Set by ImGuiInputFlags_LockUntilRelease. When this is true LockThisFrame is always true as well.
+}
+
+// Flags for extended versions of IsKeyPressed(), IsMouseClicked(), Shortcut(), SetKeyOwner(), SetItemKeyOwner()
+// Don't mistake with ImGuiInputTextFlags! (which is for ImGui::InputText() function)
+InputFlags :: enum_flags s32 {
+    None                             :: 0x0;
+
+    Repeat                           :: 0x1;
+    RepeatRateDefault                :: 0x2;
+    RepeatRateNavMove                :: 0x4;
+    RepeatRateNavTweak               :: 0x8;
+
+    RepeatUntilRelease               :: 0x10;
+    RepeatUntilKeyModsChange         :: 0x20;
+    RepeatUntilKeyModsChangeFromNone :: 0x40;
+    RepeatUntilOtherKeyPress         :: 0x80;
+
+    CondHovered                      :: 0x100;
+    CondActive                       :: 0x200;
+    CondDefault_                     :: 0x300;
+
+    LockThisFrame                    :: 0x400;
+    LockUntilRelease                 :: 0x800;
+
+    RouteFocused                     :: 0x1000;
+    RouteGlobalLow                   :: 0x2000;
+    RouteGlobal                      :: 0x4000;
+    RouteGlobalHigh                  :: 0x8000;
+    RouteAlways                      :: 0x10000;
+
+    RouteUnlessBgFocused             :: 0x20000;
+
+    RepeatRateMask_                  :: 0xe;
+    RepeatUntilMask_                 :: 0xf0;
+    RepeatMask_                      :: 0xff;
+    CondMask_                        :: 0x300;
+    RouteMask_                       :: 0xf000;
+    SupportedByIsKeyPressed          :: 0xff;
+    SupportedByIsMouseClicked        :: 0x1;
+    SupportedByShortcut              :: 0x3f0ff;
+    SupportedBySetKeyOwner           :: 0xc00;
+    SupportedBySetItemKeyOwner       :: 0xf00;
+
+    ImGuiInputFlags_None                             :: None;
+
+    ImGuiInputFlags_Repeat                           :: Repeat;
+    ImGuiInputFlags_RepeatRateDefault                :: RepeatRateDefault;
+    ImGuiInputFlags_RepeatRateNavMove                :: RepeatRateNavMove;
+    ImGuiInputFlags_RepeatRateNavTweak               :: RepeatRateNavTweak;
+
+    ImGuiInputFlags_RepeatUntilRelease               :: RepeatUntilRelease;
+    ImGuiInputFlags_RepeatUntilKeyModsChange         :: RepeatUntilKeyModsChange;
+    ImGuiInputFlags_RepeatUntilKeyModsChangeFromNone :: RepeatUntilKeyModsChangeFromNone;
+    ImGuiInputFlags_RepeatUntilOtherKeyPress         :: RepeatUntilOtherKeyPress;
+
+    ImGuiInputFlags_CondHovered                      :: CondHovered;
+    ImGuiInputFlags_CondActive                       :: CondActive;
+    ImGuiInputFlags_CondDefault_                     :: CondDefault_;
+
+    ImGuiInputFlags_LockThisFrame                    :: LockThisFrame;
+    ImGuiInputFlags_LockUntilRelease                 :: LockUntilRelease;
+
+    ImGuiInputFlags_RouteFocused                     :: RouteFocused;
+    ImGuiInputFlags_RouteGlobalLow                   :: RouteGlobalLow;
+    ImGuiInputFlags_RouteGlobal                      :: RouteGlobal;
+    ImGuiInputFlags_RouteGlobalHigh                  :: RouteGlobalHigh;
+    ImGuiInputFlags_RouteAlways                      :: RouteAlways;
+
+    ImGuiInputFlags_RouteUnlessBgFocused             :: RouteUnlessBgFocused;
+
+    ImGuiInputFlags_RepeatRateMask_                  :: RepeatRateMask_;
+    ImGuiInputFlags_RepeatUntilMask_                 :: RepeatUntilMask_;
+    ImGuiInputFlags_RepeatMask_                      :: RepeatMask_;
+    ImGuiInputFlags_CondMask_                        :: CondMask_;
+    ImGuiInputFlags_RouteMask_                       :: RouteMask_;
+    ImGuiInputFlags_SupportedByIsKeyPressed          :: SupportedByIsKeyPressed;
+    ImGuiInputFlags_SupportedByIsMouseClicked        :: SupportedByIsMouseClicked;
+    ImGuiInputFlags_SupportedByShortcut              :: SupportedByShortcut;
+    ImGuiInputFlags_SupportedBySetKeyOwner           :: SupportedBySetKeyOwner;
+    ImGuiInputFlags_SupportedBySetItemKeyOwner       :: SupportedBySetItemKeyOwner;
+}
+
+// Note that Max is exclusive, so perhaps should be using a Begin/End convention.
+ListClipperRange :: struct {
+    Min:                 s32;
+    Max:                 s32;
+    PosToIndexConvert:   bool; // Begin/End are absolute position (will be converted to indices later)
+    PosToIndexOffsetMin: ImS8; // Add to Min after converting to indices
+    PosToIndexOffsetMax: ImS8; // Add to Min after converting to indices
+}
+
+// Temporary clipper data, buffers shared/reused between instances
+ListClipperData :: struct {
+    ListClipper_:    *ListClipper;
+    LossynessOffset: float;
+    StepNo:          s32;
+    ItemsFrozen:     s32;
+    Ranges:          ImVector(ListClipperRange);
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] Navigation support
+//-----------------------------------------------------------------------------
+ActivateFlags_ :: enum_flags s32 {
+    None               :: 0x0;
+    PreferInput        :: 0x1;
+    PreferTweak        :: 0x2;
+    TryToPreserveState :: 0x4;
+    FromTabbing        :: 0x8;
+    FromShortcut       :: 0x10;
+
+    ImGuiActivateFlags_None               :: None;
+    ImGuiActivateFlags_PreferInput        :: PreferInput;
+    ImGuiActivateFlags_PreferTweak        :: PreferTweak;
+    ImGuiActivateFlags_TryToPreserveState :: TryToPreserveState;
+    ImGuiActivateFlags_FromTabbing        :: FromTabbing;
+    ImGuiActivateFlags_FromShortcut       :: FromShortcut;
+}
+
+// Early work-in-progress API for ScrollToItem()
+ScrollFlags :: enum_flags s32 {
+    None               :: 0x0;
+    KeepVisibleEdgeX   :: 0x1;
+    KeepVisibleEdgeY   :: 0x2;
+    KeepVisibleCenterX :: 0x4;
+    KeepVisibleCenterY :: 0x8;
+    AlwaysCenterX      :: 0x10;
+    AlwaysCenterY      :: 0x20;
+    NoScrollParent     :: 0x40;
+    MaskX_             :: 0x15;
+    MaskY_             :: 0x2a;
+
+    ImGuiScrollFlags_None               :: None;
+    ImGuiScrollFlags_KeepVisibleEdgeX   :: KeepVisibleEdgeX;
+    ImGuiScrollFlags_KeepVisibleEdgeY   :: KeepVisibleEdgeY;
+    ImGuiScrollFlags_KeepVisibleCenterX :: KeepVisibleCenterX;
+    ImGuiScrollFlags_KeepVisibleCenterY :: KeepVisibleCenterY;
+    ImGuiScrollFlags_AlwaysCenterX      :: AlwaysCenterX;
+    ImGuiScrollFlags_AlwaysCenterY      :: AlwaysCenterY;
+    ImGuiScrollFlags_NoScrollParent     :: NoScrollParent;
+    ImGuiScrollFlags_MaskX_             :: MaskX_;
+    ImGuiScrollFlags_MaskY_             :: MaskY_;
+}
+
+NavHighlightFlags :: enum_flags s32 {
+    None       :: 0x0;
+    Compact    :: 0x2;
+    AlwaysDraw :: 0x4;
+    NoRounding :: 0x8;
+
+    ImGuiNavHighlightFlags_None       :: None;
+    ImGuiNavHighlightFlags_Compact    :: Compact;
+    ImGuiNavHighlightFlags_AlwaysDraw :: AlwaysDraw;
+    ImGuiNavHighlightFlags_NoRounding :: NoRounding;
+}
+
+NavMoveFlags :: enum_flags s32 {
+    None                :: 0x0;
+    LoopX               :: 0x1;
+    LoopY               :: 0x2;
+    WrapX               :: 0x4;
+    WrapY               :: 0x8;
+    WrapMask_           :: 0xf;
+    AllowCurrentNavId   :: 0x10;
+    AlsoScoreVisibleSet :: 0x20;
+    ScrollToEdgeY       :: 0x40;
+    Forwarded           :: 0x80;
+    DebugNoResult       :: 0x100;
+    FocusApi            :: 0x200;
+    IsTabbing           :: 0x400;
+    IsPageMove          :: 0x800;
+    Activate            :: 0x1000;
+    NoSelect            :: 0x2000;
+    NoSetNavHighlight   :: 0x4000;
+
+    ImGuiNavMoveFlags_None                :: None;
+    ImGuiNavMoveFlags_LoopX               :: LoopX;
+    ImGuiNavMoveFlags_LoopY               :: LoopY;
+    ImGuiNavMoveFlags_WrapX               :: WrapX;
+    ImGuiNavMoveFlags_WrapY               :: WrapY;
+    ImGuiNavMoveFlags_WrapMask_           :: WrapMask_;
+    ImGuiNavMoveFlags_AllowCurrentNavId   :: AllowCurrentNavId;
+    ImGuiNavMoveFlags_AlsoScoreVisibleSet :: AlsoScoreVisibleSet;
+    ImGuiNavMoveFlags_ScrollToEdgeY       :: ScrollToEdgeY;
+    ImGuiNavMoveFlags_Forwarded           :: Forwarded;
+    ImGuiNavMoveFlags_DebugNoResult       :: DebugNoResult;
+    ImGuiNavMoveFlags_FocusApi            :: FocusApi;
+    ImGuiNavMoveFlags_IsTabbing           :: IsTabbing;
+    ImGuiNavMoveFlags_IsPageMove          :: IsPageMove;
+    ImGuiNavMoveFlags_Activate            :: Activate;
+    ImGuiNavMoveFlags_NoSelect            :: NoSelect;
+    ImGuiNavMoveFlags_NoSetNavHighlight   :: NoSetNavHighlight;
+}
+
+NavLayer :: enum s32 {
+    Main  :: 0;
+    Menu  :: 1;
+    COUNT :: 2;
+
+    ImGuiNavLayer_Main  :: Main;
+    ImGuiNavLayer_Menu  :: Menu;
+    ImGuiNavLayer_COUNT :: COUNT;
+}
+
+NavItemData :: struct {
+    Window_:            *Window; // Init,Move    // Best candidate window (result->ItemWindow->RootWindowForNav == request->Window)
+    ID_:                ID; // Init,Move    // Best candidate item ID
+    FocusScopeId:       ID; // Init,Move    // Best candidate focus scope ID
+    RectRel:            ImRect; // Init,Move    // Best candidate bounding box in window relative space
+    InFlags:            ItemFlags; // ????,Move    // Best candidate item flags
+    SelectionUserData_: SelectionUserData; //I+Mov    // Best candidate SetNextItemSelectionData() value.
+    DistBox:            float; //      Move    // Best candidate box distance to current NavId
+    DistCenter:         float; //      Move    // Best candidate center distance to current NavId
+    DistAxial:          float; //      Move    // Best candidate axial distance to current NavId
+}
+
+FocusScopeData :: struct {
+    ID_:      ID;
+    WindowID: ID;
+}
+
+// Flags for GetTypingSelectRequest()
+TypingSelectFlags :: enum_flags s32 {
+    None                :: 0x0;
+    AllowBackspace      :: 0x1;
+    AllowSingleCharMode :: 0x2;
+
+    ImGuiTypingSelectFlags_None                :: None;
+    ImGuiTypingSelectFlags_AllowBackspace      :: AllowBackspace;
+    ImGuiTypingSelectFlags_AllowSingleCharMode :: AllowSingleCharMode;
+}
+
+// Returned by GetTypingSelectRequest(), designed to eventually be public.
+TypingSelectRequest :: struct {
+    Flags:           TypingSelectFlags; // Flags passed to GetTypingSelectRequest()
+    SearchBufferLen: s32;
+    SearchBuffer:    *u8; // Search buffer contents (use full string. unless SingleCharMode is set, in which case use SingleCharSize).
+    SelectRequest:   bool; // Set when buffer was modified this frame, requesting a selection.
+    SingleCharMode:  bool; // Notify when buffer contains same character repeated, to implement special mode. In this situation it preferred to not display any on-screen search indication.
+    SingleCharSize:  ImS8; // Length in bytes of first letter codepoint (1 for ascii, 2-4 for UTF-8). If (SearchBufferLen==RepeatCharSize) only 1 letter has been input.
+}
+
+// Storage for GetTypingSelectRequest()
+TypingSelectState :: struct {
+    Request:            TypingSelectRequest; // User-facing data
+    SearchBuffer:       [64] u8; // Search buffer: no need to make dynamic as this search is very transient.
+    FocusScope:         ID;
+    LastRequestFrame:   s32 = 0;
+    LastRequestTime:    float = 0.0;
+    SingleCharModeLock  := false; // After a certain single char repeat count we lock into SingleCharMode. Two benefits: 1) buffer never fill, 2) we can provide an immediate SingleChar mode without timer elapsing.
+}
+
+// Flags for internal's BeginColumns(). This is an obsolete API. Prefer using BeginTable() nowadays!
+OldColumnFlags :: enum_flags s32 {
+    None                   :: 0x0;
+    NoBorder               :: 0x1;
+    NoResize               :: 0x2;
+    NoPreserveWidths       :: 0x4;
+    NoForceWithinWindow    :: 0x8;
+    GrowParentContentsSize :: 0x10;
+
+    ImGuiOldColumnFlags_None                   :: None;
+    ImGuiOldColumnFlags_NoBorder               :: NoBorder;
+    ImGuiOldColumnFlags_NoResize               :: NoResize;
+    ImGuiOldColumnFlags_NoPreserveWidths       :: NoPreserveWidths;
+    ImGuiOldColumnFlags_NoForceWithinWindow    :: NoForceWithinWindow;
+    ImGuiOldColumnFlags_GrowParentContentsSize :: GrowParentContentsSize;
+}
+
+OldColumnData :: struct {
+    OffsetNorm:             float; // Column start offset, normalized 0.0 (far left) -> 1.0 (far right)
+    OffsetNormBeforeResize: float;
+    Flags:                  OldColumnFlags; // Not exposed
+    ClipRect:               ImRect;
+}
+
+OldColumns :: struct {
+    ID_:                      ID;
+    Flags:                    OldColumnFlags;
+    IsFirstFrame:             bool;
+    IsBeingResized:           bool;
+    Current:                  s32;
+    Count:                    s32;
+    OffMinX:                  float; // Offsets from HostWorkRect.Min.x
+    OffMaxX:                  float; // Offsets from HostWorkRect.Min.x
+    LineMinY:                 float;
+    LineMaxY:                 float;
+    HostCursorPosY:           float; // Backup of CursorPos at the time of BeginColumns()
+    HostCursorMaxPosX:        float; // Backup of CursorMaxPos at the time of BeginColumns()
+    HostInitialClipRect:      ImRect; // Backup of ClipRect at the time of BeginColumns()
+    HostBackupClipRect:       ImRect; // Backup of ClipRect during PushColumnsBackground()/PopColumnsBackground()
+    HostBackupParentWorkRect: ImRect; //Backup of WorkRect at the time of BeginColumns()
+    Columns:                  ImVector(OldColumnData);
+    Splitter:                 ImDrawListSplitter;
+}
+
+// Extend ImGuiDockNodeFlags_
+DockNodeFlagsPrivate_ :: enum s32 {
+    DockNodeFlags_DockSpace                 :: 1024;
+    DockNodeFlags_CentralNode               :: 2048;
+    DockNodeFlags_NoTabBar                  :: 4096;
+    DockNodeFlags_HiddenTabBar              :: 8192;
+    DockNodeFlags_NoWindowMenuButton        :: 16384;
+    DockNodeFlags_NoCloseButton             :: 32768;
+    DockNodeFlags_NoResizeX                 :: 65536;
+    DockNodeFlags_NoResizeY                 :: 131072;
+    DockNodeFlags_DockedWindowsInFocusRoute :: 262144;
+
+    DockNodeFlags_NoDockingSplitOther       :: 524288;
+    DockNodeFlags_NoDockingOverMe           :: 1048576;
+    DockNodeFlags_NoDockingOverOther        :: 2097152;
+    DockNodeFlags_NoDockingOverEmpty        :: 4194304;
+    DockNodeFlags_NoDocking                 :: 7864336;
+
+    DockNodeFlags_SharedFlagsInheritMask_   :: -1;
+    DockNodeFlags_NoResizeFlagsMask_        :: 196640;
+
+    DockNodeFlags_LocalFlagsTransferMask_   :: 260208;
+    DockNodeFlags_SavedFlagsMask_           :: 261152;
+
+    ImGuiDockNodeFlags_DockSpace                 :: DockNodeFlags_DockSpace;
+    ImGuiDockNodeFlags_CentralNode               :: DockNodeFlags_CentralNode;
+    ImGuiDockNodeFlags_NoTabBar                  :: DockNodeFlags_NoTabBar;
+    ImGuiDockNodeFlags_HiddenTabBar              :: DockNodeFlags_HiddenTabBar;
+    ImGuiDockNodeFlags_NoWindowMenuButton        :: DockNodeFlags_NoWindowMenuButton;
+    ImGuiDockNodeFlags_NoCloseButton             :: DockNodeFlags_NoCloseButton;
+    ImGuiDockNodeFlags_NoResizeX                 :: DockNodeFlags_NoResizeX;
+    ImGuiDockNodeFlags_NoResizeY                 :: DockNodeFlags_NoResizeY;
+    ImGuiDockNodeFlags_DockedWindowsInFocusRoute :: DockNodeFlags_DockedWindowsInFocusRoute;
+
+    ImGuiDockNodeFlags_NoDockingSplitOther       :: DockNodeFlags_NoDockingSplitOther;
+    ImGuiDockNodeFlags_NoDockingOverMe           :: DockNodeFlags_NoDockingOverMe;
+    ImGuiDockNodeFlags_NoDockingOverOther        :: DockNodeFlags_NoDockingOverOther;
+    ImGuiDockNodeFlags_NoDockingOverEmpty        :: DockNodeFlags_NoDockingOverEmpty;
+    ImGuiDockNodeFlags_NoDocking                 :: DockNodeFlags_NoDocking;
+
+    ImGuiDockNodeFlags_SharedFlagsInheritMask_   :: DockNodeFlags_SharedFlagsInheritMask_;
+    ImGuiDockNodeFlags_NoResizeFlagsMask_        :: DockNodeFlags_NoResizeFlagsMask_;
+
+    ImGuiDockNodeFlags_LocalFlagsTransferMask_   :: DockNodeFlags_LocalFlagsTransferMask_;
+    ImGuiDockNodeFlags_SavedFlagsMask_           :: DockNodeFlags_SavedFlagsMask_;
+}
+
+// Store the source authority (dock node vs window) of a field
+DataAuthority_ :: enum s32 {
+    Auto     :: 0;
+    DockNode :: 1;
+    Window   :: 2;
+
+    ImGuiDataAuthority_Auto     :: Auto;
+    ImGuiDataAuthority_DockNode :: DockNode;
+    ImGuiDataAuthority_Window   :: Window;
+}
+
+DockNodeState :: enum s32 {
+    Unknown                                   :: 0;
+    HostWindowHiddenBecauseSingleWindow       :: 1;
+    HostWindowHiddenBecauseWindowsAreResizing :: 2;
+    HostWindowVisible                         :: 3;
+
+    ImGuiDockNodeState_Unknown                                   :: Unknown;
+    ImGuiDockNodeState_HostWindowHiddenBecauseSingleWindow       :: HostWindowHiddenBecauseSingleWindow;
+    ImGuiDockNodeState_HostWindowHiddenBecauseWindowsAreResizing :: HostWindowHiddenBecauseWindowsAreResizing;
+    ImGuiDockNodeState_HostWindowVisible                         :: HostWindowVisible;
+}
+
+// sizeof() 156~192
+DockNode :: struct {
+    ID_:                    ID;
+    SharedFlags:            DockNodeFlags; // (Write) Flags shared by all nodes of a same dockspace hierarchy (inherited from the root node)
+    LocalFlags:             DockNodeFlags; // (Write) Flags specific to this node
+    LocalFlagsInWindows:    DockNodeFlags; // (Write) Flags specific to this node, applied from windows
+    MergedFlags:            DockNodeFlags; // (Read)  Effective flags (== SharedFlags | LocalFlagsInNode | LocalFlagsInWindows)
+    State:                  DockNodeState;
+    ParentNode:             *DockNode;
+    ChildNodes:             [2] *DockNode; // [Split node only] Child nodes (left/right or top/bottom). Consider switching to an array.
+    Windows:                ImVector(*Window); // Note: unordered list! Iterate TabBar->Tabs for user-order.
+    TabBar_:                *TabBar;
+    Pos:                    ImVec2; // Current position
+    Size:                   ImVec2; // Current size
+    SizeRef:                ImVec2; // [Split node only] Last explicitly written-to size (overridden when using a splitter affecting the node), used to calculate Size.
+    SplitAxis:              Axis; // [Split node only] Split axis (X or Y)
+    WindowClass_:           WindowClass; // [Root node only]
+    LastBgColor:            ImU32;
+
+    HostWindow:             *Window;
+    VisibleWindow:          *Window; // Generally point to window which is ID is == SelectedTabID, but when CTRL+Tabbing this can be a different window.
+    CentralNode:            *DockNode; // [Root node only] Pointer to central node.
+    OnlyNodeWithWindows:    *DockNode; // [Root node only] Set when there is a single visible node within the hierarchy.
+    CountNodeWithWindows:   s32; // [Root node only]
+    LastFrameAlive:         s32; // Last frame number the node was updated or kept alive explicitly with DockSpace() + ImGuiDockNodeFlags_KeepAliveOnly
+    LastFrameActive:        s32; // Last frame number the node was updated.
+    LastFrameFocused:       s32; // Last frame number the node was focused.
+    LastFocusedNodeId:      ID; // [Root node only] Which of our child docking node (any ancestor in the hierarchy) was last focused.
+    SelectedTabId:          ID; // [Leaf node only] Which of our tab/window is selected.
+    WantCloseTabId:         ID; // [Leaf node only] Set when closing a specific tab/window.
+    RefViewportId:          ID; // Reference viewport ID from visible window when HostWindow == NULL.
+    AuthorityForPos:        u16;
+    #place AuthorityForPos; /*bitfield 3*/ AuthorityForSize:       u16;
+    #place AuthorityForPos; /*bitfield 6*/ AuthorityForViewport:   u16;
+    IsVisible:              bool; // Set to false when the node is hidden (usually disabled as it has no active window)
+    #place IsVisible; /*bitfield 1*/ IsFocused:              bool;
+    #place IsVisible; /*bitfield 2*/ IsBgDrawnThisFrame:     bool;
+    #place IsVisible; /*bitfield 3*/ HasCloseButton:         bool; // Provide space for a close button (if any of the docked window has one). Note that button may be hidden on window without one.
+    #place IsVisible; /*bitfield 4*/ HasWindowMenuButton:    bool;
+    #place IsVisible; /*bitfield 5*/ HasCentralNodeChild:    bool;
+    #place IsVisible; /*bitfield 6*/ WantCloseAll:           bool; // Set when closing all tabs at once.
+    #place IsVisible; /*bitfield 7*/ WantLockSizeOnce:       bool;
+    WantMouseMove:          bool; // After a node extraction we need to transition toward moving the newly created host window
+    #place WantMouseMove; /*bitfield 1*/ WantHiddenTabBarUpdate: bool;
+    #place WantMouseMove; /*bitfield 2*/ WantHiddenTabBarToggle: bool;
+
+    Constructor :: (this: *DockNode, id: ID) -> void #cpp_method #foreign imgui "??0ImGuiDockNode@@QEAA@I@Z";
+    Destructor :: (this: *DockNode) -> void #cpp_method #foreign imgui "??1ImGuiDockNode@@QEAA@XZ";
+}
+
+// List of colors that are stored at the time of Begin() into Docked Windows.
+// We currently store the packed colors in a simple array window->DockStyle.Colors[].
+// A better solution may involve appending into a log of colors in ImGuiContext + store offsets into those arrays in ImGuiWindow,
+// but it would be more complex as we'd need to double-buffer both as e.g. drop target may refer to window from last frame.
+WindowDockStyleCol :: enum s32 {
+    Text               :: 0;
+    Tab                :: 1;
+    TabHovered         :: 2;
+    TabActive          :: 3;
+    TabUnfocused       :: 4;
+    TabUnfocusedActive :: 5;
+    COUNT              :: 6;
+
+    ImGuiWindowDockStyleCol_Text               :: Text;
+    ImGuiWindowDockStyleCol_Tab                :: Tab;
+    ImGuiWindowDockStyleCol_TabHovered         :: TabHovered;
+    ImGuiWindowDockStyleCol_TabActive          :: TabActive;
+    ImGuiWindowDockStyleCol_TabUnfocused       :: TabUnfocused;
+    ImGuiWindowDockStyleCol_TabUnfocusedActive :: TabUnfocusedActive;
+    ImGuiWindowDockStyleCol_COUNT              :: COUNT;
+}
+
+WindowDockStyle :: struct {
+    Colors: [6] ImU32;
+}
+
+DockContext :: struct {
+    Nodes:           Storage; // Map ID -> ImGuiDockNode*: Active nodes
+    Requests:        ImVector(DockRequest);
+    NodesSettings:   ImVector(DockNodeSettings);
+    WantFullRebuild: bool;
+}
+
+// ImGuiViewport Private/Internals fields (cardinal sin: we are using inheritance!)
+// Every instance of ImGuiViewport is in fact a ImGuiViewportP.
+ViewportP :: struct {
+    #as using imguiviewport: Viewport;
+
+    Window_:                 *Window; // Set when the viewport is owned by a window (and ImGuiViewportFlags_CanHostOtherWindows is NOT set)
+    Idx:                     s32;
+    LastFrameActive:         s32; // Last frame number this viewport was activated by a window
+    LastFocusedStampCount:   s32; // Last stamp number from when a window hosted by this viewport was focused (by comparing this value between two viewport we have an implicit viewport z-order we use as fallback)
+    LastNameHash:            ID;
+    LastPos:                 ImVec2;
+    Alpha:                   float; // Window opacity (when dragging dockable windows/viewports we make them transparent)
+    LastAlpha:               float;
+    LastFocusedHadNavWindow: bool; // Instead of maintaining a LastFocusedWindow (which may harder to correctly maintain), we merely store weither NavWindow != NULL last time the viewport was focused.
+    PlatformMonitor:         s16;
+    BgFgDrawListsLastFrame:  [2] s32; // Last frame number the background (0) and foreground (1) draw lists were used
+    BgFgDrawLists:           [2] *ImDrawList; // Convenience background (0) and foreground (1) draw lists. We use them to draw software mouser cursor when io.MouseDrawCursor is set and to draw most debug overlays.
+    DrawDataP:               ImDrawData;
+    DrawDataBuilder:         ImDrawDataBuilder; // Temporary data while building final ImDrawData
+    LastPlatformPos:         ImVec2;
+    LastPlatformSize:        ImVec2;
+    LastRendererSize:        ImVec2;
+    WorkOffsetMin:           ImVec2; // Work Area: Offset from Pos to top-left corner of Work Area. Generally (0,0) or (0,+main_menu_bar_height). Work Area is Full Area but without menu-bars/status-bars (so WorkArea always fit inside Pos/Size!)
+    WorkOffsetMax:           ImVec2; // Work Area: Offset from Pos+Size to bottom-right corner of Work Area. Generally (0,0) or (0,-status_bar_height).
+    BuildWorkOffsetMin:      ImVec2; // Work Area: Offset being built during current frame. Generally >= 0.0f.
+    BuildWorkOffsetMax:      ImVec2; // Work Area: Offset being built during current frame. Generally <= 0.0f.
+}
+
+// Windows data saved in imgui.ini file
+// Because we never destroy or rename ImGuiWindowSettings, we can store the names in a separate buffer easily.
+// (this is designed to be stored in a ImChunkStream buffer, with the variable-length Name following our structure)
+WindowSettings :: struct {
+    ID_:         ID;
+    Pos:         ImVec2ih; // NB: Settings position are stored RELATIVE to the viewport! Whereas runtime ones are absolute positions.
+    Size:        ImVec2ih;
+    ViewportPos: ImVec2ih;
+    ViewportId:  ID;
+    DockId:      ID; // ID of last known DockNode (even if the DockNode is invisible because it has only 1 active window), or 0 if none.
+    ClassId:     ID; // ID of window class if specified
+    DockOrder:   s16; // Order of the last time the window was visible within its DockNode. This is used to reorder windows that are reappearing on the same frame. Same value between windows that were active and windows that were none are possible.
+    Collapsed:   bool;
+    IsChild:     bool;
+    WantApply:   bool; // Set when loaded from .ini data (to enable merging/loading .ini data into an already running context)
+    WantDelete:  bool; // Set to invalidate/delete the settings entry
+}
+
+SettingsHandler :: struct {
+    TypeName:   *u8; // Short description stored in .ini file. Disallowed characters: '[' ']'
+    TypeHash:   ID; // == ImHashStr(TypeName)
+    ClearAllFn: #type (ctx: *Context, handler: *SettingsHandler) -> void #c_call; // Clear all settings data
+    ReadInitFn: #type (ctx: *Context, handler: *SettingsHandler) -> void #c_call; // Read: Called before reading (in registration order)
+    ReadOpenFn: #type (ctx: *Context, handler: *SettingsHandler, name: *u8) -> *void #c_call; // Read: Called when entering into a new ini entry e.g. "[Window][Name]"
+    ReadLineFn: #type (ctx: *Context, handler: *SettingsHandler, entry: *void, line: *u8) -> void #c_call; // Read: Called for every line of text within an ini entry
+    ApplyAllFn: #type (ctx: *Context, handler: *SettingsHandler) -> void #c_call; // Read: Called after reading (in registration order)
+    WriteAllFn: #type (ctx: *Context, handler: *SettingsHandler, out_buf: *TextBuffer) -> void #c_call; // Write: Output every entries into 'out_buf'
+    UserData:   *void;
+}
+
+LocEntry :: struct {
+    Key:  LocKey;
+    Text: *u8;
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] Metrics, Debug Tools
+//-----------------------------------------------------------------------------
+DebugLogFlags_ :: enum_flags s32 {
+    None               :: 0x0;
+    EventActiveId      :: 0x1;
+    EventFocus         :: 0x2;
+    EventPopup         :: 0x4;
+    EventNav           :: 0x8;
+    EventClipper       :: 0x10;
+    EventSelection     :: 0x20;
+    EventIO            :: 0x40;
+    EventInputRouting  :: 0x80;
+    EventDocking       :: 0x100;
+    EventViewport      :: 0x200;
+
+    EventMask_         :: 0x3ff;
+    OutputToTTY        :: 0x100000;
+    OutputToTestEngine :: 0x200000;
+
+    ImGuiDebugLogFlags_None               :: None;
+    ImGuiDebugLogFlags_EventActiveId      :: EventActiveId;
+    ImGuiDebugLogFlags_EventFocus         :: EventFocus;
+    ImGuiDebugLogFlags_EventPopup         :: EventPopup;
+    ImGuiDebugLogFlags_EventNav           :: EventNav;
+    ImGuiDebugLogFlags_EventClipper       :: EventClipper;
+    ImGuiDebugLogFlags_EventSelection     :: EventSelection;
+    ImGuiDebugLogFlags_EventIO            :: EventIO;
+    ImGuiDebugLogFlags_EventInputRouting  :: EventInputRouting;
+    ImGuiDebugLogFlags_EventDocking       :: EventDocking;
+    ImGuiDebugLogFlags_EventViewport      :: EventViewport;
+
+    ImGuiDebugLogFlags_EventMask_         :: EventMask_;
+    ImGuiDebugLogFlags_OutputToTTY        :: OutputToTTY;
+    ImGuiDebugLogFlags_OutputToTestEngine :: OutputToTestEngine;
+}
+
+DebugAllocEntry :: struct {
+    FrameCount: s32;
+    AllocCount: ImS16;
+    FreeCount:  ImS16;
+}
+
+DebugAllocInfo :: struct {
+    TotalAllocCount: s32; // Number of call to MemAlloc().
+    TotalFreeCount:  s32;
+    LastEntriesIdx:  ImS16; // Current index in buffer
+    LastEntriesBuf:  [6] DebugAllocEntry; // Track last 6 frames that had allocations
+}
+
+MetricsConfig :: struct {
+    ShowDebugLog                  := false;
+    ShowIDStackTool               := false;
+    ShowWindowsRects              := false;
+    ShowWindowsBeginOrder         := false;
+    ShowTablesRects               := false;
+    ShowDrawCmdMesh               := true;
+    ShowDrawCmdBoundingBoxes      := true;
+    ShowTextEncodingViewer        := false;
+    ShowAtlasTintedWithTextColor  := false;
+    ShowDockingNodes              := false;
+    ShowWindowsRectsType:         s32 = -1;
+    ShowTablesRectsType:          s32 = -1;
+    HighlightMonitorIdx:          s32 = -1;
+    HighlightViewportID:          ID = 0;
+}
+
+StackLevelInfo :: struct {
+    ID_:             ID;
+    QueryFrameCount: ImS8; // >= 1: Query in progress
+    QuerySuccess:    bool; // Obtained result from DebugHookIdInfo()
+    DataType:        u8;
+    Desc:            [57] u8 #align 4; // Arbitrarily sized buffer to hold a result (FIXME: could replace Results[] with a chunk stream?) FIXME: Now that we added CTRL+C this should be fixed.
+}
+
+// State for ID Stack tool queries
+IDStackTool :: struct {
+    LastActiveFrame:         s32;
+    StackLevel:              s32; // -1: query stack and resize Results, >= 0: individual stack level
+    QueryId:                 ID; // ID to query details for
+    Results:                 ImVector(StackLevelInfo);
+    CopyToClipboardOnCtrlC:  bool;
+    CopyToClipboardLastTime: float;
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] Generic context hooks
+//-----------------------------------------------------------------------------
+ContextHookCallback :: #type (ctx: *Context, hook: *ContextHook) -> void #c_call;
+ContextHookType :: enum s32 {
+    NewFramePre     :: 0;
+    NewFramePost    :: 1;
+    EndFramePre     :: 2;
+    EndFramePost    :: 3;
+    RenderPre       :: 4;
+    RenderPost      :: 5;
+    Shutdown        :: 6;
+    PendingRemoval_ :: 7;
+    ImGuiContextHookType_NewFramePre     :: NewFramePre;
+    ImGuiContextHookType_NewFramePost    :: NewFramePost;
+    ImGuiContextHookType_EndFramePre     :: EndFramePre;
+    ImGuiContextHookType_EndFramePost    :: EndFramePost;
+    ImGuiContextHookType_RenderPre       :: RenderPre;
+    ImGuiContextHookType_RenderPost      :: RenderPost;
+    ImGuiContextHookType_Shutdown        :: Shutdown;
+    ImGuiContextHookType_PendingRemoval_ :: PendingRemoval_;
+}
+
+ContextHook :: struct {
+    HookId:   ID; // A unique ID assigned by AddContextHook()
+    Type:     ContextHookType;
+    Owner:    ID;
+    Callback: ContextHookCallback;
+    UserData: *void;
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] ImGuiContext (main Dear ImGui context)
+//-----------------------------------------------------------------------------
+Context :: struct #type_info_none {
+    Initialized:                              bool;
+    FontAtlasOwnedByContext:                  bool; // IO.Fonts-> is owned by the ImGuiContext and will be destructed along with it.
+    IO_:                                      IO;
+    PlatformIO_:                              PlatformIO;
+    Style_:                                   Style;
+    ConfigFlagsCurrFrame:                     ConfigFlags; // = g.IO.ConfigFlags at the time of NewFrame()
+    ConfigFlagsLastFrame:                     ConfigFlags;
+    Font:                                     *ImFont; // (Shortcut) == FontStack.empty() ? IO.Font : FontStack.back()
+    FontSize:                                 float; // (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize(). Text height for current window.
+    FontBaseSize:                             float; // (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Base text height.
+    DrawListSharedData:                       ImDrawListSharedData;
+    Time:                                     float64;
+    FrameCount:                               s32;
+    FrameCountEnded:                          s32;
+    FrameCountPlatformEnded:                  s32;
+    FrameCountRendered:                       s32;
+    WithinFrameScope:                         bool; // Set by NewFrame(), cleared by EndFrame()
+    WithinFrameScopeWithImplicitWindow:       bool; // Set by NewFrame(), cleared by EndFrame() when the implicit debug window has been pushed
+    WithinEndChild:                           bool; // Set within EndChild()
+    GcCompactAll:                             bool; // Request full GC
+    TestEngineHookItems:                      bool; // Will call test engine hooks: ImGuiTestEngineHook_ItemAdd(), ImGuiTestEngineHook_ItemInfo(), ImGuiTestEngineHook_Log()
+    TestEngine:                               *void; // Test engine user data
+
+    InputEventsQueue:                         ImVector(InputEvent); // Input events which will be trickled/written into IO structure.
+    InputEventsTrail:                         ImVector(InputEvent); // Past input events processed in NewFrame(). This is to allow domain-specific application to access e.g mouse/pen trail.
+    InputEventsNextMouseSource:               MouseSource;
+    InputEventsNextEventId:                   ImU32;
+
+    Windows:                                  ImVector(*Window); // Windows, sorted in display order, back to front
+    WindowsFocusOrder:                        ImVector(*Window); // Root windows, sorted in focus order, back to front.
+    WindowsTempSortBuffer:                    ImVector(*Window); // Temporary buffer used in EndFrame() to reorder windows so parents are kept before their child
+    CurrentWindowStack:                       ImVector(WindowStackData);
+    WindowsById:                              Storage; // Map window's ImGuiID to ImGuiWindow*
+    WindowsActiveCount:                       s32; // Number of unique windows submitted by frame
+    WindowsHoverPadding:                      ImVec2; // Padding around resizable windows for which hovering on counts as hovering the window == ImMax(style.TouchExtraPadding, WINDOWS_HOVER_PADDING)
+    DebugBreakInWindow:                       ID; // Set to break in Begin() call.
+    CurrentWindow:                            *Window; // Window being drawn into
+    HoveredWindow:                            *Window; // Window the mouse is hovering. Will typically catch mouse inputs.
+    HoveredWindowUnderMovingWindow:           *Window; // Hovered window ignoring MovingWindow. Only set if MovingWindow is set.
+    MovingWindow:                             *Window; // Track the window we clicked on (in order to preserve focus). The actual window that is moved is generally MovingWindow->RootWindowDockTree.
+    WheelingWindow:                           *Window; // Track the window we started mouse-wheeling on. Until a timer elapse or mouse has moved, generally keep scrolling the same window even if during the course of scrolling the mouse ends up hovering a child window.
+    WheelingWindowRefMousePos:                ImVec2;
+    WheelingWindowStartFrame:                 s32; // This may be set one frame before WheelingWindow is != NULL
+    WheelingWindowScrolledFrame:              s32;
+    WheelingWindowReleaseTimer:               float;
+    WheelingWindowWheelRemainder:             ImVec2;
+    WheelingAxisAvg:                          ImVec2;
+
+    DebugHookIdInfo:                          ID; // Will call core hooks: DebugHookIdInfo() from GetID functions, used by ID Stack Tool [next HoveredId/ActiveId to not pull in an extra cache-line]
+    HoveredId:                                ID; // Hovered widget, filled during the frame
+    HoveredIdPreviousFrame:                   ID;
+    HoveredIdAllowOverlap:                    bool;
+    HoveredIdDisabled:                        bool; // At least one widget passed the rect test, but has been discarded by disabled flag or popup inhibit. May be true even if HoveredId == 0.
+    HoveredIdTimer:                           float; // Measure contiguous hovering time
+    HoveredIdNotActiveTimer:                  float; // Measure contiguous hovering time where the item has not been active
+    ActiveId:                                 ID; // Active widget
+    ActiveIdIsAlive:                          ID; // Active widget has been seen this frame (we can't use a bool as the ActiveId may change within the frame)
+    ActiveIdTimer:                            float;
+    ActiveIdIsJustActivated:                  bool; // Set at the time of activation for one frame
+    ActiveIdAllowOverlap:                     bool; // Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)
+    ActiveIdNoClearOnFocusLoss:               bool; // Disable losing active id if the active id window gets unfocused.
+    ActiveIdHasBeenPressedBefore:             bool; // Track whether the active id led to a press (this is to allow changing between PressOnClick and PressOnRelease without pressing twice). Used by range_select branch.
+    ActiveIdHasBeenEditedBefore:              bool; // Was the value associated to the widget Edited over the course of the Active state.
+    ActiveIdHasBeenEditedThisFrame:           bool;
+    ActiveIdFromShortcut:                     bool;
+    ActiveIdMouseButton:                      u8;
+    ActiveIdClickOffset:                      ImVec2; // Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior)
+    ActiveIdWindow:                           *Window;
+    ActiveIdSource:                           InputSource; // Activating source: ImGuiInputSource_Mouse OR ImGuiInputSource_Keyboard OR ImGuiInputSource_Gamepad
+    ActiveIdPreviousFrame:                    ID;
+    ActiveIdPreviousFrameIsAlive:             bool;
+    ActiveIdPreviousFrameHasBeenEditedBefore: bool;
+    ActiveIdPreviousFrameWindow:              *Window;
+    LastActiveId:                             ID; // Store the last non-zero ActiveId, useful for animation.
+    LastActiveIdTimer:                        float; // Store the last non-zero ActiveId timer since the beginning of activation, useful for animation.
+
+    LastKeyModsChangeTime:                    float64; // Record the last time key mods changed (affect repeat delay when using shortcut logic)
+    LastKeyModsChangeFromNoneTime:            float64; // Record the last time key mods changed away from being 0 (affect repeat delay when using shortcut logic)
+    LastKeyboardKeyPressTime:                 float64; // Record the last time a keyboard key (ignore mouse/gamepad ones) was pressed.
+    KeysMayBeCharInput:                       ImBitArrayForNamedKeys; // Lookup to tell if a key can emit char input, see IsKeyChordPotentiallyCharInput(). sizeof() = 20 bytes
+    KeysOwnerData:                            [154] KeyOwnerData;
+    KeysRoutingTable:                         KeyRoutingTable;
+    ActiveIdUsingNavDirMask:                  ImU32; // Active widget will want to read those nav move requests (e.g. can activate a button and move away from it)
+    ActiveIdUsingAllKeyboardKeys:             bool; // Active widget will want to read all keyboard keys inputs. (FIXME: This is a shortcut for not taking ownership of 100+ keys but perhaps best to not have the inconsistency)
+    DebugBreakInShortcutRouting:              KeyChord; // Set to break in SetShortcutRouting()/Shortcut() calls.
+
+    ActiveIdUsingNavInputMask:                ImU32; // If you used this. Since (IMGUI_VERSION_NUM >= 18804) : 'g.ActiveIdUsingNavInputMask |= (1 << ImGuiNavInput_Cancel);' becomes 'SetKeyOwner(ImGuiKey_Escape, g.ActiveId) and/or SetKeyOwner(ImGuiKey_NavGamepadCancel, g.ActiveId);'
+
+    CurrentFocusScopeId:                      ID; // Value for currently appending items == g.FocusScopeStack.back(). Not to be mistaken with g.NavFocusScopeId.
+    CurrentItemFlags:                         ItemFlags; // Value for currently appending items == g.ItemFlagsStack.back()
+    DebugLocateId:                            ID; // Storage for DebugLocateItemOnHover() feature: this is read by ItemAdd() so we keep it in a hot/cached location
+    NextItemData_:                            NextItemData; // Storage for SetNextItem** functions
+    LastItemData_:                            LastItemData; // Storage for last submitted item (setup by ItemAdd)
+    NextWindowData_:                          NextWindowData; // Storage for SetNextWindow** functions
+    DebugShowGroupRects:                      bool;
+
+    DebugFlashStyleColorIdx:                  Col; // (Keep close to ColorStack to share cache line)
+    ColorStack:                               ImVector(ColorMod); // Stack for PushStyleColor()/PopStyleColor() - inherited by Begin()
+    StyleVarStack:                            ImVector(StyleMod); // Stack for PushStyleVar()/PopStyleVar() - inherited by Begin()
+    FontStack:                                ImVector(*ImFont); // Stack for PushFont()/PopFont() - inherited by Begin()
+    FocusScopeStack:                          ImVector(FocusScopeData); // Stack for PushFocusScope()/PopFocusScope() - inherited by BeginChild(), pushed into by Begin()
+    ItemFlagsStack:                           ImVector(ItemFlags); // Stack for PushItemFlag()/PopItemFlag() - inherited by Begin()
+    GroupStack:                               ImVector(GroupData); // Stack for BeginGroup()/EndGroup() - not inherited by Begin()
+    OpenPopupStack:                           ImVector(PopupData); // Which popups are open (persistent)
+    BeginPopupStack:                          ImVector(PopupData); // Which level of BeginPopup() we are in (reset every frame)
+    NavTreeNodeStack:                         ImVector(NavTreeNodeData); // Stack for TreeNode() when a NavLeft requested is emitted.
+
+    Viewports:                                ImVector(*ViewportP); // Active viewports (always 1+, and generally 1 unless multi-viewports are enabled). Each viewports hold their copy of ImDrawData.
+    CurrentDpiScale:                          float; // == CurrentViewport->DpiScale
+    CurrentViewport:                          *ViewportP; // We track changes of viewport (happening in Begin) so we can call Platform_OnChangedViewport()
+    MouseViewport:                            *ViewportP;
+    MouseLastHoveredViewport:                 *ViewportP; // Last known viewport that was hovered by mouse (even if we are not hovering any viewport any more) + honoring the _NoInputs flag.
+    PlatformLastFocusedViewportId:            ID;
+    FallbackMonitor:                          PlatformMonitor; // Virtual monitor used as fallback if backend doesn't provide monitor information.
+    PlatformMonitorsFullWorkRect:             ImRect; // Bounding box of all platform monitors
+    ViewportCreatedCount:                     s32; // Unique sequential creation counter (mostly for testing/debugging)
+    PlatformWindowsCreatedCount:              s32; // Unique sequential creation counter (mostly for testing/debugging)
+    ViewportFocusedStampCount:                s32; // Every time the front-most window changes, we stamp its viewport with an incrementing counter
+
+    NavWindow:                                *Window; // Focused window for navigation. Could be called 'FocusedWindow'
+    NavId:                                    ID; // Focused item for navigation
+    NavFocusScopeId:                          ID; // Focused focus scope (e.g. selection code often wants to "clear other items" when landing on an item of the same scope)
+    NavFocusRoute:                            ImVector(FocusScopeData); // Reversed copy focus scope stack for NavId (should contains NavFocusScopeId). This essentially follow the window->ParentWindowForFocusRoute chain.
+    NavActivateId:                            ID; // ~~ (g.ActiveId == 0) && (IsKeyPressed(ImGuiKey_Space) || IsKeyDown(ImGuiKey_Enter) || IsKeyPressed(ImGuiKey_NavGamepadActivate)) ? NavId : 0, also set when calling ActivateItem()
+    NavActivateDownId:                        ID; // ~~ IsKeyDown(ImGuiKey_Space) || IsKeyDown(ImGuiKey_Enter) || IsKeyDown(ImGuiKey_NavGamepadActivate) ? NavId : 0
+    NavActivatePressedId:                     ID; // ~~ IsKeyPressed(ImGuiKey_Space) || IsKeyPressed(ImGuiKey_Enter) || IsKeyPressed(ImGuiKey_NavGamepadActivate) ? NavId : 0 (no repeat)
+    NavActivateFlags:                         ActivateFlags;
+    NavHighlightActivatedId:                  ID;
+    NavHighlightActivatedTimer:               float;
+    NavJustMovedToId:                         ID; // Just navigated to this id (result of a successfully MoveRequest).
+    NavJustMovedToFocusScopeId:               ID; // Just navigated to this focus scope id (result of a successfully MoveRequest).
+    NavJustMovedToKeyMods:                    KeyChord;
+    NavNextActivateId:                        ID; // Set by ActivateItem(), queued until next frame.
+    NavNextActivateFlags:                     ActivateFlags;
+    NavInputSource:                           InputSource; // Keyboard or Gamepad mode? THIS CAN ONLY BE ImGuiInputSource_Keyboard or ImGuiInputSource_Mouse
+    NavLayer_:                                NavLayer; // Layer we are navigating on. For now the system is hard-coded for 0=main contents and 1=menu/title bar, may expose layers later.
+    NavLastValidSelectionUserData:            SelectionUserData; // Last valid data passed to SetNextItemSelectionUser(), or -1. For current window. Not reset when focusing an item that doesn't have selection data.
+    NavIdIsAlive:                             bool; // Nav widget has been seen this frame ~~ NavRectRel is valid
+    NavMousePosDirty:                         bool; // When set we will update mouse position if (io.ConfigFlags & ImGuiConfigFlags_NavEnableSetMousePos) if set (NB: this not enabled by default)
+    NavDisableHighlight:                      bool; // When user starts using mouse, we hide gamepad/keyboard highlight (NB: but they are still available, which is why NavDisableHighlight isn't always != NavDisableMouseHover)
+    NavDisableMouseHover:                     bool; // When user starts using gamepad/keyboard, we hide mouse hovering highlight until mouse is touched again.
+
+    NavAnyRequest:                            bool; // ~~ NavMoveRequest || NavInitRequest this is to perform early out in ItemAdd()
+    NavInitRequest:                           bool; // Init request for appearing window to select first item
+    NavInitRequestFromMove:                   bool;
+    NavInitResult:                            NavItemData; // Init request result (first item of the window, or one for which SetItemDefaultFocus() was called)
+    NavMoveSubmitted:                         bool; // Move request submitted, will process result on next NewFrame()
+    NavMoveScoringItems:                      bool; // Move request submitted, still scoring incoming items
+    NavMoveForwardToNextFrame:                bool;
+    NavMoveFlags_:                            NavMoveFlags;
+    NavMoveScrollFlags:                       ScrollFlags;
+    NavMoveKeyMods:                           KeyChord;
+    NavMoveDir:                               Dir; // Direction of the move request (left/right/up/down)
+    NavMoveDirForDebug:                       Dir;
+    NavMoveClipDir:                           Dir; // FIXME-NAV: Describe the purpose of this better. Might want to rename?
+    NavScoringRect:                           ImRect; // Rectangle used for scoring, in screen space. Based of window->NavRectRel[], modified for directional navigation scoring.
+    NavScoringNoClipRect:                     ImRect; // Some nav operations (such as PageUp/PageDown) enforce a region which clipper will attempt to always keep submitted
+    NavScoringDebugCount:                     s32; // Metrics for debugging
+    NavTabbingDir:                            s32; // Generally -1 or +1, 0 when tabbing without a nav id
+    NavTabbingCounter:                        s32; // >0 when counting items for tabbing
+    NavMoveResultLocal:                       NavItemData; // Best move request candidate within NavWindow
+    NavMoveResultLocalVisible:                NavItemData; // Best move request candidate within NavWindow that are mostly visible (when using ImGuiNavMoveFlags_AlsoScoreVisibleSet flag)
+    NavMoveResultOther:                       NavItemData; // Best move request candidate within NavWindow's flattened hierarchy (when using ImGuiWindowFlags_NavFlattened flag)
+    NavTabbingResultFirst:                    NavItemData; // First tabbing request candidate within NavWindow and flattened hierarchy
+
+    ConfigNavWindowingKeyNext:                KeyChord; // = ImGuiMod_Ctrl | ImGuiKey_Tab, for reconfiguration (see #4828)
+    ConfigNavWindowingKeyPrev:                KeyChord; // = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Tab
+    NavWindowingTarget:                       *Window; // Target window when doing CTRL+Tab (or Pad Menu + FocusPrev/Next), this window is temporarily displayed top-most!
+    NavWindowingTargetAnim:                   *Window; // Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0.0f, so the fade-out can stay on it.
+    NavWindowingListWindow:                   *Window; // Internal window actually listing the CTRL+Tab contents
+    NavWindowingTimer:                        float;
+    NavWindowingHighlightAlpha:               float;
+    NavWindowingToggleLayer:                  bool;
+    NavWindowingToggleKey:                    Key;
+    NavWindowingAccumDeltaPos:                ImVec2;
+    NavWindowingAccumDeltaSize:               ImVec2;
+
+    DimBgRatio:                               float; // 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list)
+
+    // Drag and Drop
+    DragDropActive:                           bool;
+    DragDropWithinSource:                     bool; // Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag source.
+    DragDropWithinTarget:                     bool; // Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag target.
+    DragDropSourceFlags:                      DragDropFlags;
+    DragDropSourceFrameCount:                 s32;
+    DragDropMouseButton:                      s32;
+    DragDropPayload:                          Payload;
+    DragDropTargetRect:                       ImRect; // Store rectangle of current target candidate (we favor small targets when overlapping)
+    DragDropTargetClipRect:                   ImRect; // Store ClipRect at the time of item's drawing
+    DragDropTargetId:                         ID;
+    DragDropAcceptFlags:                      DragDropFlags;
+    DragDropAcceptIdCurrRectSurface:          float; // Target item surface (we resolve overlapping targets by prioritizing the smaller surface)
+    DragDropAcceptIdCurr:                     ID; // Target item id (set at the time of accepting the payload)
+    DragDropAcceptIdPrev:                     ID; // Target item id from previous frame (we need to store this to allow for overlapping drag and drop targets)
+    DragDropAcceptFrameCount:                 s32; // Last time a target expressed a desire to accept the source
+    DragDropHoldJustPressedId:                ID; // Set when holding a payload just made ButtonBehavior() return a press.
+    DragDropPayloadBufHeap:                   ImVector(u8); // We don't expose the ImVector<> directly, ImGuiPayload only holds pointer+size
+    DragDropPayloadBufLocal:                  [16] u8; // Local buffer for small payloads
+
+    // Clipper
+    ClipperTempDataStacked:                   s32;
+    ClipperTempData:                          ImVector(ListClipperData);
+
+    // Tables
+    CurrentTable:                             *Table;
+    DebugBreakInTable:                        ID; // Set to break in BeginTable() call.
+    TablesTempDataStacked:                    s32; // Temporary table data size (because we leave previous instances undestructed, we generally don't use TablesTempData.Size)
+    TablesTempData:                           ImVector(TableTempData); // Temporary table data (buffers reused/shared across instances, support nesting)
+    Tables:                                   ImPool(Table); // Persistent table data
+    TablesLastTimeActive:                     ImVector(float); // Last used timestamp of each tables (SOA, for efficient GC)
+    DrawChannelsTempMergeBuffer:              ImVector(ImDrawChannel);
+
+    // Tab bars
+    CurrentTabBar:                            *TabBar;
+    TabBars:                                  ImPool(TabBar);
+    CurrentTabBarStack:                       ImVector(PtrOrIndex);
+    ShrinkWidthBuffer:                        ImVector(ShrinkWidthItem);
+
+    // Hover Delay system
+    HoverItemDelayId:                         ID;
+    HoverItemDelayIdPreviousFrame:            ID;
+    HoverItemDelayTimer:                      float; // Currently used by IsItemHovered()
+    HoverItemDelayClearTimer:                 float; // Currently used by IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared.
+    HoverItemUnlockedStationaryId:            ID; // Mouse has once been stationary on this item. Only reset after departing the item.
+    HoverWindowUnlockedStationaryId:          ID; // Mouse has once been stationary on this window. Only reset after departing the window.
+
+    // Mouse state
+    MouseCursor_:                             MouseCursor;
+    MouseStationaryTimer:                     float; // Time the mouse has been stationary (with some loose heuristic)
+    MouseLastValidPos:                        ImVec2;
+
+    // Widget state
+    InputTextState_:                          InputTextState;
+    InputTextDeactivatedState_:               InputTextDeactivatedState;
+    InputTextPasswordFont:                    ImFont;
+    TempInputId:                              ID; // Temporary text input when CTRL+clicking on a slider, etc.
+    BeginMenuDepth:                           s32;
+    BeginComboDepth:                          s32;
+    ColorEditOptions:                         ColorEditFlags; // Store user options for color edit widgets
+    ColorEditCurrentID:                       ID; // Set temporarily while inside of the parent-most ColorEdit4/ColorPicker4 (because they call each others).
+    ColorEditSavedID:                         ID; // ID we are saving/restoring HS for
+    ColorEditSavedHue:                        float; // Backup of last Hue associated to LastColor, so we can restore Hue in lossy RGB<>HSV round trips
+    ColorEditSavedSat:                        float; // Backup of last Saturation associated to LastColor, so we can restore Saturation in lossy RGB<>HSV round trips
+    ColorEditSavedColor:                      ImU32; // RGB value with alpha set to 0.
+    ColorPickerRef:                           ImVec4; // Initial/reference color at the time of opening the color picker.
+    ComboPreviewData_:                        ComboPreviewData;
+    WindowResizeBorderExpectedRect:           ImRect; // Expected border rect, switch to relative edit if moving
+    WindowResizeRelativeMode:                 bool;
+    SliderGrabClickOffset:                    float;
+    SliderCurrentAccum:                       float; // Accumulated slider delta when using navigation controls.
+    SliderCurrentAccumDirty:                  bool; // Has the accumulated slider delta changed since last time we tried to apply it?
+    DragCurrentAccumDirty:                    bool;
+    DragCurrentAccum:                         float; // Accumulator for dragging modification. Always high-precision, not rounded by end-user precision settings
+    DragSpeedDefaultRatio:                    float; // If speed == 0.0f, uses (max-min) * DragSpeedDefaultRatio
+    ScrollbarClickDeltaToGrabCenter:          float; // Distance between mouse and center of grab box, normalized in parent space. Use storage?
+    DisabledAlphaBackup:                      float; // Backup for style.Alpha for BeginDisabled()
+    DisabledStackSize:                        s16;
+    LockMarkEdited:                           s16;
+    TooltipOverrideCount:                     s16;
+    ClipboardHandlerData:                     ImVector(u8); // If no custom clipboard handler is defined
+    MenusIdSubmittedThisFrame:                ImVector(ID); // A list of menu IDs that were rendered at least once
+    TypingSelectState_:                       TypingSelectState; // State for GetTypingSelectRequest()
+
+    PlatformImeData_:                         PlatformImeData; // Data updated by current frame
+    PlatformImeDataPrev:                      PlatformImeData; // Previous frame data (when changing we will call io.SetPlatformImeDataFn
+    PlatformImeViewport:                      ID;
+
+    // Extensions
+    // FIXME: We could provide an API to register one slot in an array held in ImGuiContext?
+    DockContext_:                             DockContext;
+    DockNodeWindowMenuHandler:                #type (ctx: *Context, node: *DockNode, tab_bar: *TabBar) -> void #c_call;
+
+    // Settings
+    SettingsLoaded:                           bool;
+    SettingsDirtyTimer:                       float; // Save .ini Settings to memory when time reaches zero
+    SettingsIniData:                          TextBuffer; // In memory .ini settings
+    SettingsHandlers:                         ImVector(SettingsHandler); // List of .ini settings handlers
+    SettingsWindows:                          ImChunkStream(WindowSettings); // ImGuiWindow .ini settings entries
+    SettingsTables:                           ImChunkStream(TableSettings); // ImGuiTable .ini settings entries
+    Hooks:                                    ImVector(ContextHook); // Hooks for extensions (e.g. test engine)
+    HookIdNext:                               ID; // Next available HookId
+
+    // Localization
+    LocalizationTable:                        [11] *u8;
+
+    LogEnabled:                               bool; // Currently capturing
+    LogType_:                                 LogType; // Capture target
+    LogFile:                                  ImFileHandle; // If != NULL log to stdout/ file
+    LogBuffer:                                TextBuffer; // Accumulation buffer when log to clipboard. This is pointer so our GImGui static constructor doesn't call heap allocators.
+    LogNextPrefix:                            *u8;
+    LogNextSuffix:                            *u8;
+    LogLinePosY:                              float;
+    LogLineFirstItem:                         bool;
+    LogDepthRef:                              s32;
+    LogDepthToExpand:                         s32;
+    LogDepthToExpandDefault:                  s32; // Default/stored value for LogDepthMaxExpand if not specified in the LogXXX function call.
+
+    // Debug Tools
+    // (some of the highly frequently used data are interleaved in other structures above: DebugBreakXXX fields, DebugHookIdInfo, DebugLocateId etc.)
+    DebugLogFlags_:                           DebugLogFlags;
+    DebugLogBuf:                              TextBuffer;
+    DebugLogIndex:                            TextIndex;
+    DebugLogAutoDisableFlags:                 DebugLogFlags;
+    DebugLogAutoDisableFrames:                ImU8;
+    DebugLocateFrames:                        ImU8; // For DebugLocateItemOnHover(). This is used together with DebugLocateId which is in a hot/cached spot above.
+    DebugBreakInLocateId:                     bool; // Debug break in ItemAdd() call for g.DebugLocateId.
+    DebugBreakKeyChord:                       KeyChord; // = ImGuiKey_Pause
+    DebugBeginReturnValueCullDepth:           ImS8; // Cycle between 0..9 then wrap around.
+    DebugItemPickerActive:                    bool; // Item picker is active (started with DebugStartItemPicker())
+    DebugItemPickerMouseButton:               ImU8;
+    DebugItemPickerBreakId:                   ID; // Will call IM_DEBUG_BREAK() when encountering this ID
+    DebugFlashStyleColorTime:                 float;
+    DebugFlashStyleColorBackup:               ImVec4;
+    DebugMetricsConfig:                       MetricsConfig;
+    DebugIDStackTool:                         IDStackTool;
+    DebugAllocInfo_:                          DebugAllocInfo;
+    DebugHoveredDockNode:                     *DockNode; // Hovered dock node.
+
+    FramerateSecPerFrame:                     [60] float; // Calculate estimate of framerate for user over the last 60 frames..
+    FramerateSecPerFrameIdx:                  s32;
+    FramerateSecPerFrameCount:                s32;
+    FramerateSecPerFrameAccum:                float;
+    WantCaptureMouseNextFrame:                s32; // Explicit capture override via SetNextFrameWantCaptureMouse()/SetNextFrameWantCaptureKeyboard(). Default to -1.
+    WantCaptureKeyboardNextFrame:             s32; // "
+    WantTextInputNextFrame:                   s32;
+    TempBuffer:                               ImVector(u8); // Temporary text buffer
+    TempKeychordName:                         [64] u8;
+}
+
+// Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
+// (That's theory, in practice the delimitation between ImGuiWindow and ImGuiWindowTempData is quite tenuous and could be reconsidered..)
+// (This doesn't need a constructor because we zero-clear it as part of ImGuiWindow and all frame-temporary data are setup on Begin)
+WindowTempData :: struct {
+    CursorPos:                 ImVec2; // Current emitting position, in absolute coordinates.
+    CursorPosPrevLine:         ImVec2;
+    CursorStartPos:            ImVec2; // Initial position after Begin(), generally ~ window position + WindowPadding.
+    CursorMaxPos:              ImVec2; // Used to implicitly calculate ContentSize at the beginning of next frame, for scrolling range and auto-resize. Always growing during the frame.
+    IdealMaxPos:               ImVec2; // Used to implicitly calculate ContentSizeIdeal at the beginning of next frame, for auto-resize only. Always growing during the frame.
+    CurrLineSize:              ImVec2;
+    PrevLineSize:              ImVec2;
+    CurrLineTextBaseOffset:    float; // Baseline offset (0.0f by default on a new line, generally == style.FramePadding.y when a framed item has been added).
+    PrevLineTextBaseOffset:    float;
+    IsSameLine:                bool;
+    IsSetPos:                  bool;
+    Indent:                    ImVec1; // Indentation / start position from left of window (increased by TreePush/TreePop, etc.)
+    ColumnsOffset:             ImVec1; // Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use cases like Tree->Column->Tree. Need revamp columns API.
+    GroupOffset:               ImVec1;
+    CursorStartPosLossyness:   ImVec2; // Record the loss of precision of CursorStartPos due to really large scrolling amount. This is used by clipper to compensate and fix the most common use case of large scroll area.
+
+    NavLayerCurrent:           NavLayer; // Current layer, 0..31 (we currently only use 0..1)
+    NavLayersActiveMask:       s16; // Which layers have been written to (result from previous frame)
+    NavLayersActiveMaskNext:   s16; // Which layers have been written to (accumulator for current frame)
+    NavIsScrollPushableX:      bool; // Set when current work location may be scrolled horizontally when moving left / right. This is generally always true UNLESS within a column.
+    NavHideHighlightOneFrame:  bool;
+    NavWindowHasScrollY:       bool; // Set per window when scrolling can be used (== ScrollMax.y > 0.0f)
+
+    MenuBarAppending:          bool; // FIXME: Remove this
+    MenuBarOffset:             ImVec2; // MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we switch to the menu bar. The only situation when MenuBarOffset.y is > 0 if when (SafeAreaPadding.y > FramePadding.y), often used on TVs.
+    MenuColumns_:              MenuColumns; // Simplified columns storage for menu items measurement
+    TreeDepth:                 s32; // Current tree depth.
+    TreeJumpToParentOnPopMask: ImU32; // Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary.
+    ChildWindows:              ImVector(*Window);
+    StateStorage:              *Storage; // Current persistent per-window storage (store e.g. tree node open/close state)
+    CurrentColumns:            *OldColumns; // Current columns set
+    CurrentTableIdx:           s32; // Current table index (into g.Tables)
+    LayoutType_:               LayoutType;
+    ParentLayoutType:          LayoutType; // Layout type of parent window at the time of Begin()
+    ModalDimBgColor:           ImU32;
+
+    ItemWidth:                 float; // Current item width (>0.0: width in pixels, <0.0: align xx pixels to the right of window).
+    TextWrapPos:               float; // Current text wrap pos.
+    ItemWidthStack:            ImVector(float); // Store item widths to restore (attention: .back() is not == ItemWidth)
+    TextWrapPosStack:          ImVector(float); // Store text wrap pos to restore (attention: .back() is not == TextWrapPos)
+}
+
+// Storage for one window
+Window :: struct {
+    Ctx:                                *Context; // Parent UI context (needs to be set explicitly by parent).
+    Name:                               *u8; // Window name, owned by the window.
+    ID_:                                ID; // == ImHashStr(Name)
+    Flags:                              WindowFlags; // See enum ImGuiWindowFlags_
+    FlagsPreviousFrame:                 WindowFlags; // See enum ImGuiWindowFlags_
+    ChildFlags_:                        ChildFlags; // Set when window is a child window. See enum ImGuiChildFlags_
+    WindowClass_:                       WindowClass; // Advanced users only. Set with SetNextWindowClass()
+    Viewport:                           *ViewportP; // Always set in Begin(). Inactive windows may have a NULL value here if their viewport was discarded.
+    ViewportId:                         ID; // We backup the viewport id (since the viewport may disappear or never be created if the window is inactive)
+    ViewportPos:                        ImVec2; // We backup the viewport position (since the viewport may disappear or never be created if the window is inactive)
+    ViewportAllowPlatformMonitorExtend: s32; // Reset to -1 every frame (index is guaranteed to be valid between NewFrame..EndFrame), only used in the Appearing frame of a tooltip/popup to enforce clamping to a given monitor
+    Pos:                                ImVec2; // Position (always rounded-up to nearest pixel)
+    Size:                               ImVec2; // Current size (==SizeFull or collapsed title bar size)
+    SizeFull:                           ImVec2; // Size when non collapsed
+    ContentSize:                        ImVec2; // Size of contents/scrollable client area (calculated from the extents reach of the cursor) from previous frame. Does not include window decoration or window padding.
+    ContentSizeIdeal:                   ImVec2;
+    ContentSizeExplicit:                ImVec2; // Size of contents/scrollable client area explicitly request by the user via SetNextWindowContentSize().
+    WindowPadding:                      ImVec2; // Window padding at the time of Begin().
+    WindowRounding:                     float; // Window rounding at the time of Begin(). May be clamped lower to avoid rendering artifacts with title bar, menu bar etc.
+    WindowBorderSize:                   float; // Window border size at the time of Begin().
+    DecoOuterSizeX1:                    float; // Left/Up offsets. Sum of non-scrolling outer decorations (X1 generally == 0.0f. Y1 generally = TitleBarHeight + MenuBarHeight). Locked during Begin().
+    DecoOuterSizeY1:                    float; // Left/Up offsets. Sum of non-scrolling outer decorations (X1 generally == 0.0f. Y1 generally = TitleBarHeight + MenuBarHeight). Locked during Begin().
+    DecoOuterSizeX2:                    float; // Right/Down offsets (X2 generally == ScrollbarSize.x, Y2 == ScrollbarSizes.y).
+    DecoOuterSizeY2:                    float; // Right/Down offsets (X2 generally == ScrollbarSize.x, Y2 == ScrollbarSizes.y).
+    DecoInnerSizeX1:                    float; // Applied AFTER/OVER InnerRect. Specialized for Tables as they use specialized form of clipping and frozen rows/columns are inside InnerRect (and not part of regular decoration sizes).
+    DecoInnerSizeY1:                    float; // Applied AFTER/OVER InnerRect. Specialized for Tables as they use specialized form of clipping and frozen rows/columns are inside InnerRect (and not part of regular decoration sizes).
+    NameBufLen:                         s32; // Size of buffer storing Name. May be larger than strlen(Name)!
+    MoveId:                             ID; // == window->GetID("#MOVE")
+    TabId:                              ID; // == window->GetID("#TAB")
+    ChildId:                            ID; // ID of corresponding item in parent window (for navigation to return from child window to parent window)
+    Scroll:                             ImVec2;
+    ScrollMax:                          ImVec2;
+    ScrollTarget:                       ImVec2; // target scroll position. stored as cursor position with scrolling canceled out, so the highest point is always 0.0f. (FLT_MAX for no change)
+    ScrollTargetCenterRatio:            ImVec2; // 0.0f = scroll so that target position is at top, 0.5f = scroll so that target position is centered
+    ScrollTargetEdgeSnapDist:           ImVec2; // 0.0f = no snapping, >0.0f snapping threshold
+    ScrollbarSizes:                     ImVec2; // Size taken by each scrollbars on their smaller axis. Pay attention! ScrollbarSizes.x == width of the vertical scrollbar, ScrollbarSizes.y = height of the horizontal scrollbar.
+    ScrollbarX:                         bool; // Are scrollbars visible?
+    ScrollbarY:                         bool; // Are scrollbars visible?
+    ViewportOwned:                      bool;
+    Active:                             bool; // Set to true on Begin(), unless Collapsed
+    WasActive:                          bool;
+    WriteAccessed:                      bool; // Set to true when any widget access the current window
+    Collapsed:                          bool; // Set when collapsing window to become only title-bar
+    WantCollapseToggle:                 bool;
+    SkipItems:                          bool; // Set when items can safely be all clipped (e.g. window not visible or collapsed)
+    Appearing:                          bool; // Set during the frame where the window is appearing (or re-appearing)
+    Hidden:                             bool; // Do not display (== HiddenFrames*** > 0)
+    IsFallbackWindow:                   bool; // Set on the "Debug##Default" window.
+    IsExplicitChild:                    bool; // Set when passed _ChildWindow, left to false by BeginDocked()
+    HasCloseButton:                     bool; // Set when the window has a close button (p_open != NULL)
+    ResizeBorderHovered:                s8; // Current border being hovered for resize (-1: none, otherwise 0-3)
+    ResizeBorderHeld:                   s8; // Current border being held for resize (-1: none, otherwise 0-3)
+    BeginCount:                         s16; // Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs)
+    BeginCountPreviousFrame:            s16; // Number of Begin() during the previous frame
+    BeginOrderWithinParent:             s16; // Begin() order within immediate parent window, if we are a child window. Otherwise 0.
+    BeginOrderWithinContext:            s16; // Begin() order within entire imgui context. This is mostly used for debugging submission order related issues.
+    FocusOrder:                         s16; // Order within WindowsFocusOrder[], altered when windows are focused.
+    PopupId:                            ID; // ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)
+    AutoFitFramesX:                     ImS8;
+    AutoFitFramesY:                     ImS8;
+    AutoFitOnlyGrows:                   bool;
+    AutoPosLastDirection:               Dir;
+    HiddenFramesCanSkipItems:           ImS8; // Hide the window for N frames
+    HiddenFramesCannotSkipItems:        ImS8; // Hide the window for N frames while allowing items to be submitted so we can measure their size
+    HiddenFramesForRenderOnly:          ImS8; // Hide the window until frame N at Render() time only
+    DisableInputsFrames:                ImS8; // Disable window interactions for N frames
+    SetWindowPosAllowFlags:             Cond; // store acceptable condition flags for SetNextWindowPos() use.
+    #place SetWindowPosAllowFlags; /*bitfield 8*/ SetWindowSizeAllowFlags:            Cond; // store acceptable condition flags for SetNextWindowSize() use.
+    #place SetWindowPosAllowFlags; /*bitfield 16*/ SetWindowCollapsedAllowFlags:       Cond; // store acceptable condition flags for SetNextWindowCollapsed() use.
+    #place SetWindowPosAllowFlags; /*bitfield 24*/ SetWindowDockAllowFlags:            Cond; // store acceptable condition flags for SetNextWindowDock() use.
+    SetWindowPosVal:                    ImVec2; // store window position when using a non-zero Pivot (position set needs to be processed when we know the window size)
+    SetWindowPosPivot:                  ImVec2; // store window pivot for positioning. ImVec2(0, 0) when positioning from top-left corner; ImVec2(0.5f, 0.5f) for centering; ImVec2(1, 1) for bottom right.
+
+    IDStack:                            ImVector(ID); // ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this should be in the TempData structure)
+    DC:                                 WindowTempData; // Temporary per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the "DC" variable name.
+
+    OuterRectClipped:                   ImRect; // == Window->Rect() just after setup in Begin(). == window->Rect() for root window.
+    InnerRect:                          ImRect; // Inner rectangle (omit title bar, menu bar, scroll bar)
+    InnerClipRect:                      ImRect; // == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect.
+    WorkRect:                           ImRect; // Initially covers the whole scrolling region. Reduced by containers e.g columns/tables when active. Shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward).
+    ParentWorkRect:                     ImRect; // Backup of WorkRect before entering a container such as columns/tables. Used by e.g. SpanAllColumns functions to easily access. Stacked containers are responsible for maintaining this. // FIXME-WORKRECT: Could be a stack?
+    ClipRect:                           ImRect; // Current clipping/scissoring rectangle, evolve as we are using PushClipRect(), etc. == DrawList->clip_rect_stack.back().
+    ContentRegionRect:                  ImRect; // FIXME: This is currently confusing/misleading. It is essentially WorkRect but not handling of scrolling. We currently rely on it as right/bottom aligned sizing operation need some size to rely on.
+    HitTestHoleSize:                    ImVec2ih; // Define an optional rectangular hole where mouse will pass-through the window.
+    HitTestHoleOffset:                  ImVec2ih;
+
+    LastFrameActive:                    s32; // Last frame number the window was Active.
+    LastFrameJustFocused:               s32; // Last frame number the window was made Focused.
+    LastTimeActive:                     float; // Last timestamp the window was Active (using float as we don't need high precision there)
+    ItemWidthDefault:                   float;
+    StateStorage:                       Storage;
+    ColumnsStorage:                     ImVector(OldColumns);
+    FontWindowScale:                    float; // User scale multiplier per-window, via SetWindowFontScale()
+    FontDpiScale:                       float;
+    SettingsOffset:                     s32; // Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back)
+
+    DrawList:                           *ImDrawList; // == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer)
+    DrawListInst:                       ImDrawList;
+    ParentWindow:                       *Window; // If we are a child _or_ popup _or_ docked window, this is pointing to our parent. Otherwise NULL.
+    ParentWindowInBeginStack:           *Window;
+    RootWindow:                         *Window; // Point to ourself or first ancestor that is not a child window. Doesn't cross through popups/dock nodes.
+    RootWindowPopupTree:                *Window; // Point to ourself or first ancestor that is not a child window. Cross through popups parent<>child.
+    RootWindowDockTree:                 *Window; // Point to ourself or first ancestor that is not a child window. Cross through dock nodes.
+    RootWindowForTitleBarHighlight:     *Window; // Point to ourself or first ancestor which will display TitleBgActive color when this window is active.
+    RootWindowForNav:                   *Window; // Point to ourself or first ancestor which doesn't have the NavFlattened flag.
+    ParentWindowForFocusRoute:          *Window; // Set to manual link a window to its logical parent so that Shortcut() chain are honoerd (e.g. Tool linked to Document)
+
+    NavLastChildNavWindow:              *Window; // When going to the menu bar, we remember the child window we came from. (This could probably be made implicit if we kept g.Windows sorted by last focused including child window.)
+    NavLastIds:                         [2] ID; // Last known NavId for this window, per layer (0/1)
+    NavRectRel:                         [2] ImRect; // Reference rectangle, in window relative space
+    NavPreferredScoringPosRel:          [2] ImVec2; // Preferred X/Y position updated when moving on a given axis, reset to FLT_MAX.
+    NavRootFocusScopeId:                ID; // Focus Scope ID at the time of Begin()
+
+    MemoryDrawListIdxCapacity:          s32; // Backup of last idx/vtx count, so when waking up the window we can preallocate and avoid iterative alloc/copy
+    MemoryDrawListVtxCapacity:          s32;
+    MemoryCompacted:                    bool; // Set when window extraneous data have been garbage collected
+
+    DockIsActive:                       bool; // When docking artifacts are actually visible. When this is set, DockNode is guaranteed to be != NULL. ~~ (DockNode != NULL) && (DockNode->Windows.Size > 1).
+    #place DockIsActive; /*bitfield 1*/ DockNodeIsVisible:                  bool;
+    #place DockIsActive; /*bitfield 2*/ DockTabIsVisible:                   bool; // Is our window visible this frame? ~~ is the corresponding tab selected?
+    #place DockIsActive; /*bitfield 3*/ DockTabWantClose:                   bool;
+    DockOrder:                          s16; // Order of the last time the window was visible within its DockNode. This is used to reorder windows that are reappearing on the same frame. Same value between windows that were active and windows that were none are possible.
+    DockStyle:                          WindowDockStyle;
+    DockNode_:                          *DockNode; // Which node are we docked into. Important: Prefer testing DockIsActive in many cases as this will still be set when the dock node is hidden.
+    DockNodeAsHost:                     *DockNode; // Which node are we owning (for parent windows)
+    DockId:                             ID; // Backup of last valid DockNode->ID, so single window remember their dock node id even when they are not bound any more
+    DockTabItemStatusFlags:             ItemStatusFlags;
+    DockTabItemRect:                    ImRect;
+
+    Constructor :: (this: *Window, _context: *Context, name: *u8) -> void #cpp_method #foreign imgui "??0ImGuiWindow@@QEAA@PEAUImGuiContext@@PEBD@Z";
+    Destructor :: (this: *Window) -> void #cpp_method #foreign imgui "??1ImGuiWindow@@QEAA@XZ";
+
+    GetID :: (this: *Window, str: *u8, str_end: *u8 = null) -> ID #cpp_method #foreign imgui "?GetID@ImGuiWindow@@QEAAIPEBD0@Z";
+    GetID :: (this: *Window, str: string) -> ID #no_context {
+        return GetID(this, str.data, str.data + str.count);
+    }
+    GetID :: (this: *Window, ptr: *void) -> ID #cpp_method #foreign imgui "?GetID@ImGuiWindow@@QEAAIPEBX@Z";
+    GetID :: (this: *Window, n: s32) -> ID #cpp_method #foreign imgui "?GetID@ImGuiWindow@@QEAAIH@Z";
+    GetIDFromRectangle :: (this: *Window, r_abs: *ImRect) -> ID #cpp_method #foreign imgui "?GetIDFromRectangle@ImGuiWindow@@QEAAIAEBUImRect@@@Z";
+    GetIDFromRectangle :: (this: *Window, r_abs: ImRect) -> ID #no_context {
+        return GetIDFromRectangle(this, *r_abs);
+    }
+}
+
+// Extend ImGuiTabBarFlags_
+TabBarFlagsPrivate_ :: enum s32 {
+    TabBarFlags_DockNode     :: 1048576;
+    TabBarFlags_IsFocused    :: 2097152;
+    TabBarFlags_SaveSettings :: 4194304;
+
+    ImGuiTabBarFlags_DockNode     :: TabBarFlags_DockNode;
+    ImGuiTabBarFlags_IsFocused    :: TabBarFlags_IsFocused;
+    ImGuiTabBarFlags_SaveSettings :: TabBarFlags_SaveSettings;
+}
+
+// Extend ImGuiTabItemFlags_
+TabItemFlagsPrivate_ :: enum s32 {
+    TabItemFlags_SectionMask_  :: 192;
+    TabItemFlags_NoCloseButton :: 1048576;
+    TabItemFlags_Button        :: 2097152;
+    TabItemFlags_Unsorted      :: 4194304;
+
+    ImGuiTabItemFlags_SectionMask_  :: TabItemFlags_SectionMask_;
+    ImGuiTabItemFlags_NoCloseButton :: TabItemFlags_NoCloseButton;
+    ImGuiTabItemFlags_Button        :: TabItemFlags_Button;
+    ImGuiTabItemFlags_Unsorted      :: TabItemFlags_Unsorted;
+}
+
+// Storage for one active tab item (sizeof() 48 bytes)
+TabItem :: struct {
+    ID_:               ID;
+    Flags:             TabItemFlags;
+    Window_:           *Window; // When TabItem is part of a DockNode's TabBar, we hold on to a window.
+    LastFrameVisible:  s32;
+    LastFrameSelected: s32; // This allows us to infer an ordered list of the last activated tabs with little maintenance
+    Offset:            float; // Position relative to beginning of tab
+    Width:             float; // Width currently displayed
+    ContentWidth:      float; // Width of label, stored during BeginTabItem() call
+    RequestedWidth:    float; // Width optionally requested by caller, -1.0f is unused
+    NameOffset:        ImS32; // When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames
+    BeginOrder:        ImS16; // BeginTabItem() order, used to re-order tabs after toggling ImGuiTabBarFlags_Reorderable
+    IndexDuringLayout: ImS16; // Index only used during TabBarLayout(). Tabs gets reordered so 'Tabs[n].IndexDuringLayout == n' but may mismatch during additions.
+    WantClose:         bool; // Marked as closed by SetTabItemClosed()
+}
+
+// Storage for a tab bar (sizeof() 152 bytes)
+TabBar :: struct {
+    Tabs:                            ImVector(TabItem);
+    Flags:                           TabBarFlags;
+    ID_:                             ID; // Zero for tab-bars used by docking
+    SelectedTabId:                   ID; // Selected tab/window
+    NextSelectedTabId:               ID; // Next selected tab/window. Will also trigger a scrolling animation
+    VisibleTabId:                    ID; // Can occasionally be != SelectedTabId (e.g. when previewing contents for CTRL+TAB preview)
+    CurrFrameVisible:                s32;
+    PrevFrameVisible:                s32;
+    BarRect:                         ImRect;
+    CurrTabsContentsHeight:          float;
+    PrevTabsContentsHeight:          float; // Record the height of contents submitted below the tab bar
+    WidthAllTabs:                    float; // Actual width of all tabs (locked during layout)
+    WidthAllTabsIdeal:               float; // Ideal width if all tabs were visible and not clipped
+    ScrollingAnim:                   float;
+    ScrollingTarget:                 float;
+    ScrollingTargetDistToVisibility: float;
+    ScrollingSpeed:                  float;
+    ScrollingRectMinX:               float;
+    ScrollingRectMaxX:               float;
+    SeparatorMinX:                   float;
+    SeparatorMaxX:                   float;
+    ReorderRequestTabId:             ID;
+    ReorderRequestOffset:            ImS16;
+    BeginCount:                      ImS8;
+    WantLayout:                      bool;
+    VisibleTabWasSubmitted:          bool;
+    TabsAddedNew:                    bool; // Set to true when a new tab item or button has been added to the tab bar during last frame
+    TabsActiveCount:                 ImS16; // Number of tabs submitted this frame.
+    LastTabItemIdx:                  ImS16; // Index of last BeginTabItem() tab for use by EndTabItem()
+    ItemSpacingY:                    float;
+    FramePadding:                    ImVec2; // style.FramePadding locked at the time of BeginTabBar()
+    BackupCursorPos:                 ImVec2;
+    TabsNames:                       TextBuffer; // For non-docking tab bar we re-append names in a contiguous buffer.
+
+    Constructor :: (this: *TabBar) -> void #cpp_method #foreign imgui "??0ImGuiTabBar@@QEAA@XZ";
+}
+
+// Our current column maximum is 64 but we may raise that in the future.
+TableColumnIdx :: ImS16;
+TableDrawChannelIdx :: ImU16;
+
+// [Internal] sizeof() ~ 112
+// We use the terminology "Enabled" to refer to a column that is not Hidden by user/api.
+// We use the terminology "Clipped" to refer to a column that is out of sight because of scrolling/clipping.
+// This is in contrast with some user-facing api such as IsItemVisible() / IsRectVisible() which use "Visible" to mean "not clipped".
+TableColumn :: struct {
+    Flags:                    TableColumnFlags; // Flags after some patching (not directly same as provided by user). See ImGuiTableColumnFlags_
+    WidthGiven:               float; // Final/actual width visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum width, may be < WidthRequest to honor shrinking columns down in tight space.
+    MinX:                     float; // Absolute positions
+    MaxX:                     float;
+    WidthRequest:             float; // Master width absolute value when !(Flags & _WidthStretch). When Stretch this is derived every frame from StretchWeight in TableUpdateLayout()
+    WidthAuto:                float; // Automatic width
+    StretchWeight:            float; // Master width weight when (Flags & _WidthStretch). Often around ~1.0f initially.
+    InitStretchWeightOrWidth: float; // Value passed to TableSetupColumn(). For Width it is a content width (_without padding_).
+    ClipRect:                 ImRect; // Clipping rectangle for the column
+    UserID:                   ID; // Optional, value passed to TableSetupColumn()
+    WorkMinX:                 float; // Contents region min ~(MinX + CellPaddingX + CellSpacingX1) == cursor start position when entering column
+    WorkMaxX:                 float; // Contents region max ~(MaxX - CellPaddingX - CellSpacingX2)
+    ItemWidth:                float; // Current item width for the column, preserved across rows
+    ContentMaxXFrozen:        float; // Contents maximum position for frozen rows (apart from headers), from which we can infer content width.
+    ContentMaxXUnfrozen:      float;
+    ContentMaxXHeadersUsed:   float; // Contents maximum position for headers rows (regardless of freezing). TableHeader() automatically softclip itself + report ideal desired size, to avoid creating extraneous draw calls
+    ContentMaxXHeadersIdeal:  float;
+    NameOffset:               ImS16; // Offset into parent ColumnsNames[]
+    DisplayOrder:             TableColumnIdx; // Index within Table's IndexToDisplayOrder[] (column may be reordered by users)
+    IndexWithinEnabledSet:    TableColumnIdx; // Index within enabled/visible set (<= IndexToDisplayOrder)
+    PrevEnabledColumn:        TableColumnIdx; // Index of prev enabled/visible column within Columns[], -1 if first enabled/visible column
+    NextEnabledColumn:        TableColumnIdx; // Index of next enabled/visible column within Columns[], -1 if last enabled/visible column
+    SortOrder:                TableColumnIdx; // Index of this column within sort specs, -1 if not sorting on this column, 0 for single-sort, may be >0 on multi-sort
+    DrawChannelCurrent:       TableDrawChannelIdx; // Index within DrawSplitter.Channels[]
+    DrawChannelFrozen:        TableDrawChannelIdx; // Draw channels for frozen rows (often headers)
+    DrawChannelUnfrozen:      TableDrawChannelIdx; // Draw channels for unfrozen rows
+    IsEnabled:                bool; // IsUserEnabled && (Flags & ImGuiTableColumnFlags_Disabled) == 0
+    IsUserEnabled:            bool; // Is the column not marked Hidden by the user? (unrelated to being off view, e.g. clipped by scrolling).
+    IsUserEnabledNextFrame:   bool;
+    IsVisibleX:               bool; // Is actually in view (e.g. overlapping the host window clipping rectangle, not scrolled).
+    IsVisibleY:               bool;
+    IsRequestOutput:          bool; // Return value for TableSetColumnIndex() / TableNextColumn(): whether we request user to output contents or not.
+    IsSkipItems:              bool; // Do we want item submissions to this column to be completely ignored (no layout will happen).
+    IsPreserveWidthAuto:      bool;
+    NavLayerCurrent:          ImS8; // ImGuiNavLayer in 1 byte
+    AutoFitQueue:             ImU8; // Queue of 8 values for the next 8 frames to request auto-fit
+    CannotSkipItemsQueue:     ImU8; // Queue of 8 values for the next 8 frames to disable Clipped/SkipItem
+    SortDirection:            ImU8; // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending
+    #place SortDirection; /*bitfield 2*/ SortDirectionsAvailCount: ImU8; // Number of available sort directions (0 to 3)
+    #place SortDirection; /*bitfield 4*/ SortDirectionsAvailMask:  ImU8; // Mask of available sort directions (1-bit each)
+    SortDirectionsAvailList:  ImU8; // Ordered list of available sort directions (2-bits each, total 8-bits)
+}
+
+// Transient cell data stored per row.
+// sizeof() ~ 6
+TableCellData :: struct {
+    BgColor: ImU32; // Actual color
+    Column:  TableColumnIdx; // Column number
+}
+
+// Per-instance data that needs preserving across frames (seemingly most others do not need to be preserved aside from debug needs. Does that means they could be moved to ImGuiTableTempData?)
+// sizeof() ~ 24 bytes
+TableInstanceData :: struct {
+    TableInstanceID:         ID;
+    LastOuterHeight:         float; // Outer height from last frame
+    LastTopHeadersRowHeight: float; // Height of first consecutive header rows from last frame (FIXME: this is used assuming consecutive headers are in same frozen set)
+    LastFrozenHeight:        float; // Height of frozen section from last frame
+    HoveredRowLast:          s32; // Index of row which was hovered last frame.
+    HoveredRowNext:          s32; // Index of row hovered this frame, set after encountering it.
+}
+
+// FIXME-TABLE: more transient data could be stored in a stacked ImGuiTableTempData: e.g. SortSpecs, incoming RowData
+// sizeof() ~ 580 bytes + heap allocs described in TableBeginInitMemory()
+Table :: struct {
+    ID_:                        ID;
+    Flags:                      TableFlags;
+    RawData:                    *void; // Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[]
+    TempData:                   *TableTempData; // Transient data while table is active. Point within g.CurrentTableStack[]
+    Columns:                    ImSpan(TableColumn); // Point within RawData[]
+    DisplayOrderToIndex:        ImSpan(TableColumnIdx); // Point within RawData[]. Store display order of columns (when not reordered, the values are 0...Count-1)
+    RowCellData:                ImSpan(TableCellData); // Point within RawData[]. Store cells background requests for current row.
+    EnabledMaskByDisplayOrder:  ImBitArrayPtr; // Column DisplayOrder -> IsEnabled map
+    EnabledMaskByIndex:         ImBitArrayPtr; // Column Index -> IsEnabled map (== not hidden by user/api) in a format adequate for iterating column without touching cold data
+    VisibleMaskByIndex:         ImBitArrayPtr; // Column Index -> IsVisibleX|IsVisibleY map (== not hidden by user/api && not hidden by scrolling/cliprect)
+    SettingsLoadedFlags:        TableFlags; // Which data were loaded from the .ini file (e.g. when order is not altered we won't save order)
+    SettingsOffset:             s32; // Offset in g.SettingsTables
+    LastFrameActive:            s32;
+    ColumnsCount:               s32; // Number of columns declared in BeginTable()
+    CurrentRow:                 s32;
+    CurrentColumn:              s32;
+    InstanceCurrent:            ImS16; // Count of BeginTable() calls with same ID in the same frame (generally 0). This is a little bit similar to BeginCount for a window, but multiple table with same ID look are multiple tables, they are just synched.
+    InstanceInteracted:         ImS16; // Mark which instance (generally 0) of the same ID is being interacted with
+    RowPosY1:                   float;
+    RowPosY2:                   float;
+    RowMinHeight:               float; // Height submitted to TableNextRow()
+    RowCellPaddingY:            float; // Top and bottom padding. Reloaded during row change.
+    RowTextBaseline:            float;
+    RowIndentOffsetX:           float;
+    RowFlags:                   TableRowFlags; // Current row flags, see ImGuiTableRowFlags_
+    #place RowFlags; /*bitfield 16*/ LastRowFlags:               TableRowFlags;
+    RowBgColorCounter:          s32; // Counter for alternating background colors (can be fast-forwarded by e.g clipper), not same as CurrentRow because header rows typically don't increase this.
+    RowBgColor:                 [2] ImU32; // Background color override for current row.
+    BorderColorStrong:          ImU32;
+    BorderColorLight:           ImU32;
+    BorderX1:                   float;
+    BorderX2:                   float;
+    HostIndentX:                float;
+    MinColumnWidth:             float;
+    OuterPaddingX:              float;
+    CellPaddingX:               float; // Padding from each borders. Locked in BeginTable()/Layout.
+    CellSpacingX1:              float; // Spacing between non-bordered cells. Locked in BeginTable()/Layout.
+    CellSpacingX2:              float;
+    InnerWidth:                 float; // User value passed to BeginTable(), see comments at the top of BeginTable() for details.
+    ColumnsGivenWidth:          float; // Sum of current column width
+    ColumnsAutoFitWidth:        float; // Sum of ideal column width in order nothing to be clipped, used for auto-fitting and content width submission in outer window
+    ColumnsStretchSumWeights:   float; // Sum of weight of all enabled stretching columns
+    ResizedColumnNextWidth:     float;
+    ResizeLockMinContentsX2:    float; // Lock minimum contents width while resizing down in order to not create feedback loops. But we allow growing the table.
+    RefScale:                   float; // Reference scale to be able to rescale columns on font/dpi changes.
+    AngledHeadersHeight:        float; // Set by TableAngledHeadersRow(), used in TableUpdateLayout()
+    AngledHeadersSlope:         float; // Set by TableAngledHeadersRow(), used in TableUpdateLayout()
+    OuterRect:                  ImRect; // Note: for non-scrolling table, OuterRect.Max.y is often FLT_MAX until EndTable(), unless a height has been specified in BeginTable().
+    InnerRect:                  ImRect; // InnerRect but without decoration. As with OuterRect, for non-scrolling tables, InnerRect.Max.y is
+    WorkRect:                   ImRect;
+    InnerClipRect:              ImRect;
+    BgClipRect:                 ImRect; // We use this to cpu-clip cell background color fill, evolve during the frame as we cross frozen rows boundaries
+    Bg0ClipRectForDrawCmd:      ImRect; // Actual ImDrawCmd clip rect for BG0/1 channel. This tends to be == OuterWindow->ClipRect at BeginTable() because output in BG0/BG1 is cpu-clipped
+    Bg2ClipRectForDrawCmd:      ImRect; // Actual ImDrawCmd clip rect for BG2 channel. This tends to be a correct, tight-fit, because output to BG2 are done by widgets relying on regular ClipRect.
+    HostClipRect:               ImRect; // This is used to check if we can eventually merge our columns draw calls into the current draw call of the current window.
+    HostBackupInnerClipRect:    ImRect; // Backup of InnerWindow->ClipRect during PushTableBackground()/PopTableBackground()
+    OuterWindow:                *Window; // Parent window for the table
+    InnerWindow:                *Window; // Window holding the table data (== OuterWindow or a child window)
+    ColumnsNames:               TextBuffer; // Contiguous buffer holding columns names
+    DrawSplitter:               *ImDrawListSplitter; // Shortcut to TempData->DrawSplitter while in table. Isolate draw commands per columns to avoid switching clip rect constantly
+    InstanceDataFirst:          TableInstanceData;
+    InstanceDataExtra:          ImVector(TableInstanceData); // FIXME-OPT: Using a small-vector pattern would be good.
+    SortSpecsSingle:            TableColumnSortSpecs;
+    SortSpecsMulti:             ImVector(TableColumnSortSpecs); // FIXME-OPT: Using a small-vector pattern would be good.
+    SortSpecs:                  TableSortSpecs; // Public facing sorts specs, this is what we return in TableGetSortSpecs()
+    SortSpecsCount:             TableColumnIdx;
+    ColumnsEnabledCount:        TableColumnIdx; // Number of enabled columns (<= ColumnsCount)
+    ColumnsEnabledFixedCount:   TableColumnIdx; // Number of enabled columns (<= ColumnsCount)
+    DeclColumnsCount:           TableColumnIdx; // Count calls to TableSetupColumn()
+    AngledHeadersCount:         TableColumnIdx; // Count columns with angled headers
+    HoveredColumnBody:          TableColumnIdx; // Index of column whose visible region is being hovered. Important: == ColumnsCount when hovering empty region after the right-most column!
+    HoveredColumnBorder:        TableColumnIdx; // Index of column whose right-border is being hovered (for resizing).
+    HighlightColumnHeader:      TableColumnIdx; // Index of column which should be highlighted.
+    AutoFitSingleColumn:        TableColumnIdx; // Index of single column requesting auto-fit.
+    ResizedColumn:              TableColumnIdx; // Index of column being resized. Reset when InstanceCurrent==0.
+    LastResizedColumn:          TableColumnIdx; // Index of column being resized from previous frame.
+    HeldHeaderColumn:           TableColumnIdx; // Index of column header being held.
+    ReorderColumn:              TableColumnIdx; // Index of column being reordered. (not cleared)
+    ReorderColumnDir:           TableColumnIdx; // -1 or +1
+    LeftMostEnabledColumn:      TableColumnIdx; // Index of left-most non-hidden column.
+    RightMostEnabledColumn:     TableColumnIdx; // Index of right-most non-hidden column.
+    LeftMostStretchedColumn:    TableColumnIdx; // Index of left-most stretched column.
+    RightMostStretchedColumn:   TableColumnIdx; // Index of right-most stretched column.
+    ContextPopupColumn:         TableColumnIdx; // Column right-clicked on, of -1 if opening context menu from a neutral/empty spot
+    FreezeRowsRequest:          TableColumnIdx; // Requested frozen rows count
+    FreezeRowsCount:            TableColumnIdx; // Actual frozen row count (== FreezeRowsRequest, or == 0 when no scrolling offset)
+    FreezeColumnsRequest:       TableColumnIdx; // Requested frozen columns count
+    FreezeColumnsCount:         TableColumnIdx; // Actual frozen columns count (== FreezeColumnsRequest, or == 0 when no scrolling offset)
+    RowCellDataCurrent:         TableColumnIdx; // Index of current RowCellData[] entry in current row
+    DummyDrawChannel:           TableDrawChannelIdx; // Redirect non-visible columns here.
+    Bg2DrawChannelCurrent:      TableDrawChannelIdx; // For Selectable() and other widgets drawing across columns after the freezing line. Index within DrawSplitter.Channels[]
+    Bg2DrawChannelUnfrozen:     TableDrawChannelIdx;
+    IsLayoutLocked:             bool; // Set by TableUpdateLayout() which is called when beginning the first row.
+    IsInsideRow:                bool; // Set when inside TableBeginRow()/TableEndRow().
+    IsInitializing:             bool;
+    IsSortSpecsDirty:           bool;
+    IsUsingHeaders:             bool; // Set when the first row had the ImGuiTableRowFlags_Headers flag.
+    IsContextPopupOpen:         bool; // Set when default context menu is open (also see: ContextPopupColumn, InstanceInteracted).
+    DisableDefaultContextMenu:  bool; // Disable default context menu contents. You may submit your own using TableBeginContextMenuPopup()/EndPopup()
+    IsSettingsRequestLoad:      bool;
+    IsSettingsDirty:            bool; // Set when table settings have changed and needs to be reported into ImGuiTableSetttings data.
+    IsDefaultDisplayOrder:      bool; // Set when display order is unchanged from default (DisplayOrder contains 0...Count-1)
+    IsResetAllRequest:          bool;
+    IsResetDisplayOrderRequest: bool;
+    IsUnfrozenRows:             bool; // Set when we got past the frozen row.
+    IsDefaultSizingPolicy:      bool; // Set if user didn't explicitly set a sizing policy in BeginTable()
+    IsActiveIdAliveBeforeTable: bool;
+    IsActiveIdInTable:          bool;
+    HasScrollbarYCurr:          bool; // Whether ANY instance of this table had a vertical scrollbar during the current frame.
+    HasScrollbarYPrev:          bool; // Whether ANY instance of this table had a vertical scrollbar during the previous.
+    MemoryCompacted:            bool;
+    HostSkipItems:              bool; // Backup of InnerWindow->SkipItem at the end of BeginTable(), because we will overwrite InnerWindow->SkipItem on a per-column basis
+}
+
+// Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared (1 per level of stacked table).
+// - Accessing those requires chasing an extra pointer so for very frequently used data we leave them in the main table structure.
+// - We also leave out of this structure data that tend to be particularly useful for debugging/metrics.
+// sizeof() ~ 120 bytes.
+TableTempData :: struct {
+    TableIndex:                   s32; // Index in g.Tables.Buf[] pool
+    LastTimeActive:               float; // Last timestamp this structure was used
+    AngledHeadersExtraWidth:      float; // Used in EndTable()
+
+    UserOuterSize:                ImVec2; // outer_size.x passed to BeginTable()
+    DrawSplitter:                 ImDrawListSplitter;
+
+    HostBackupWorkRect:           ImRect; // Backup of InnerWindow->WorkRect at the end of BeginTable()
+    HostBackupParentWorkRect:     ImRect; // Backup of InnerWindow->ParentWorkRect at the end of BeginTable()
+    HostBackupPrevLineSize:       ImVec2; // Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable()
+    HostBackupCurrLineSize:       ImVec2; // Backup of InnerWindow->DC.CurrLineSize at the end of BeginTable()
+    HostBackupCursorMaxPos:       ImVec2; // Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable()
+    HostBackupColumnsOffset:      ImVec1; // Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable()
+    HostBackupItemWidth:          float; // Backup of OuterWindow->DC.ItemWidth at the end of BeginTable()
+    HostBackupItemWidthStackSize: s32; //Backup of OuterWindow->DC.ItemWidthStack.Size at the end of BeginTable()
+}
+
+// sizeof() ~ 12
+TableColumnSettings :: struct {
+    WidthOrWeight: float;
+    UserID:        ID;
+    Index:         TableColumnIdx;
+    DisplayOrder:  TableColumnIdx;
+    SortOrder:     TableColumnIdx;
+    SortDirection: ImU8;
+    #place SortDirection; /*bitfield 2*/ IsEnabled:     ImU8; // "Visible" in ini file
+    #place SortDirection; /*bitfield 3*/ IsStretch:     ImU8;
+}
+
+// This is designed to be stored in a single ImChunkStream (1 header followed by N ImGuiTableColumnSettings, etc.)
+TableSettings :: struct {
+    ID_:             ID; // Set to 0 to invalidate/delete the setting
+    SaveFlags:       TableFlags; // Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags (could be using its own flags..)
+    RefScale:        float; // Reference scale to be able to rescale columns on font/dpi changes.
+    ColumnsCount:    TableColumnIdx;
+    ColumnsCountMax: TableColumnIdx; // Maximum number of columns this settings instance can store, we can recycle a settings instance with lower number of columns but not higher
+    WantApply:       bool; // Set when loaded from .ini data (to enable merging/loading .ini data into an already running context)
+}
+
+// This structure is likely to evolve as we add support for incremental atlas updates
+ImFontBuilderIO :: struct {
+    FontBuilder_Build: #type (atlas: *ImFontAtlas) -> bool #c_call;
+}
+
+ImFontAtlasGetBuilderForStbTruetype :: () -> *ImFontBuilderIO #foreign imgui "?ImFontAtlasGetBuilderForStbTruetype@@YAPEBUImFontBuilderIO@@XZ";
+
+ImFontAtlasUpdateConfigDataPointers :: (atlas: *ImFontAtlas) -> void #foreign imgui "?ImFontAtlasUpdateConfigDataPointers@@YAXPEAUImFontAtlas@@@Z";
+ImFontAtlasBuildInit :: (atlas: *ImFontAtlas) -> void #foreign imgui "?ImFontAtlasBuildInit@@YAXPEAUImFontAtlas@@@Z";
+ImFontAtlasBuildSetupFont :: (atlas: *ImFontAtlas, font: *ImFont, font_config: *ImFontConfig, ascent: float, descent: float) -> void #foreign imgui "?ImFontAtlasBuildSetupFont@@YAXPEAUImFontAtlas@@PEAUImFont@@PEAUImFontConfig@@MM@Z";
+ImFontAtlasBuildPackCustomRects :: (atlas: *ImFontAtlas, stbrp_context_opaque: *void) -> void #foreign imgui "?ImFontAtlasBuildPackCustomRects@@YAXPEAUImFontAtlas@@PEAX@Z";
+ImFontAtlasBuildFinish :: (atlas: *ImFontAtlas) -> void #foreign imgui "?ImFontAtlasBuildFinish@@YAXPEAUImFontAtlas@@@Z";
+ImFontAtlasBuildRender8bppRectFromString :: (atlas: *ImFontAtlas, x: s32, y: s32, w: s32, h: s32, in_str: *u8, in_marker_char: u8, in_marker_pixel_value: u8) -> void #foreign imgui "?ImFontAtlasBuildRender8bppRectFromString@@YAXPEAUImFontAtlas@@HHHHPEBDDE@Z";
+ImFontAtlasBuildRender32bppRectFromString :: (atlas: *ImFontAtlas, x: s32, y: s32, w: s32, h: s32, in_str: *u8, in_marker_char: u8, in_marker_pixel_value: u32) -> void #foreign imgui "?ImFontAtlasBuildRender32bppRectFromString@@YAXPEAUImFontAtlas@@HHHHPEBDDI@Z";
+ImFontAtlasBuildMultiplyCalcLookupTable :: (out_table: *[256] u8, in_multiply_factor: float) -> void #foreign imgui "?ImFontAtlasBuildMultiplyCalcLookupTable@@YAXQEAEM@Z";
+ImFontAtlasBuildMultiplyRectAlpha8 :: (table: *[256] u8, pixels: *u8, x: s32, y: s32, w: s32, h: s32, stride: s32) -> void #foreign imgui "?ImFontAtlasBuildMultiplyRectAlpha8@@YAXQEBEPEAEHHHHH@Z";
 
 #scope_file
 

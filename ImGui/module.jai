@@ -9,6 +9,8 @@ FLOAT32_MAX :: Math.FLOAT32_MAX;
 
 size_t :: u64;
 
+FILE :: void;
+
 #scope_export
 
 #if OS == .WINDOWS
@@ -29,6 +31,15 @@ else
 ImVec2 :: Linalg.Vec2f;
 ImVec4 :: Linalg.Vec4f;
 ImColor:: Linalg.Vec4f;
+
+// Helper: ImBitArray class (wrapper over ImBitArray functions)
+// Store 1-bit per value.
+ImBitArray :: struct (BITCOUNT: s32, OFFSET: s32 = 0)
+{
+    Storage : [(BITCOUNT + 31) >> 5]ImU32;
+}
+
+ImBitArrayForNamedKeys :: ImBitArray (cast (s32) Key.NamedKey_COUNT, -cast (s32) Key.NamedKey_BEGIN);
 
 ImVector :: struct (T : Type)
 {
