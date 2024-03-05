@@ -99,3 +99,17 @@ operator *[] :: inline (vec : *ImVector, index : s64) -> *vec.T #must
 
 ImDrawCallback :: #type (parent_list : *ImDrawList, cmd : *ImDrawCmd) #c_call;
 ImDrawCallback_ResetRenderState :: -1;
+
+// Inlined functions are not generated so we need to write them ourselves
+
+GetCurrentWindowRead :: inline () -> *Window #must #no_context
+{
+    return GImGui.CurrentWindow;
+}
+
+GetCurrentWindow :: inline () -> *Window #must #no_context
+{
+    GImGui.CurrentWindow.WriteAccessed = true;
+
+    return GImGui.CurrentWindow;
+}

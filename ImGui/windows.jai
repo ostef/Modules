@@ -6,7 +6,6 @@
 
 
 
-IMGUI_USE_WCHAR32 :: 1;
 IMGUI_VERSION :: "1.90.4";
 IMGUI_VERSION_NUM :: 19040;
 
@@ -4746,6 +4745,73 @@ ImVec2ih :: struct {
 ImRect :: struct {
     Min: ImVec2; // Upper-left
     Max: ImVec2; // Lower-right
+
+    Constructor :: (this: *ImRect) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@XZ";
+    Constructor :: (this: *ImRect, min: *ImVec2, max: *ImVec2) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@AEBUImVec2@@0@Z";
+    Constructor :: (this: *ImRect, min: ImVec2, max: ImVec2) #no_context {
+        Constructor(this, *min, *max);
+    }
+    Constructor :: (this: *ImRect, v: *ImVec4) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@AEBUImVec4@@@Z";
+    Constructor :: (this: *ImRect, v: ImVec4) #no_context {
+        Constructor(this, *v);
+    }
+    Constructor :: (this: *ImRect, x1: float, y1: float, x2: float, y2: float) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@MMMM@Z";
+
+    GetCenter :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetCenter@ImRect@@QEBA?AUImVec2@@XZ";
+    GetSize :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetSize@ImRect@@QEBA?AUImVec2@@XZ";
+    GetWidth :: (this: *ImRect) -> float #cpp_method #foreign imgui "?GetWidth@ImRect@@QEBAMXZ";
+    GetHeight :: (this: *ImRect) -> float #cpp_method #foreign imgui "?GetHeight@ImRect@@QEBAMXZ";
+    GetArea :: (this: *ImRect) -> float #cpp_method #foreign imgui "?GetArea@ImRect@@QEBAMXZ";
+    GetTL :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetTL@ImRect@@QEBA?AUImVec2@@XZ";
+    GetTR :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetTR@ImRect@@QEBA?AUImVec2@@XZ";
+    GetBL :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetBL@ImRect@@QEBA?AUImVec2@@XZ";
+    GetBR :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetBR@ImRect@@QEBA?AUImVec2@@XZ";
+    Contains :: (this: *ImRect, p: *ImVec2) -> bool #cpp_method #foreign imgui "?Contains@ImRect@@QEBA_NAEBUImVec2@@@Z";
+    Contains :: (this: *ImRect, p: ImVec2) -> bool #no_context {
+        return Contains(this, *p);
+    }
+    Contains :: (this: *ImRect, r: *ImRect) -> bool #cpp_method #foreign imgui "?Contains@ImRect@@QEBA_NAEBU1@@Z";
+    Contains :: (this: *ImRect, r: ImRect) -> bool #no_context {
+        return Contains(this, *r);
+    }
+    ContainsWithPad :: (this: *ImRect, p: *ImVec2, pad: *ImVec2) -> bool #cpp_method #foreign imgui "?ContainsWithPad@ImRect@@QEBA_NAEBUImVec2@@0@Z";
+    ContainsWithPad :: (this: *ImRect, p: ImVec2, pad: ImVec2) -> bool #no_context {
+        return ContainsWithPad(this, *p, *pad);
+    }
+    Overlaps :: (this: *ImRect, r: *ImRect) -> bool #cpp_method #foreign imgui "?Overlaps@ImRect@@QEBA_NAEBU1@@Z";
+    Overlaps :: (this: *ImRect, r: ImRect) -> bool #no_context {
+        return Overlaps(this, *r);
+    }
+    Add :: (this: *ImRect, p: *ImVec2) -> void #cpp_method #foreign imgui "?Add@ImRect@@QEAAXAEBUImVec2@@@Z";
+    Add :: (this: *ImRect, p: ImVec2) #no_context {
+        Add(this, *p);
+    }
+    Add :: (this: *ImRect, r: *ImRect) -> void #cpp_method #foreign imgui "?Add@ImRect@@QEAAXAEBU1@@Z";
+    Add :: (this: *ImRect, r: ImRect) #no_context {
+        Add(this, *r);
+    }
+    Expand :: (this: *ImRect, amount: float) -> void #cpp_method #foreign imgui "?Expand@ImRect@@QEAAXM@Z";
+    Expand :: (this: *ImRect, amount: *ImVec2) -> void #cpp_method #foreign imgui "?Expand@ImRect@@QEAAXAEBUImVec2@@@Z";
+    Expand :: (this: *ImRect, amount: ImVec2) #no_context {
+        Expand(this, *amount);
+    }
+    Translate :: (this: *ImRect, d: *ImVec2) -> void #cpp_method #foreign imgui "?Translate@ImRect@@QEAAXAEBUImVec2@@@Z";
+    Translate :: (this: *ImRect, d: ImVec2) #no_context {
+        Translate(this, *d);
+    }
+    TranslateX :: (this: *ImRect, dx: float) -> void #cpp_method #foreign imgui "?TranslateX@ImRect@@QEAAXM@Z";
+    TranslateY :: (this: *ImRect, dy: float) -> void #cpp_method #foreign imgui "?TranslateY@ImRect@@QEAAXM@Z";
+    ClipWith :: (this: *ImRect, r: *ImRect) -> void #cpp_method #foreign imgui "?ClipWith@ImRect@@QEAAXAEBU1@@Z";
+    ClipWith :: (this: *ImRect, r: ImRect) #no_context {
+        ClipWith(this, *r);
+    }
+    ClipWithFull :: (this: *ImRect, r: *ImRect) -> void #cpp_method #foreign imgui "?ClipWithFull@ImRect@@QEAAXAEBU1@@Z";
+    ClipWithFull :: (this: *ImRect, r: ImRect) #no_context {
+        ClipWithFull(this, *r);
+    }
+    Floor :: (this: *ImRect) -> void #cpp_method #foreign imgui "?Floor@ImRect@@QEAAXXZ";
+    IsInverted :: (this: *ImRect) -> bool #cpp_method #foreign imgui "?IsInverted@ImRect@@QEBA_NXZ";
+    ToVec4 :: (this: *ImRect) -> ImVec4 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?ToVec4@ImRect@@QEBA?AUImVec4@@XZ";
 }
 
 ImBitArrayPtr :: *ImU32;
@@ -4755,6 +4821,11 @@ ImBitArrayPtr :: *ImU32;
 //-----------------------------------------------------------------------------
 ImBitVector :: struct {
     Storage: ImVector(ImU32);
+    Create :: (this: *ImBitVector, sz: s32) -> void #cpp_method #foreign imgui "?Create@ImBitVector@@QEAAXH@Z";
+    Clear :: (this: *ImBitVector) -> void #cpp_method #foreign imgui "?Clear@ImBitVector@@QEAAXXZ";
+    TestBit :: (this: *ImBitVector, n: s32) -> bool #cpp_method #foreign imgui "?TestBit@ImBitVector@@QEBA_NH@Z";
+    SetBit :: (this: *ImBitVector, n: s32) -> void #cpp_method #foreign imgui "?SetBit@ImBitVector@@QEAAXH@Z";
+    ClearBit :: (this: *ImBitVector, n: s32) -> void #cpp_method #foreign imgui "?ClearBit@ImBitVector@@QEAAXH@Z";
 }
 
 // Helper: ImSpan<>
@@ -5115,6 +5186,8 @@ ComboPreviewData :: struct {
     BackupCursorPosPrevLine:      ImVec2;
     BackupPrevLineTextBaseOffset: float;
     BackupLayout:                 LayoutType;
+
+    Constructor :: (this: *ComboPreviewData) -> void #cpp_method #foreign imgui "??0ImGuiComboPreviewData@@QEAA@XZ";
 }
 
 // Stacked storage data for BeginGroup()/EndGroup()
@@ -5145,6 +5218,7 @@ MenuColumns :: struct {
     OffsetMark:     ImU16;
     Widths:         [4] ImU16; // Width of:   Icon, Label, Shortcut, Mark  (accumulators for current frame)
 
+    Constructor :: (this: *MenuColumns) -> void #cpp_method #foreign imgui "??0ImGuiMenuColumns@@QEAA@XZ";
     Update :: (this: *MenuColumns, spacing: float, window_reappearing: bool) -> void #cpp_method #foreign imgui "?Update@ImGuiMenuColumns@@QEAAXM_N@Z";
     DeclColumns :: (this: *MenuColumns, w_icon: float, w_label: float, w_shortcut: float, w_mark: float) -> float #cpp_method #foreign imgui "?DeclColumns@ImGuiMenuColumns@@QEAAMMMMM@Z";
     CalcNextTotalWidth :: (this: *MenuColumns, update_offsets: bool) -> void #cpp_method #foreign imgui "?CalcNextTotalWidth@ImGuiMenuColumns@@QEAAX_N@Z";
@@ -5154,6 +5228,9 @@ MenuColumns :: struct {
 InputTextDeactivatedState :: struct {
     ID_:   ID; // widget id owning the text state (which just got deactivated)
     TextA: ImVector(u8); // text buffer
+
+    Constructor :: (this: *InputTextDeactivatedState) -> void #cpp_method #foreign imgui "??0ImGuiInputTextDeactivatedState@@QEAA@XZ";
+    ClearFreeMemory :: (this: *InputTextDeactivatedState) -> void #cpp_method #foreign imgui "?ClearFreeMemory@ImGuiInputTextDeactivatedState@@QEAAXXZ";
 }
 
 // Internal state of the currently focused/edited text input box
@@ -5179,7 +5256,31 @@ InputTextState :: struct {
     ReloadSelectionStart: s32; // POSITIONS ARE IN IMWCHAR units *NOT* UTF-8 this is why this is not exposed yet.
     ReloadSelectionEnd:   s32;
 
+    Constructor :: (this: *InputTextState) -> void #cpp_method #foreign imgui "??0ImGuiInputTextState@@QEAA@XZ";
+    ClearText :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?ClearText@ImGuiInputTextState@@QEAAXXZ";
+    ClearFreeMemory :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?ClearFreeMemory@ImGuiInputTextState@@QEAAXXZ";
+    GetUndoAvailCount :: (this: *InputTextState) -> s32 #cpp_method #foreign imgui "?GetUndoAvailCount@ImGuiInputTextState@@QEBAHXZ";
+    GetRedoAvailCount :: (this: *InputTextState) -> s32 #cpp_method #foreign imgui "?GetRedoAvailCount@ImGuiInputTextState@@QEBAHXZ";
     OnKeyPressed :: (this: *InputTextState, key: s32) -> void #cpp_method #foreign imgui "?OnKeyPressed@ImGuiInputTextState@@QEAAXH@Z";
+
+    // Cursor & Selection
+    CursorAnimReset :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?CursorAnimReset@ImGuiInputTextState@@QEAAXXZ";
+    CursorClamp :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?CursorClamp@ImGuiInputTextState@@QEAAXXZ";
+    HasSelection :: (this: *InputTextState) -> bool #cpp_method #foreign imgui "?HasSelection@ImGuiInputTextState@@QEBA_NXZ";
+    ClearSelection :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?ClearSelection@ImGuiInputTextState@@QEAAXXZ";
+    GetCursorPos :: (this: *InputTextState) -> s32 #cpp_method #foreign imgui "?GetCursorPos@ImGuiInputTextState@@QEBAHXZ";
+    GetSelectionStart :: (this: *InputTextState) -> s32 #cpp_method #foreign imgui "?GetSelectionStart@ImGuiInputTextState@@QEBAHXZ";
+    GetSelectionEnd :: (this: *InputTextState) -> s32 #cpp_method #foreign imgui "?GetSelectionEnd@ImGuiInputTextState@@QEBAHXZ";
+    SelectAll :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?SelectAll@ImGuiInputTextState@@QEAAXXZ";
+
+    // Reload user buf (WIP #2890)
+    // If you modify underlying user-passed const char* while active you need to call this (InputText V2 may lift this)
+    //   strcpy(my_buf, "hello");
+    //   if (ImGuiInputTextState* state = ImGui::GetInputTextState(id)) // id may be ImGui::GetItemID() is last item
+    //       state->ReloadUserBufAndSelectAll();
+    ReloadUserBufAndSelectAll :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?ReloadUserBufAndSelectAll@ImGuiInputTextState@@QEAAXXZ";
+    ReloadUserBufAndKeepSelection :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?ReloadUserBufAndKeepSelection@ImGuiInputTextState@@QEAAXXZ";
+    ReloadUserBufAndMoveToEnd :: (this: *InputTextState) -> void #cpp_method #foreign imgui "?ReloadUserBufAndMoveToEnd@ImGuiInputTextState@@QEAAXXZ";
 }
 
 NextWindowDataFlags :: enum_flags s32 {
@@ -5296,6 +5397,7 @@ StackSizes :: struct {
     SizeOfBeginPopupStack: s16;
     SizeOfDisabledStack:   s16;
 
+    Constructor :: (this: *StackSizes) -> void #cpp_method #foreign imgui "??0ImGuiStackSizes@@QEAA@XZ";
     SetToContextState :: (this: *StackSizes, ctx: *Context) -> void #cpp_method #foreign imgui "?SetToContextState@ImGuiStackSizes@@QEAAXPEAUImGuiContext@@@Z";
     CompareWithContextState :: (this: *StackSizes, ctx: *Context) -> void #cpp_method #foreign imgui "?CompareWithContextState@ImGuiStackSizes@@QEAAXPEAUImGuiContext@@@Z";
 }
@@ -5739,6 +5841,9 @@ TypingSelectState :: struct {
     LastRequestFrame:   s32 = 0;
     LastRequestTime:    float = 0.0;
     SingleCharModeLock  := false; // After a certain single char repeat count we lock into SingleCharMode. Two benefits: 1) buffer never fill, 2) we can provide an immediate SingleChar mode without timer elapsing.
+
+    Constructor :: (this: *TypingSelectState) -> void #cpp_method #foreign imgui "??0ImGuiTypingSelectState@@QEAA@XZ";
+    Clear :: (this: *TypingSelectState) -> void #cpp_method #foreign imgui "?Clear@ImGuiTypingSelectState@@QEAAXXZ";
 }
 
 // Flags for internal's BeginColumns(). This is an obsolete API. Prefer using BeginTable() nowadays!
@@ -5903,6 +6008,19 @@ DockNode :: struct {
 
     Constructor :: (this: *DockNode, id: ID) -> void #cpp_method #foreign imgui "??0ImGuiDockNode@@QEAA@I@Z";
     Destructor :: (this: *DockNode) -> void #cpp_method #foreign imgui "??1ImGuiDockNode@@QEAA@XZ";
+    IsRootNode :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsRootNode@ImGuiDockNode@@QEBA_NXZ";
+    IsDockSpace :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsDockSpace@ImGuiDockNode@@QEBA_NXZ";
+    IsFloatingNode :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsFloatingNode@ImGuiDockNode@@QEBA_NXZ";
+    IsCentralNode :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsCentralNode@ImGuiDockNode@@QEBA_NXZ";
+    IsHiddenTabBar :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsHiddenTabBar@ImGuiDockNode@@QEBA_NXZ";
+    IsNoTabBar :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsNoTabBar@ImGuiDockNode@@QEBA_NXZ";
+    IsSplitNode :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsSplitNode@ImGuiDockNode@@QEBA_NXZ";
+    IsLeafNode :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsLeafNode@ImGuiDockNode@@QEBA_NXZ";
+    IsEmpty :: (this: *DockNode) -> bool #cpp_method #foreign imgui "?IsEmpty@ImGuiDockNode@@QEBA_NXZ";
+    Rect :: (this: *DockNode) -> ImRect #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?Rect@ImGuiDockNode@@QEBA?AUImRect@@XZ";
+
+    SetLocalFlags :: (this: *DockNode, flags: DockNodeFlags) -> void #cpp_method #foreign imgui "?SetLocalFlags@ImGuiDockNode@@QEAAXH@Z";
+    UpdateMergedFlags :: (this: *DockNode) -> void #cpp_method #foreign imgui "?UpdateMergedFlags@ImGuiDockNode@@QEAAXXZ";
 }
 
 // List of colors that are stored at the time of Begin() into Docked Windows.
@@ -6640,6 +6758,14 @@ Window :: struct {
     GetIDFromRectangle :: (this: *Window, r_abs: ImRect) -> ID #no_context {
         return GetIDFromRectangle(this, *r_abs);
     }
+
+    // We don't use g.FontSize because the window may be != g.CurrentWindow.
+    Rect :: (this: *Window) -> ImRect #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?Rect@ImGuiWindow@@QEBA?AUImRect@@XZ";
+    CalcFontSize :: (this: *Window) -> float #cpp_method #foreign imgui "?CalcFontSize@ImGuiWindow@@QEBAMXZ";
+    TitleBarHeight :: (this: *Window) -> float #cpp_method #foreign imgui "?TitleBarHeight@ImGuiWindow@@QEBAMXZ";
+    TitleBarRect :: (this: *Window) -> ImRect #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?TitleBarRect@ImGuiWindow@@QEBA?AUImRect@@XZ";
+    MenuBarHeight :: (this: *Window) -> float #cpp_method #foreign imgui "?MenuBarHeight@ImGuiWindow@@QEBAMXZ";
+    MenuBarRect :: (this: *Window) -> ImRect #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?MenuBarRect@ImGuiWindow@@QEBA?AUImRect@@XZ";
 }
 
 // Extend ImGuiTabBarFlags_
@@ -6907,6 +7033,9 @@ Table :: struct {
     HasScrollbarYPrev:          bool; // Whether ANY instance of this table had a vertical scrollbar during the previous.
     MemoryCompacted:            bool;
     HostSkipItems:              bool; // Backup of InnerWindow->SkipItem at the end of BeginTable(), because we will overwrite InnerWindow->SkipItem on a per-column basis
+
+    Constructor :: (this: *Table) -> void #cpp_method #foreign imgui "??0ImGuiTable@@QEAA@XZ";
+    Destructor :: (this: *Table) -> void #cpp_method #foreign imgui "??1ImGuiTable@@QEAA@XZ";
 }
 
 // Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared (1 per level of stacked table).
@@ -6929,6 +7058,8 @@ TableTempData :: struct {
     HostBackupColumnsOffset:      ImVec1; // Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable()
     HostBackupItemWidth:          float; // Backup of OuterWindow->DC.ItemWidth at the end of BeginTable()
     HostBackupItemWidthStackSize: s32; //Backup of OuterWindow->DC.ItemWidthStack.Size at the end of BeginTable()
+
+    Constructor :: (this: *TableTempData) -> void #cpp_method #foreign imgui "??0ImGuiTableTempData@@QEAA@XZ";
 }
 
 // sizeof() ~ 12

@@ -27,11 +27,9 @@ Global_Declarations_Flags :: FlagsForSpecificDeclaration.[
     .{"ImGuiContext", .TYPE_INFO_NONE},
 ];
 
-Defines :: string.[
-    "IMGUI_USE_WCHAR32",
-];
+Defines :: string.[];
 
-Always_Compile_Cpp_Source :: false;
+Always_Compile_Cpp_Source :: true;
 Compile_Debug :: true;
 Include_Demo  :: true;
 
@@ -49,6 +47,8 @@ g_begin_end_string_args : [..]*Declaration;
 else #if OS == .LINUX
     compile_source := Always_Compile_Cpp_Source
         || !file_exists ("linux/ImGui.so") || !file_exists ("linux/ImGui.a");
+
+    copy_file ("imconfig.h", "source/imconfig.h");
 
     if compile_source
     {
@@ -141,7 +141,7 @@ GenerateBindings :: () -> bool
     array_add (*opts.strip_prefixes, "ImGui");
     opts.auto_detect_enum_prefixes = false;
     opts.generate_compile_time_struct_checks = false;
-    opts.strip_flags |= .INLINED_FUNCTIONS;
+    // opts.strip_flags |= .INLINED_FUNCTIONS;
 
     opts.visitor = HandleDeclaration;
     opts.get_func_args_for_printing = GetFuncArgsForPrinting;
