@@ -48,6 +48,15 @@ StringBuilderWrite :: inline (builder : *StringBuilder, do_reset := true, to_sta
     return Basic.write_builder (builder, do_reset, to_standard_error);
 }
 
+StringBuilderAppendAny :: inline (builder : *StringBuilder, any : Any) -> s64
+{
+    start_length := StringBuilderLength (builder);
+
+    Basic.print_item_to_builder (builder, any);
+
+    return StringBuilderLength (builder) - start_length;
+}
+
 StringBuilderAppend :: inline (builder : *StringBuilder, format_string : string, args : ..Any) -> s64
 {
     start_length := StringBuilderLength (builder);
