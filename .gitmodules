@@ -1,0 +1,3 @@
+[submodule "Win32"]
+	path = Win32
+	url = https://github.com/ostef/Jai-Win32
