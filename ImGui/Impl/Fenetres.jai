@@ -737,8 +737,6 @@ InitPlatformInterfaceForGL :: inline (window : *Fenetres.Window, gl_context : Fe
 }
 
 }
-else
-{
 
 InitPlatformInterfaceNoGraphicsBackend :: inline (window : *Fenetres.Window)
 {
@@ -764,8 +762,6 @@ InitPlatformInterfaceNoGraphicsBackend :: inline (window : *Fenetres.Window)
     main_viewport := ImGui.GetMainViewport ();
     main_viewport.PlatformUserData = vp_data;
     main_viewport.PlatformHandle = window;
-}
-
 }
 
 TerminatePlatformInterface :: inline ()
