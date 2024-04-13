@@ -1,9 +1,19 @@
+#module_parameters (Graphics_Backend := GraphicsBackend.OpenGL) {
+    GraphicsBackend :: enum
+    {
+        None;
+        OpenGL;
+    }
+}
+
 #import "Common";
 
 #scope_module
 
 Fenetres :: #import "Fenetres";
-Fenetres_GL :: #import "Fenetres/GL";
+
+#if Graphics_Backend == .OpenGL
+    Fenetres_GL :: #import "Fenetres/GL";
 
 ImGui :: #import "ImGui";
 Math :: #import "Math";
@@ -28,7 +38,28 @@ GetUserData :: inline () -> *UserData #must #no_context
     return ifx ImGui.GetCurrentContext () then cast (*UserData) ImGui.GetIO ().BackendPlatformUserData else null;
 }
 
+#if Graphics_Backend == .OpenGL
+{
+
 InitForGL :: (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
+{
+    InitNoGraphicsBackend (window);
+
+    // @Todo: make sure Fenetres behaves correctly for this:
+    // Set SDL hint to receive mouse click events on window focus, otherwise SDL doesn't emit the event.
+    // Without this, when clicking to gain focus, our widgets wouldn't activate even though they showed as hovered.
+    // (This is unfortunately a global SDL setting, so enabling it might have a side-effect on your application.
+    // It is unlikely to make a difference, but if your app absolutely needs to ignore the initial on-focus click:
+    // you can ignore SDL_MOUSEBUTTONDOWN events coming right after a SDL_WINDOWEVENT_FOCUS_GAINED)
+    // SDL_SetHint (SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
+
+    // if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
+        InitPlatformInterfaceForGL (window, gl_context);
+}
+
+}
+
+InitNoGraphicsBackend :: (window : *Fenetres.Window)
 {
     io := ImGui.GetIO ();
     Assert (io.BackendPlatformUserData == null, "Platform implementation already initialized");
@@ -60,17 +91,6 @@ InitForGL :: (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
     main_viewport := ImGui.GetMainViewport ();
     main_viewport.PlatformHandle = window;
     main_viewport.PlatformHandleRaw = Fenetres.GetPlatformHandle (window);
-
-    // @Todo: make sure Fenetres behaves correctly for this:
-    // Set SDL hint to receive mouse click events on window focus, otherwise SDL doesn't emit the event.
-    // Without this, when clicking to gain focus, our widgets wouldn't activate even though they showed as hovered.
-    // (This is unfortunately a global SDL setting, so enabling it might have a side-effect on your application.
-    // It is unlikely to make a difference, but if your app absolutely needs to ignore the initial on-focus click:
-    // you can ignore SDL_MOUSEBUTTONDOWN events coming right after a SDL_WINDOWEVENT_FOCUS_GAINED)
-    // SDL_SetHint (SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
-
-    // if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
-        InitPlatformInterface (window, gl_context);
 }
 
 Terminate :: ()
@@ -509,7 +529,9 @@ ViewportData :: struct
 {
     window : *Fenetres.Window;
     window_owned : bool;
-    gl_context : Fenetres_GL.GLContext;
+
+    #if Graphics_Backend == .OpenGL
+        gl_context : Fenetres_GL.GLContext;
 }
 
 GetWindowFlagsFromViewportFlags :: inline (flags : ImGui.ViewportFlags) -> Fenetres.WindowFlags #must #no_context
@@ -568,17 +590,21 @@ CreateWindow :: (viewport : *ImGui.Viewport) #c_call
         }
 
         vp_data.window_owned = true;
-        vp_data.gl_context = Fenetres_GL.CreateContext (vp_data.window);
-        Fenetres_GL.ShareContexts (main_viewport_data.gl_context, vp_data.gl_context);
 
-        backup_window := Fenetres_GL.GetCurrentWindow ();
-        backup_context := Fenetres_GL.GetCurrentContext ();
+        #if Graphics_Backend == .OpenGL
+        {
+            vp_data.gl_context = Fenetres_GL.CreateContext (vp_data.window);
+            Fenetres_GL.ShareContexts (main_viewport_data.gl_context, vp_data.gl_context);
 
-        Fenetres_GL.MakeCurrent (vp_data.window, vp_data.gl_context);
+            backup_window := Fenetres_GL.GetCurrentWindow ();
+            backup_context := Fenetres_GL.GetCurrentContext ();
 
-        Fenetres_GL.SetSwapInterval (0);
+            Fenetres_GL.MakeCurrent (vp_data.window, vp_data.gl_context);
 
-        Fenetres_GL.MakeCurrent (backup_window, backup_context);
+            Fenetres_GL.SetSwapInterval (0);
+
+            Fenetres_GL.MakeCurrent (backup_window, backup_context);
+        }
 
         viewport.PlatformHandle = vp_data.window;
         viewport.PlatformHandleRaw = Fenetres.GetPlatformHandle (vp_data.window);
@@ -595,8 +621,11 @@ DestroyWindow :: (viewport : *ImGui.Viewport) #c_call
         vp_data := cast (*ViewportData) viewport.PlatformUserData;
         if vp_data
         {
-            if vp_data.gl_context && vp_data.window_owned
-                Fenetres_GL.DestroyContext (vp_data.gl_context);
+            #if Graphics_Backend == .OpenGL
+            {
+                if vp_data.gl_context && vp_data.window_owned
+                    Fenetres_GL.DestroyContext (vp_data.gl_context);
+            }
 
             if vp_data.window && vp_data.window_owned
                 Fenetres.DestroyWindow (vp_data.window);
@@ -680,17 +709,38 @@ GetWindowMinimized :: (viewport : *ImGui.Viewport) -> bool #c_call
 RenderWindow :: (viewport : *ImGui.Viewport, *void) #c_call
 {
     vp_data := cast (*ViewportData) viewport.PlatformUserData;
-    if vp_data.gl_context
-        Fenetres_GL.MakeCurrent (vp_data.window, vp_data.gl_context);
+
+    #if Graphics_Backend == .OpenGL
+    {
+        if vp_data.gl_context
+            Fenetres_GL.MakeCurrent (vp_data.window, vp_data.gl_context);
+    }
 }
 
 SwapBuffers :: (viewport : *ImGui.Viewport, *void) #c_call
 {
     vp_data := cast (*ViewportData) viewport.PlatformUserData;
-    Fenetres.SwapBuffers (vp_data.window);
+
+    #if Graphics_Backend == .OpenGL
+        Fenetres.SwapBuffers (vp_data.window);
 }
 
-InitPlatformInterface :: inline (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
+#if Graphics_Backend == .OpenGL
+{
+
+InitPlatformInterfaceForGL :: inline (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
+{
+    InitPlatformInterfaceNoGraphicsBackend (window);
+
+    vp_data := cast (*ViewportData) ImGui.GetMainViewport ().PlatformUserData;
+    vp_data.gl_context = gl_context;
+}
+
+}
+else
+{
+
+InitPlatformInterfaceNoGraphicsBackend :: inline (window : *Fenetres.Window)
 {
     using platform_io := ImGui.GetPlatformIO ();
     Platform_CreateWindow = CreateWindow;
@@ -710,11 +760,12 @@ InitPlatformInterface :: inline (window : *Fenetres.Window, gl_context : Fenetre
     vp_data := Alloc (ViewportData);
     vp_data.window = window;
     vp_data.window_owned = false;
-    vp_data.gl_context = gl_context;
 
     main_viewport := ImGui.GetMainViewport ();
     main_viewport.PlatformUserData = vp_data;
     main_viewport.PlatformHandle = window;
+}
+
 }
 
 TerminatePlatformInterface :: inline ()
