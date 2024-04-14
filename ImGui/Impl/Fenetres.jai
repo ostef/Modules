@@ -43,7 +43,7 @@ GetUserData :: inline () -> *UserData #must #no_context
 
 InitForGL :: (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
 {
-    InitNoGraphicsBackend (window);
+    Init (window);
 
     // @Todo: make sure Fenetres behaves correctly for this:
     // Set SDL hint to receive mouse click events on window focus, otherwise SDL doesn't emit the event.
@@ -59,7 +59,7 @@ InitForGL :: (window : *Fenetres.Window, gl_context : Fenetres_GL.GLContext)
 
 }
 
-InitNoGraphicsBackend :: (window : *Fenetres.Window)
+Init :: (window : *Fenetres.Window)
 {
     io := ImGui.GetIO ();
     Assert (io.BackendPlatformUserData == null, "Platform implementation already initialized");
