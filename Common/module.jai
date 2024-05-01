@@ -146,7 +146,7 @@ Initialize :: inline (item : *$T, count : s64)
     }
 }
 
-OffsetOf :: ($T : Type, $member : string) -> s64 #must #expand
+OffsetOf :: inline ($T : Type, $member : string) -> s64 #must
 {
     dummy := cast (*T) null;
 
@@ -171,19 +171,19 @@ IsNumeric :: inline (type : Type) -> bool
 
 #scope_export
 
-Min :: (a : $T, b : T) -> T #must #expand
+Min :: inline (a : $T, b : T) -> T #must
 #modify { return IsNumeric (T); }
 {
     return ifx a < b then a else b;
 }
 
-Max :: (a : $T, b : T) -> T #must #expand
+Max :: inline (a : $T, b : T) -> T #must
 #modify { return IsNumeric (T); }
 {
     return ifx a > b then a else b;
 }
 
-MinMax :: (a : $T, b : T) -> min : T, max : T #must #expand
+MinMax :: inline (a : $T, b : T) -> min : T, max : T #must
 #modify { return IsNumeric (T); }
 {
     if a < b
@@ -192,62 +192,69 @@ MinMax :: (a : $T, b : T) -> min : T, max : T #must #expand
         return b, a;
 }
 
-Clamp :: (x : $T, min : T, max : T) -> T #must #expand
+Clamp :: inline (x : $T, min : T, max : T) -> T #must
 #modify { return IsNumeric (T); }
 {
     return Min (Max (x, min), max);
 }
 
-Saturate :: (x : $T) -> T #must #expand
+Saturate :: inline (x : $T) -> T #must
 #modify { return IsNumeric (T); }
 {
     return Clamp (x, 0, 1);
 }
 
-Abs :: (x : $T) -> T #must #expand
+Abs :: inline (x : $T) -> T #must
 #modify { return IsNumeric (T); }
 {
     return ifx x < 0 then -x else x;
 }
 
-Sign :: (x : $T) -> T #must #expand
+Sign :: inline (x : $T) -> T #must
 #modify { return IsNumeric (T); }
 {
     return cast (T) ifx x < 0 then -1 else ifx x > 0 then 1 else 0;
 }
 
-Lerp :: (a : float, b : float, t : float) -> float #must #expand
+Lerp :: inline (a : float, b : float, t : float) -> float #must
 {
     return a * (1 - t) + b * t;
 }
 
-InverseLerp :: (a : float, b : float, t : float) -> float #must #expand
+InverseLerp :: inline (a : float, b : float, t : float) -> float #must
 {
     return (t - a) / (b - a);
 }
 
-Round :: (value : float) -> float #must #expand
+Round :: inline (value : float) -> float #must
 {
     return cast (float) (cast (int) (value + Sign (value) * 0.5));
 }
 
-SnapDown :: (value : float, grid_size : float) -> float #must #expand
+SnapDown :: inline (value : float, grid_size : float) -> float #must
 {
     Math :: #import "Math";
 
     return Math.floor (value / grid_size) * grid_size;
 }
 
-Snap :: (value : float, grid_size : float) -> float #must #expand
+Snap :: inline (value : float, grid_size : float) -> float #must
 {
     Math :: #import "Math";
 
     return Math.round (value / grid_size) * grid_size;
 }
 
-SnapUp :: (value : float, grid_size : float) -> float #must #expand
+SnapUp :: inline (value : float, grid_size : float) -> float #must
 {
     Math :: #import "Math";
 
     return Math.ceil (value / grid_size) * grid_size;
+}
+
+Swap :: inline (a : *$T, b : *T)
+{
+    tmp := a.*;
+    a.* = b.*;
+    b.* = tmp;
 }
