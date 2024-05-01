@@ -146,14 +146,14 @@ Initialize :: inline (item : *$T, count : s64)
     }
 }
 
-OffsetOf :: inline ($T : Type, $member : string) -> s64 #must
+OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
 {
     dummy := cast (*T) null;
 
     #insert #run SPrint ("return cast (s64) *dummy.%;", member);
 }
 
-DefaultValue :: ($T : Type) -> T #expand
+DefaultValue :: inline ($T : Type) -> T #must #no_context
 {
     val : T;
 
@@ -171,19 +171,19 @@ IsNumeric :: inline (type : Type) -> bool
 
 #scope_export
 
-Min :: inline (a : $T, b : T) -> T #must
+Min :: inline (a : $T, b : T) -> T #must #no_context
 #modify { return IsNumeric (T); }
 {
     return ifx a < b then a else b;
 }
 
-Max :: inline (a : $T, b : T) -> T #must
+Max :: inline (a : $T, b : T) -> T #must #no_context
 #modify { return IsNumeric (T); }
 {
     return ifx a > b then a else b;
 }
 
-MinMax :: inline (a : $T, b : T) -> min : T, max : T #must
+MinMax :: inline (a : $T, b : T) -> min : T, max : T #must #no_context
 #modify { return IsNumeric (T); }
 {
     if a < b
@@ -192,67 +192,67 @@ MinMax :: inline (a : $T, b : T) -> min : T, max : T #must
         return b, a;
 }
 
-Clamp :: inline (x : $T, min : T, max : T) -> T #must
+Clamp :: inline (x : $T, min : T, max : T) -> T #must #no_context
 #modify { return IsNumeric (T); }
 {
     return Min (Max (x, min), max);
 }
 
-Saturate :: inline (x : $T) -> T #must
+Saturate :: inline (x : $T) -> T #must #no_context
 #modify { return IsNumeric (T); }
 {
     return Clamp (x, 0, 1);
 }
 
-Abs :: inline (x : $T) -> T #must
+Abs :: inline (x : $T) -> T #must #no_context
 #modify { return IsNumeric (T); }
 {
     return ifx x < 0 then -x else x;
 }
 
-Sign :: inline (x : $T) -> T #must
+Sign :: inline (x : $T) -> T #must #no_context
 #modify { return IsNumeric (T); }
 {
     return cast (T) ifx x < 0 then -1 else ifx x > 0 then 1 else 0;
 }
 
-Lerp :: inline (a : float, b : float, t : float) -> float #must
+Lerp :: inline (a : float, b : float, t : float) -> float #must #no_context
 {
     return a * (1 - t) + b * t;
 }
 
-InverseLerp :: inline (a : float, b : float, t : float) -> float #must
+InverseLerp :: inline (a : float, b : float, t : float) -> float #must #no_context
 {
     return (t - a) / (b - a);
 }
 
-Round :: inline (value : float) -> float #must
+Round :: inline (value : float) -> float #must #no_context
 {
     return cast (float) (cast (int) (value + Sign (value) * 0.5));
 }
 
-SnapDown :: inline (value : float, grid_size : float) -> float #must
+SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     Math :: #import "Math";
 
     return Math.floor (value / grid_size) * grid_size;
 }
 
-Snap :: inline (value : float, grid_size : float) -> float #must
+Snap :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     Math :: #import "Math";
 
     return Math.round (value / grid_size) * grid_size;
 }
 
-SnapUp :: inline (value : float, grid_size : float) -> float #must
+SnapUp :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     Math :: #import "Math";
 
     return Math.ceil (value / grid_size) * grid_size;
 }
 
-Swap :: inline (a : *$T, b : *T)
+Swap :: inline (a : *$T, b : *T) #no_context
 {
     tmp := a.*;
     a.* = b.*;
