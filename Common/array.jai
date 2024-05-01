@@ -194,3 +194,14 @@ ArrayFindLast :: (arr : []$T, item : T) -> s64 #must
 
     return -1;
 }
+
+ArrayPushUnique :: (arr : *[..]$T, item : T) -> bool
+{
+    if ArrayFindFirst (arr.*, item) == -1
+    {
+        ArrayPush (arr, item);
+        return true;
+    }
+
+    return false;
+}
