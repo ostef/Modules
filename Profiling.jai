@@ -219,11 +219,58 @@ PrintProfilingData :: (builder : *StringBuilder, entries : ProfilingEntriesMap, 
     case .Name; compare = CompareNames;
     }
 
-    Sort.quick_sort (sorted_entries, compare);
+    QuickSort (sorted_entries, compare);
 
     for sorted_entries
     {
         PrintProfilingData (builder, it);
         StringBuilderAppend (builder, "\n");
     }
+}
+
+#scope_module
+
+QuickSort :: inline (arr : []$T, compare : (T, T) -> $R)
+{
+    QuickSortHelper :: (
+        arr : []$T,
+        left : s64, right : s64,
+        compare : (T, T) -> $R
+    )
+    #no_abc
+    {
+        if left < 0 || right <= left
+            return;
+
+        i := left;
+        j := right;
+
+        pivot := arr[(j + i) / 2];
+
+        while true
+        {
+            while compare (arr[i], pivot) < 0
+                i += 1;
+            while compare (arr[j], pivot) > 0
+                j -= 1;
+
+            if i >= j
+                break;
+
+            tmp := arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+
+            i += 1;
+            j -= 1;
+        }
+
+        QuickSortHelper (arr, left, j, compare);
+        QuickSortHelper (arr, j + 1, right, compare);
+    }
+
+    if arr.count < 2
+        return;
+
+    QuickSortHelper (arr, 0, arr.count - 1, compare);
 }
