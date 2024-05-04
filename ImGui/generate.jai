@@ -116,9 +116,9 @@ CompileCppSource :: () -> bool
 GenerateBindings :: () -> bool
 {
     #if OS == .WINDOWS
-        output_filename := "windows.jai";
+        output_filename := "imgui_windows.jai";
     else #if OS == .LINUX
-        output_filename := "linux.jai";
+        output_filename := "imgui_linux.jai";
 
     opts : Generate_Bindings_Options;
 

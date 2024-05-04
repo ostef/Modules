@@ -15,13 +15,13 @@ FILE :: void;
 
 #if OS == .WINDOWS
 {
-    #load "windows.jai";
+    #load "imgui_windows.jai";
 
     user32 :: #system_library "User32";	// Needed unless ImGui is compiled with IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCS
 }
 else #if OS == .LINUX
 {
-    #load "linux.jai";
+    #load "imgui_linux.jai";
 }
 else
 {
