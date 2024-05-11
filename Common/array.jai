@@ -92,6 +92,15 @@ ArrayPush :: inline (arr : *[..]$T, elem : T) -> *T
     return ptr;
 }
 
+ArrayPushMultiple :: inline (arr : *[..]$T, elems : []T)
+{
+    if arr.count + elems.count > arr.allocated
+        ArrayReserve (arr, arr.allocated * 2 + elems.count);
+
+    memcpy (arr.data + arr.count, elems.data, size_of (T) * elems.count);
+    arr.count += elems.count;
+}
+
 ArrayPop :: inline (arr : *[..]$T)
 {
     Assert (arr.count > 0, "Popping empty array");
