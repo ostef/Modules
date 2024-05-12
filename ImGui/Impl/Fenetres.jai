@@ -722,7 +722,7 @@ SwapBuffers :: (viewport : *ImGui.Viewport, *void) #c_call
     vp_data := cast (*ViewportData) viewport.PlatformUserData;
 
     #if Graphics_Backend == .OpenGL
-        Fenetres.SwapBuffers (vp_data.window);
+        Fenetres_GL.SwapBuffers (vp_data.window);
 }
 
 #if Graphics_Backend == .OpenGL
