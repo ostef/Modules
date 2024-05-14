@@ -80,16 +80,21 @@ StringBuilderAppendString :: inline (builder : *StringBuilder, str : string) -> 
     return str.count;
 }
 
-StringBuilderAppendStringLiteral :: inline (builder : *StringBuilder, str : string, quotes := "\"") -> s64
+StringBuilderAppendStringLiteral :: inline (builder : *StringBuilder, str : string, quote : u8 = #char "\"") -> s64
 {
     count := 0;
 
-    count += StringBuilderAppend (builder, quotes);
+    count += StringBuilderAppendByte (builder, quote);
 
     for i : 0..str.count - 1
     #no_abc
     {
-        if str[i] ==
+        if str[i] == quote
+        {
+            count += StringBuilderAppendByte (builder, #char "\\");
+            count += StringBuilderAppendByte (builder, quote);
+        }
+        else if str[i] ==
         {
         case #char "\\"; count += StringBuilderAppendString (builder, "\\\\");
         case #char "\t"; count += StringBuilderAppendString (builder, "\\t");
@@ -99,7 +104,7 @@ StringBuilderAppendStringLiteral :: inline (builder : *StringBuilder, str : stri
         }
     }
 
-    count += StringBuilderAppend (builder, quotes);
+    count += StringBuilderAppendByte (builder, quote);
 
     return count;
 }
