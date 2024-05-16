@@ -214,3 +214,26 @@ StringJoin :: (allocator : Allocator, args : ..string) -> string #must
 {
     return StringJoin (..args,, allocator);
 }
+
+StringSplit :: (str : string, split : u8) -> [..]string #must
+{
+    String :: #import "String";
+
+    result : [..]string;
+
+    offset := 0;
+    while offset < str.count
+    {
+        index := String.find_index_from_left (str, split, offset);
+        if index == -1
+            index = str.count;
+
+        line := string.{index - offset, str.data + offset};
+        offset = index + 1;
+
+        if line.count > 0
+            ArrayPush (*result, line);
+    }
+
+    return result;
+}
