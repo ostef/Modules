@@ -170,7 +170,7 @@ ArrayOrderedRemove :: inline (arr : *[..]$T, index : s64)
 {
     Assert (index >= 0 && index < arr.count, "Index out of bounds (index is %, bounds are [0, %])", index, arr.count - 1);
 
-    memcpy (arr.data + index, arr.data + index + 1, arr.count - index - 1);
+    memcpy (arr.data + index, arr.data + index + 1, size_of (T) * (arr.count - index - 1));
     arr.count -= 1;
 }
 
