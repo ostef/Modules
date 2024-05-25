@@ -25,6 +25,10 @@ SetContextLogger :: inline (data : *void, proc : Logger)
     context.logger = proc;
 }
 
+IgnoreLogger :: (message : string, data : *void, info : Log_Info)
+{
+}
+
 MultiLogger :: struct
 {
     DispatchTarget :: struct
