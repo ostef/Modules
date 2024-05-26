@@ -150,7 +150,7 @@ OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
 {
     dummy := cast (*T) null;
 
-    #insert #run SPrint ("return cast (s64) *dummy.%;", member);
+    #insert #run SPrint ("// OffsetOf %.%\nreturn cast (s64) *dummy.%;", T, member, member);
 }
 
 DefaultValue :: inline ($T : Type) -> T #must #no_context
