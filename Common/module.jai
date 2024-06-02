@@ -1,5 +1,14 @@
 #module_parameters () (Enable_Asserts := true);
 
+InitContextBase :: ()
+{
+    #if OS == .WINDOWS
+    {
+        Win32 :: #import "Win32" (Threads = true);
+        context.thread_index = xx Win32.GetCurrentThreadId ();
+    }
+}
+
 Formatter :: Basic.Formatter;
 FormatInt :: Basic.FormatInt;
 FormatFloat :: Basic.FormatFloat;
