@@ -37,6 +37,16 @@ SPrint :: (format_string : string, args : ..Any) -> string #must
 }
 @PrintLike
 
+TPrint :: (format_string : string, args : ..Any) -> string #must
+{
+    builder : StringBuilder;
+    builder.allocator = Temp;
+    StringBuilderAppend (*builder, format_string, ..args);
+
+    return StringBuilderBuild (*builder ,, Temp);
+}
+@PrintLike
+
 FormatString :: (allocator : Allocator, format_string : string, args : ..Any) -> string #must
 #deprecated "Use a context argument instead: FormatString (\"...\", ... ,, allocator)"
 {
