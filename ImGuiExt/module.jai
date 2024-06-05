@@ -2,6 +2,7 @@
 
 #scope_module
 
+Basic :: #import "Basic";
 ImGui :: #import "ImGui";
 
 #scope_export
@@ -20,11 +21,23 @@ EnumCombo :: (label : *u8, current_item : *$T, ignore_last_value := false, popup
         name := *names[value_index];
         name.* = StringCloneToCString (enum_info.names[value_index],, Temp);
 
+        first_letter := true;
         for i : 0..enum_info.names[value_index].count - 1
         {
+            if Basic.is_alpha (name.*[i])
+            {
+                if first_letter
+                    name.*[i] = Basic.to_upper (name.*[i]);
+                else
+                    name.*[i] = Basic.to_lower (name.*[i]);
+
+                first_letter = false;
+            }
+
             if (name.*)[i] == #char "_"
             {
                 (name.*)[i] = #char " ";
+                first_letter = true;
             }
         }
     }
