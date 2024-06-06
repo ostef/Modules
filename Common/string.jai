@@ -49,6 +49,9 @@ MakeString :: inline (count : s64, data : *u8) -> string #must
 
 MakeString :: inline (cstr : *u8) -> string #must
 {
+    if !cstr
+        return "";
+
     return .{StringLength (cstr), cstr};
 }
 
