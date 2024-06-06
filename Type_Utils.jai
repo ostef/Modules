@@ -381,3 +381,14 @@ TypeIsSubstructOf :: (info : *Type_Info, of : *Type_Info) -> bool #must
 
     return false;
 }
+
+TypeGetSourcePolymorph :: (info : *Type_Info_Struct) -> *Type_Info_Struct #must
+{
+    if !info.polymorph_source_struct
+        return null;
+
+    while info && info.polymorph_source_struct
+        info = info.polymorph_source_struct;
+
+    return info;
+}
