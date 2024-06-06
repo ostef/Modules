@@ -81,15 +81,15 @@ AppendConsoleColor :: (builder : *StringBuilder, color : ConsoleColor)
     if #complete color ==
     {
     case .None;
-        StringBuilderAppend (builder, None_Color_Str);
+        StringBuilderAppendString (builder, None_Color_Str);
     case .Info;
-        StringBuilderAppend (builder, Info_Color_Str);
+        StringBuilderAppendString (builder, Info_Color_Str);
     case .Warning;
-        StringBuilderAppend (builder, Warning_Color_Str);
+        StringBuilderAppendString (builder, Warning_Color_Str);
     case .Error;
-        StringBuilderAppend (builder, Error_Color_Str);
+        StringBuilderAppendString (builder, Error_Color_Str);
     case .Fatal;
-        StringBuilderAppend (builder, Fatal_Color_Str);
+        StringBuilderAppendString (builder, Fatal_Color_Str);
     }
 }
 
@@ -174,10 +174,10 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
     if report_filenames
         StringBuilderAppend (*builder, "(%:%) ", info.location.fully_pathed_filename, info.location.line_number);
 
-    StringBuilderAppend (*builder, message);
+    StringBuilderAppendString (*builder, message);
 
     if message[message.count - 1] != #char "\n"
-        StringBuilderAppend (*builder, "\n");
+        StringBuilderAppendString (*builder, "\n");
 
     str := StringBuilderBuild (*builder,, Temp);
 
