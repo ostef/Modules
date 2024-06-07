@@ -118,7 +118,7 @@ UpdateKeyModifiers :: inline (mods : Fenetres.KeyMods)
     io.AddKeyEvent (io, .ModAlt, (mods & .Alt) != 0);
 }
 
-HandleWindowMessage :: (msg : Fenetres.Message) -> handled : bool
+HandleWindowMessage :: (msg : Fenetres.Message, ignore_mouse_move := false) -> handled : bool
 {
     io := ImGui.GetIO ();
     data := GetUserData ();
@@ -126,17 +126,20 @@ HandleWindowMessage :: (msg : Fenetres.Message) -> handled : bool
     if msg.kind ==
     {
     case .Mouse_Moved;
-        mouse_pos := ImVec2.{cast (float) msg.mouse_x, cast (float) msg.mouse_y};
-        if io.ConfigFlags_ & .ViewportsEnable
+        if !ignore_mouse_move
         {
-            window_x, window_y := Fenetres.GetViewportPosition (msg.window);
-            mouse_pos.x += cast (float) window_x;
-            mouse_pos.y += cast (float) window_y;
+            mouse_pos := ImVec2.{cast (float) msg.mouse_x, cast (float) msg.mouse_y};
+            if io.ConfigFlags_ & .ViewportsEnable
+            {
+                window_x, window_y := Fenetres.GetViewportPosition (msg.window);
+                mouse_pos.x += cast (float) window_x;
+                mouse_pos.y += cast (float) window_y;
+            }
+
+            io.AddMousePosEvent (io, mouse_pos.x, mouse_pos.y);
+
+            return true;
         }
-
-        io.AddMousePosEvent (io, mouse_pos.x, mouse_pos.y);
-
-        return true;
 
     case .Mouse_Wheel;
         wheel_x := Sign (msg.mouse_wheel_x);
