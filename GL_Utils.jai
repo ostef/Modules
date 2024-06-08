@@ -108,6 +108,11 @@ MakeShaderStringWithLineNumbers :: (shader : string, errors : []ErrorInfo) -> st
         line_str.data += line_str.count;
     }
 
+    for i : error_index..errors.count - 1
+    {
+        StringBuilderAppend (*builder, "> %\n", errors[error_index].message);
+    }
+
     return StringBuilderBuild (*builder,, Temp);
 }
 
@@ -133,8 +138,12 @@ CheckShader :: (handle : GLuint, desc : string, source : string, location := #ca
                 errors := ParseErrorMessage (message);
                 str := MakeShaderStringWithLineNumbers (source, errors);
 
-                LogError (desc, location = location);
-                LogMessage ("Here's the shader we tried to compile:\n\n%", str, location = location);
+                LogError ("%", desc, errors.count, location = location);
+
+                if errors.count > 0
+                    LogMessage ("Here's the shader we tried to compile:\n\n%", str, location = location);
+                else
+                    LogMessage ("Here's the shader we tried to compile:\n\n%\n\n%", str, message, location = location);
             }
             else
             {
