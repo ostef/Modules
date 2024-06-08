@@ -75,6 +75,16 @@ CSPrint :: (format_string : string, args : ..Any) -> *u8 #must
 }
 @PrintLike
 
+CTPrint :: (format_string : string, args : ..Any) -> *u8 #must
+{
+    builder : StringBuilder;
+    builder.allocator = Temp;
+    StringBuilderAppend (*builder, format_string, ..args);
+
+    return StringBuilderBuildCstr (*builder ,, Temp);
+}
+@PrintLike
+
 FormatToCString :: (allocator : Allocator, format_string : string, args : ..Any) -> *u8 #must
 #deprecated "Use a context argument instead: FormatToCString (\"...\", ... ,, allocator)"
 {
