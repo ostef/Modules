@@ -237,3 +237,10 @@ StringSplit :: (str : string, split : u8) -> [..]string #must
 
     return result;
 }
+
+StringTruncate :: inline (str : string, count : s64) -> string #must
+{
+    count = Max (count, str.count);
+
+    return .{count, str.data};
+}
