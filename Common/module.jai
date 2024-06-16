@@ -1,5 +1,14 @@
 #module_parameters () (Enable_Asserts := true);
 
+InitContextBase :: ()
+{
+    #if OS == .WINDOWS
+    {
+        Win32 :: #import "Win32" (Threads = true);
+        context.thread_index = xx Win32.GetCurrentThreadId ();
+    }
+}
+
 Formatter :: Basic.Formatter;
 FormatInt :: Basic.FormatInt;
 FormatFloat :: Basic.FormatFloat;
@@ -28,6 +37,16 @@ SPrint :: (format_string : string, args : ..Any) -> string #must
 }
 @PrintLike
 
+TPrint :: (format_string : string, args : ..Any) -> string #must
+{
+    builder : StringBuilder;
+    builder.allocator = Temp;
+    StringBuilderAppend (*builder, format_string, ..args);
+
+    return StringBuilderBuild (*builder ,, Temp);
+}
+@PrintLike
+
 FormatString :: (allocator : Allocator, format_string : string, args : ..Any) -> string #must
 #deprecated "Use a context argument instead: FormatString (\"...\", ... ,, allocator)"
 {
@@ -53,6 +72,16 @@ CSPrint :: (format_string : string, args : ..Any) -> *u8 #must
     StringBuilderAppend (*builder, format_string, ..args);
 
     return StringBuilderBuildCstr (*builder);
+}
+@PrintLike
+
+CTPrint :: (format_string : string, args : ..Any) -> *u8 #must
+{
+    builder : StringBuilder;
+    builder.allocator = Temp;
+    StringBuilderAppend (*builder, format_string, ..args);
+
+    return StringBuilderBuildCstr (*builder ,, Temp);
 }
 @PrintLike
 
@@ -150,7 +179,7 @@ OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
 {
     dummy := cast (*T) null;
 
-    #insert #run SPrint ("return cast (s64) *dummy.%;", member);
+    #insert #run SPrint ("// OffsetOf %.%\nreturn cast (s64) *dummy.%;", T, member, member);
 }
 
 DefaultValue :: inline ($T : Type) -> T #must #no_context
@@ -257,4 +286,95 @@ Swap :: inline (a : *$T, b : *T) #no_context
     tmp := a.*;
     a.* = b.*;
     b.* = tmp;
+}
+
+QuickSort :: inline (arr : []$T, user_data : $User, compare : (T, T, User) -> $R)
+{
+    QuickSortHelper :: (
+        arr : []$T,
+        left : s64, right : s64,
+        user_data : $User,
+        compare : (T, T, User) -> $R
+    )
+    #no_abc
+    {
+        if left < 0 || right <= left
+            return;
+
+        i := left;
+        j := right;
+
+        pivot := arr[(j + i) / 2];
+
+        while true
+        {
+            while compare (arr[i], pivot, user_data) < 0
+                i += 1;
+            while compare (arr[j], pivot, user_data) > 0
+                j -= 1;
+
+            if i >= j
+                break;
+
+            tmp := arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+
+            i += 1;
+            j -= 1;
+        }
+
+        QuickSortHelper (arr, left, j, user_data, compare);
+        QuickSortHelper (arr, j + 1, right, user_data, compare);
+    }
+
+    if arr.count < 2
+        return;
+
+    QuickSortHelper (arr, 0, arr.count - 1, user_data, compare);
+}
+
+QuickSort :: inline (arr : []$T, compare : (T, T) -> $R)
+{
+    QuickSortHelper :: (
+        arr : []$T,
+        left : s64, right : s64,
+        compare : (T, T) -> $R
+    )
+    #no_abc
+    {
+        if left < 0 || right <= left
+            return;
+
+        i := left;
+        j := right;
+
+        pivot := arr[(j + i) / 2];
+
+        while true
+        {
+            while compare (arr[i], pivot) < 0
+                i += 1;
+            while compare (arr[j], pivot) > 0
+                j -= 1;
+
+            if i >= j
+                break;
+
+            tmp := arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+
+            i += 1;
+            j -= 1;
+        }
+
+        QuickSortHelper (arr, left, j, compare);
+        QuickSortHelper (arr, j + 1, right, compare);
+    }
+
+    if arr.count < 2
+        return;
+
+    QuickSortHelper (arr, 0, arr.count - 1, compare);
 }

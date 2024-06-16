@@ -2,6 +2,7 @@
 
 #scope_module
 
+Basic :: #import "Basic";
 ImGui :: #import "ImGui";
 
 #scope_export
