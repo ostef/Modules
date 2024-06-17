@@ -271,7 +271,6 @@ UpdateMouseData :: (allow_mouse_input : bool)
     io := ImGui.GetIO ();
 
     focused_window := Fenetres.GetFocusedWindow ();
-    Fenetres.SetMouseCapture (focused_window, xx (data.mouse_buttons_down != 0));
     is_app_focused := focused_window && (data.window == focused_window || ImGui.FindViewportByPlatformHandle (focused_window));
 
     if !allow_mouse_input
@@ -280,6 +279,8 @@ UpdateMouseData :: (allow_mouse_input : bool)
     }
     else if is_app_focused
     {
+        Fenetres.SetMouseCapture (focused_window, xx (data.mouse_buttons_down != 0));
+
         if io.WantSetMousePos
         {
             if io.ConfigFlags_ & .ViewportsEnable
