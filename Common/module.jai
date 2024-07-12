@@ -269,9 +269,7 @@ SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
 
 Snap :: inline (value : float, grid_size : float) -> float #must #no_context
 {
-    Math :: #import "Math";
-
-    return Math.round (value / grid_size) * grid_size;
+    return Round (value / grid_size) * grid_size;
 }
 
 SnapUp :: inline (value : float, grid_size : float) -> float #must #no_context
