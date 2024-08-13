@@ -238,6 +238,7 @@ NewFrame :: (delta_time : float, allow_mouse_input := true)
         UpdateMonitors ();
 
     display_w, display_h := Fenetres.GetViewportSize (data.window);
+    display_px_w, display_px_h := Fenetres.GetViewportSizeInPixels (data.window);
 
     if Fenetres.IsMinimized (data.window)
     {
@@ -247,7 +248,12 @@ NewFrame :: (delta_time : float, allow_mouse_input := true)
 
     io.DisplaySize = .{cast (float) display_w, cast (float) display_h};
     if display_w > 0 && display_h > 0
-        io.DisplayFramebufferScale = .{1, 1};
+    {
+        io.DisplayFramebufferScale = .{
+            display_px_w / cast (float) display_w,
+            display_px_h / cast (float) display_h,
+        };
+    }
 
     if delta_time <= 0
         io.DeltaTime = 1.0 / 60.0;
@@ -653,7 +659,7 @@ ShowWindow :: (viewport : *ImGui.Viewport) #c_call
         Fenetres.ShowAndFocusWindow (vp_data.window);
 }
 
-GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type_is_non_pod
+GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
 {
     vp_data := cast (*ViewportData) viewport.PlatformUserData;
     x, y := Fenetres.GetViewportPosition (vp_data.window);
@@ -667,7 +673,7 @@ SetWindowPos :: (viewport : *ImGui.Viewport, pos : ImVec2) #c_call
     Fenetres.SetViewportPosition (vp_data.window, xx pos.x, xx pos.y);
 }
 
-GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type_is_non_pod
+GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
 {
     vp_data := cast (*ViewportData) viewport.PlatformUserData;
     w, h := Fenetres.GetViewportSize (vp_data.window);

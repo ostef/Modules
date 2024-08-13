@@ -13,24 +13,48 @@ FILE :: void;
 
 #scope_export
 
-#if OS == .WINDOWS
+#if OS ==
 {
+case .WINDOWS;
     #load "imgui_windows.jai";
 
     user32 :: #system_library "User32";	// Needed unless ImGui is compiled with IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCS
-}
-else #if OS == .LINUX
-{
+
+case .LINUX;
     #load "imgui_linux.jai";
-}
-else
-{
+case .MACOS;
+    #load "imgui_macos.jai";
+case;
     #assert false "Unsupported OS";
 }
 
 ImVec2 :: Linalg.Vec2f;
 ImVec4 :: Linalg.Vec4f;
 ImColor:: Linalg.Vec4f;
+
+ImRect :: struct
+{
+    Min : ImVec2; // Upper-left
+    Max : ImVec2; // Lower-right
+
+    GetWidth :: inline (using this : *ImRect) -> float #must
+    {
+        return Max.x - Min.x;
+    }
+
+    GetHeight :: inline (using this : *ImRect) -> float #must
+    {
+        return Max.y - Min.y;
+    }
+
+    GetSize :: inline (using this : *ImRect) -> ImVec2 #must
+    {
+        return .{
+            Max.x - Min.x,
+            Max.y - Min.y,
+        };
+    }
+}
 
 // Helper: ImBitArray class (wrapper over ImBitArray functions)
 // Store 1-bit per value.

@@ -19,7 +19,21 @@
 //---- Debug Tools: Macro to break in Debugger (we provide a default implementation of this in the codebase)
 // (use 'Metrics->Tools->Item Picker' to pick widgets with the mouse and break into them for easy debugging.)
 //#define IM_DEBUG_BREAK  IM_ASSERT(0)
-#define IM_DEBUG_BREAK()  __debugbreak()
+#ifndef IM_DEBUG_BREAK
+#if defined (_MSC_VER)
+#define IM_DEBUG_BREAK()    __debugbreak()
+#elif defined(__clang__)
+#define IM_DEBUG_BREAK()    __builtin_debugtrap()
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#define IM_DEBUG_BREAK()    __asm__ volatile("int3;nop")
+#elif defined(__GNUC__) && defined(__thumb__)
+#define IM_DEBUG_BREAK()    __asm__ volatile(".inst 0xde01")
+#elif defined(__GNUC__) && defined(__arm__) && !defined(__thumb__)
+#define IM_DEBUG_BREAK()    __asm__ volatile(".inst 0xe7f001f0")
+#else
+#define IM_DEBUG_BREAK()    IM_ASSERT(0)    // It is expected that you define IM_DEBUG_BREAK() into something that will break nicely in a debugger!
+#endif
+#endif // #ifndef IM_DEBUG_BREAK
 
 //---- Define assertion handler. Defaults to calling assert().
 // If your macro uses multiple statements, make sure is enclosed in a 'do { .. } while (0)' block so it can be used as a single statement.

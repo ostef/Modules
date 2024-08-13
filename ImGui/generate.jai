@@ -4,8 +4,8 @@
 #import "String";
 #import "Bindings_Generator";
 
-#if OS != .WINDOWS && OS != .LINUX
-    #assert false "Only Windows and Linux are supported for now.";
+#if OS != .WINDOWS && OS != .LINUX && OS != .MACOS
+    #assert false "Only Windows, Linux and MacOS are supported for now.";
 
 Cpp_Source_Path :: "source";
 
@@ -16,6 +16,7 @@ FlagsForSpecificDeclaration :: struct
 }
 
 Global_Declarations_Flags :: FlagsForSpecificDeclaration.[
+    .{"ImRect", .OMIT_FROM_OUTPUT},
     .{"ImVec2", .OMIT_FROM_OUTPUT},
     .{"ImVec4", .OMIT_FROM_OUTPUT},
     .{"ImColor", .OMIT_FROM_OUTPUT},
@@ -29,7 +30,7 @@ Global_Declarations_Flags :: FlagsForSpecificDeclaration.[
 
 Defines :: string.[];
 
-Always_Compile_Cpp_Source :: true;
+Always_Compile_Cpp_Source :: false;
 Compile_Debug :: true;
 Include_Demo  :: true;
 
@@ -47,6 +48,9 @@ g_begin_end_string_args : [..]*Declaration;
 else #if OS == .LINUX
     compile_source := Always_Compile_Cpp_Source
         || !file_exists ("linux/ImGui.so") || !file_exists ("linux/ImGui.a");
+else #if OS == .MACOS
+    compile_source := Always_Compile_Cpp_Source
+        || !file_exists ("macos/ImGui.dylib") || !file_exists ("macos/ImGui.a");
 
     copy_file ("imconfig.h", "source/imconfig.h");
 
@@ -109,6 +113,46 @@ CompileCppSource :: () -> bool
         array_add (*extra, "-fno-exceptions", "-fno-rtti", "-fno-threadsafe-statics");
         success &&= build_cpp_static_lib ("linux/ImGui", ..src_files, extra = extra, debug = Compile_Debug);
     }
+    else #if OS == .MACOS
+    {
+        #import "Process";
+
+        make_directory_if_it_does_not_exist ("macos");
+
+        // x86_64 version
+        {
+            extra : [..]string;
+
+            for Defines
+                array_add (*extra, tprint ("-D%", it));
+
+            array_add (*extra, "-arch", "x86_64", "-std=c++20", "-mmacos-version-min=10.13");
+
+            success &&= build_cpp_dynamic_lib ("macos/ImGui_x64", ..src_files, extra = extra, debug = Compile_Debug);
+
+            array_add (*extra, "-fno-exceptions", "-fno-rtti", "-fno-threadsafe-statics");
+            success &&= build_cpp_static_lib ("macos/ImGui_x64", ..src_files, extra = extra, debug = Compile_Debug);
+        }
+
+        // arm64 version
+        {
+            extra : [..]string;
+
+            for Defines
+                array_add (*extra, tprint ("-D%", it));
+
+            array_add (*extra, "-arch", "arm64", "-std=c++20", "-mmacos-version-min=11.0");
+
+            success &&= build_cpp_dynamic_lib ("macos/ImGui_arm64", ..src_files, extra = extra, debug = Compile_Debug);
+
+            array_add (*extra, "-fno-exceptions", "-fno-rtti", "-fno-threadsafe-statics");
+            success &&= build_cpp_static_lib ("macos/ImGui_arm64", ..src_files, extra = extra, debug = Compile_Debug);
+        }
+
+        // Create universal lib
+        success &&= run_command ("lipo", "-create", "macos/ImGui_x64.dylib", "macos/ImGui_arm64.dylib", "-output", "macos/ImGui.dylib").exit_code == 0;
+        success &&= run_command ("lipo", "-create", "macos/ImGui_x64.a", "macos/ImGui_arm64.a", "-output", "macos/ImGui.a").exit_code == 0;
+    }
 
     return success;
 }
@@ -119,6 +163,8 @@ GenerateBindings :: () -> bool
         output_filename := "imgui_windows.jai";
     else #if OS == .LINUX
         output_filename := "imgui_linux.jai";
+    else #if OS == .MACOS
+        output_filename := "imgui_macos.jai";
 
     opts : Generate_Bindings_Options;
 
@@ -126,9 +172,10 @@ GenerateBindings :: () -> bool
         array_add (*opts.libpaths, "win");
     else #if OS == .LINUX
         array_add (*opts.libpaths, "linux");
+    else #if OS == .MACOS
+        array_add (*opts.libpaths, "macos");
 
     array_add (*opts.libnames, "ImGui");
-    array_add (*opts.system_include_paths, GENERATOR_DEFAULT_SYSTEM_INCLUDE_PATH);
     array_add (*opts.include_paths, Cpp_Source_Path);
     array_add (*opts.source_files, tprint ("%/imgui.h", Cpp_Source_Path));
     array_add (*opts.source_files, tprint ("%/imgui_internal.h", Cpp_Source_Path));

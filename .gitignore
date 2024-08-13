@@ -12,3 +12,7 @@ Fenetres/
 Linalg/
 Stylo/
 imgui.ini
+*.DS_Store
+*.dylib
+*.a
+*.dSYM
