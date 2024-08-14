@@ -142,9 +142,7 @@ HandleWindowMessage :: (msg : Fenetres.Message, ignore_mouse_move := false) -> h
         }
 
     case .Mouse_Wheel;
-        wheel_x := Sign (msg.mouse_wheel_x);
-        wheel_y := Sign (msg.mouse_wheel_y);
-        io.AddMouseWheelEvent (io, wheel_x, wheel_y);
+        io.AddMouseWheelEvent (io, msg.mouse_wheel_x, msg.mouse_wheel_y);
 
         return true;
 
