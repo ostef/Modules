@@ -463,6 +463,9 @@ KeycodeToImGuiKey :: inline (keycode : Fenetres.KeyCode) -> ImGui.Key #must
         case .Add; return .KeypadAdd;
         // case .KP_ENTER; return .KeypadEnter;
         // case .KP_EQUALS; return .KeypadEqual;
+        case .Ctrl; return .LeftCtrl;
+        case .Shift; return .LeftShift;
+        case .Alt; return .LeftAlt;
         case .Left_Ctrl; return .LeftCtrl;
         case .Left_Shift; return .LeftShift;
         case .Left_Alt; return .LeftAlt;
