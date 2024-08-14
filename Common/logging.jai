@@ -140,6 +140,12 @@ InitConsoleLogger :: (logger : *ConsoleLogger, print_colors := true)
 
         logger.print_colors = std_out_colors && std_err_colors;
     }
+    else #if OS == .LINUX || OS == .MACOS
+    {
+        POSIX :: #import "POSIX";
+
+        logger.print_colors = POSIX.isatty (POSIX.STDOUT_FILENO) && POSIX.isatty (POSIX.STDERR_FILENO);
+    }
 }
 
 ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
