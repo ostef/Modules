@@ -30,6 +30,8 @@ IMSTB_TEXTEDIT_GETWIDTH_NEWLINE :: -1.0;
 IMSTB_TEXTEDIT_UNDOSTATECOUNT :: 99;
 IMSTB_TEXTEDIT_UNDOCHARCOUNT :: 999;
 
+IMSTB_TEXTEDIT_POSITIONTYPE :: s32;
+
 IMGUI_PAYLOAD_TYPE_WINDOW :: "_IMWINDOW";
 
 IM_PI :: 3.14159265358979323846;
@@ -52,10 +54,10 @@ IM_DRAWLIST_ARCFAST_SAMPLE_MAX :: IM_DRAWLIST_ARCFAST_TABLE_SIZE;
 ImGuiKey_LegacyNativeKey_BEGIN :: 0;
 ImGuiKey_LegacyNativeKey_END :: 512;
 
-ImGuiKeyOwner_Any :: cast(ID)0;
-ImGuiKeyOwner_None :: cast,trunc(ID)-1;
+ImGuiKeyOwner_Any :: cast(ID) 0;
+ImGuiKeyOwner_None :: cast,trunc(ID) -1;
 
-ImGuiSelectionUserData_Invalid :: cast,trunc(SelectionUserData)-1;
+ImGuiSelectionUserData_Invalid :: cast,trunc(SelectionUserData) -1;
 
 DOCKING_HOST_DRAW_CHANNEL_BG :: 0;
 DOCKING_HOST_DRAW_CHANNEL_FG :: 1;
@@ -4740,80 +4742,6 @@ ImVec2ih :: struct {
     y: s16;
 }
 
-// Helper: ImRect (2D axis aligned bounding-box)
-// NB: we can't rely on ImVec2 math operators being available here!
-ImRect :: struct {
-    Min: ImVec2; // Upper-left
-    Max: ImVec2; // Lower-right
-
-    Constructor :: (this: *ImRect) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@XZ";
-    Constructor :: (this: *ImRect, min: *ImVec2, max: *ImVec2) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@AEBUImVec2@@0@Z";
-    Constructor :: (this: *ImRect, min: ImVec2, max: ImVec2) #no_context {
-        Constructor(this, *min, *max);
-    }
-    Constructor :: (this: *ImRect, v: *ImVec4) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@AEBUImVec4@@@Z";
-    Constructor :: (this: *ImRect, v: ImVec4) #no_context {
-        Constructor(this, *v);
-    }
-    Constructor :: (this: *ImRect, x1: float, y1: float, x2: float, y2: float) -> void #cpp_method #foreign imgui "??0ImRect@@QEAA@MMMM@Z";
-
-    GetCenter :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetCenter@ImRect@@QEBA?AUImVec2@@XZ";
-    GetSize :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetSize@ImRect@@QEBA?AUImVec2@@XZ";
-    GetWidth :: (this: *ImRect) -> float #cpp_method #foreign imgui "?GetWidth@ImRect@@QEBAMXZ";
-    GetHeight :: (this: *ImRect) -> float #cpp_method #foreign imgui "?GetHeight@ImRect@@QEBAMXZ";
-    GetArea :: (this: *ImRect) -> float #cpp_method #foreign imgui "?GetArea@ImRect@@QEBAMXZ";
-    GetTL :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetTL@ImRect@@QEBA?AUImVec2@@XZ";
-    GetTR :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetTR@ImRect@@QEBA?AUImVec2@@XZ";
-    GetBL :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetBL@ImRect@@QEBA?AUImVec2@@XZ";
-    GetBR :: (this: *ImRect) -> ImVec2 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?GetBR@ImRect@@QEBA?AUImVec2@@XZ";
-    Contains :: (this: *ImRect, p: *ImVec2) -> bool #cpp_method #foreign imgui "?Contains@ImRect@@QEBA_NAEBUImVec2@@@Z";
-    Contains :: (this: *ImRect, p: ImVec2) -> bool #no_context {
-        return Contains(this, *p);
-    }
-    Contains :: (this: *ImRect, r: *ImRect) -> bool #cpp_method #foreign imgui "?Contains@ImRect@@QEBA_NAEBU1@@Z";
-    Contains :: (this: *ImRect, r: ImRect) -> bool #no_context {
-        return Contains(this, *r);
-    }
-    ContainsWithPad :: (this: *ImRect, p: *ImVec2, pad: *ImVec2) -> bool #cpp_method #foreign imgui "?ContainsWithPad@ImRect@@QEBA_NAEBUImVec2@@0@Z";
-    ContainsWithPad :: (this: *ImRect, p: ImVec2, pad: ImVec2) -> bool #no_context {
-        return ContainsWithPad(this, *p, *pad);
-    }
-    Overlaps :: (this: *ImRect, r: *ImRect) -> bool #cpp_method #foreign imgui "?Overlaps@ImRect@@QEBA_NAEBU1@@Z";
-    Overlaps :: (this: *ImRect, r: ImRect) -> bool #no_context {
-        return Overlaps(this, *r);
-    }
-    Add :: (this: *ImRect, p: *ImVec2) -> void #cpp_method #foreign imgui "?Add@ImRect@@QEAAXAEBUImVec2@@@Z";
-    Add :: (this: *ImRect, p: ImVec2) #no_context {
-        Add(this, *p);
-    }
-    Add :: (this: *ImRect, r: *ImRect) -> void #cpp_method #foreign imgui "?Add@ImRect@@QEAAXAEBU1@@Z";
-    Add :: (this: *ImRect, r: ImRect) #no_context {
-        Add(this, *r);
-    }
-    Expand :: (this: *ImRect, amount: float) -> void #cpp_method #foreign imgui "?Expand@ImRect@@QEAAXM@Z";
-    Expand :: (this: *ImRect, amount: *ImVec2) -> void #cpp_method #foreign imgui "?Expand@ImRect@@QEAAXAEBUImVec2@@@Z";
-    Expand :: (this: *ImRect, amount: ImVec2) #no_context {
-        Expand(this, *amount);
-    }
-    Translate :: (this: *ImRect, d: *ImVec2) -> void #cpp_method #foreign imgui "?Translate@ImRect@@QEAAXAEBUImVec2@@@Z";
-    Translate :: (this: *ImRect, d: ImVec2) #no_context {
-        Translate(this, *d);
-    }
-    TranslateX :: (this: *ImRect, dx: float) -> void #cpp_method #foreign imgui "?TranslateX@ImRect@@QEAAXM@Z";
-    TranslateY :: (this: *ImRect, dy: float) -> void #cpp_method #foreign imgui "?TranslateY@ImRect@@QEAAXM@Z";
-    ClipWith :: (this: *ImRect, r: *ImRect) -> void #cpp_method #foreign imgui "?ClipWith@ImRect@@QEAAXAEBU1@@Z";
-    ClipWith :: (this: *ImRect, r: ImRect) #no_context {
-        ClipWith(this, *r);
-    }
-    ClipWithFull :: (this: *ImRect, r: *ImRect) -> void #cpp_method #foreign imgui "?ClipWithFull@ImRect@@QEAAXAEBU1@@Z";
-    ClipWithFull :: (this: *ImRect, r: ImRect) #no_context {
-        ClipWithFull(this, *r);
-    }
-    Floor :: (this: *ImRect) -> void #cpp_method #foreign imgui "?Floor@ImRect@@QEAAXXZ";
-    IsInverted :: (this: *ImRect) -> bool #cpp_method #foreign imgui "?IsInverted@ImRect@@QEBA_NXZ";
-    ToVec4 :: (this: *ImRect) -> ImVec4 #cpp_method #cpp_return_type_is_non_pod #foreign imgui "?ToVec4@ImRect@@QEBA?AUImVec4@@XZ";
-}
-
 ImBitArrayPtr :: *ImU32;
 
 //-----------------------------------------------------------------------------
@@ -7102,5 +7030,7 @@ ImFontAtlasBuildMultiplyCalcLookupTable :: (out_table: *[256] u8, in_multiply_fa
 ImFontAtlasBuildMultiplyRectAlpha8 :: (table: *[256] u8, pixels: *u8, x: s32, y: s32, w: s32, h: s32, stride: s32) -> void #foreign imgui "?ImFontAtlasBuildMultiplyRectAlpha8@@YAXQEBEPEAEHHHHH@Z";
 
 #scope_file
+
+#import "Basic"; // For push_context
 
 imgui :: #library "win/ImGui";

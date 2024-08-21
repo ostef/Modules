@@ -660,12 +660,28 @@ ShowWindow :: (viewport : *ImGui.Viewport) #c_call
         Fenetres.ShowAndFocusWindow (vp_data.window);
 }
 
-GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
+// Why does the binding generator not put #cpp_return_type_is_non_pod? I don't know
+#if OS == .MACOS
 {
-    vp_data := cast (*ViewportData) viewport.PlatformUserData;
-    x, y := Fenetres.GetViewportPosition (vp_data.window);
+    GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
+    {
 
-    return .{xx x, xx y};
+        vp_data := cast (*ViewportData) viewport.PlatformUserData;
+        x, y := Fenetres.GetViewportPosition (vp_data.window);
+
+        return .{xx x, xx y};
+    }
+}
+else
+{
+    GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type_is_non_pod
+    {
+
+        vp_data := cast (*ViewportData) viewport.PlatformUserData;
+        x, y := Fenetres.GetViewportPosition (vp_data.window);
+
+        return .{xx x, xx y};
+    }
 }
 
 SetWindowPos :: (viewport : *ImGui.Viewport, pos : ImVec2) #c_call
@@ -674,12 +690,29 @@ SetWindowPos :: (viewport : *ImGui.Viewport, pos : ImVec2) #c_call
     Fenetres.SetViewportPosition (vp_data.window, xx pos.x, xx pos.y);
 }
 
+#if OS == .MACOS
+{
+
 GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
 {
     vp_data := cast (*ViewportData) viewport.PlatformUserData;
     w, h := Fenetres.GetViewportSize (vp_data.window);
 
     return .{xx w, xx h};
+}
+
+}
+else
+{
+
+GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type_is_non_pod
+{
+    vp_data := cast (*ViewportData) viewport.PlatformUserData;
+    w, h := Fenetres.GetViewportSize (vp_data.window);
+
+    return .{xx w, xx h};
+}
+
 }
 
 SetWindowSize :: (viewport : *ImGui.Viewport, size : ImVec2) #c_call
