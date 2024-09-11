@@ -148,8 +148,11 @@ ArrayOrderedInsert :: inline (arr : *[..]$T, index : s64, $initialize := true) -
     if arr.count >= arr.allocated
         ArrayReserve (arr, arr.allocated * 2 + 8);
 
-    memcpy (arr.data + index + 1, arr.data + index, arr.count - index);
     arr.count += 1;
+    for < i : arr.count - 1..index + 1
+    {
+        arr.data[i] = arr.data[i - 1];
+    }
 
     ptr := *arr.data[index];
     #if initialize
