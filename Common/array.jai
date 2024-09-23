@@ -7,6 +7,14 @@ MakeArray :: inline (count : s64, data : *$T) -> []T #must
     return arr;
 }
 
+ArrayClone :: inline (arr : []$T) -> []T #must
+{
+    result := AllocArray (T, arr.count);
+    memcpy (result.data, arr.data, size_of (T) * arr.count);
+
+    return result;
+}
+
 ArraySlice :: inline (arr : []$T, start : s64, count : s64) -> []T #must
 {
     res : []T = ---;
