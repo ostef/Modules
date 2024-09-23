@@ -193,22 +193,22 @@ ArrayGetIndex :: inline (arr : []$T, item : *T) -> s64 #must
     return -1;
 }
 
-ArrayFindFirst :: (arr : []$T, item : T) -> s64 #must
+ArrayFindFirst :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> s64 #must
 {
     for arr
     {
-        if it == item
+        if compare (it, item)
             return it_index;
     }
 
     return -1;
 }
 
-ArrayFindLast :: (arr : []$T, item : T) -> s64 #must
+ArrayFindLast :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> s64 #must
 {
     for < arr
     {
-        if it == item
+        if compare (it, item)
             return it_index;
     }
 
