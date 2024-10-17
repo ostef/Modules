@@ -1,3 +1,5 @@
+#import "Thread";
+
 #add_context log_section : *Log_Section;
 
 LogSectionScope :: (section : *Log_Section) #expand
@@ -173,6 +175,14 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
     builder : StringBuilder;
     builder.allocator = Temp;
 
+    if print_colors
+    {
+        if info.common_flags & .ERROR
+            AppendConsoleColor (*builder, .Error);
+        else if info.common_flags & .WARNING
+            AppendConsoleColor (*builder, .Warning);
+    }
+
     if info.section
         StringBuilderAppend (*builder, "[%] ", info.section.name);
 
@@ -185,22 +195,15 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
     if message[message.count - 1] != #char "\n"
         StringBuilderAppendString (*builder, "\n");
 
+    if print_colors
+        AppendConsoleColor (*builder, .None);
+
     str := StringBuilderBuild (*builder,, Temp);
 
     to_stderr := (info.common_flags | .ERROR) != 0;
 
-    if print_colors
-    {
-        if info.common_flags & .ERROR
-            SetConsoleColor (.Error, to_standard_error = to_stderr);
-        else if info.common_flags & .WARNING
-            SetConsoleColor (.Warning, to_standard_error = to_stderr);
-    }
-
     write_string (str, to_standard_error = to_stderr);
 
-    if print_colors
-        SetConsoleColor (.None, to_standard_error = to_stderr);
 }
 
 LogMessage :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
