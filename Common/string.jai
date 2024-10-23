@@ -26,7 +26,7 @@ for_expansion :: (str : Utf8String, body : Code, flags : For_Flags) #expand
     byte_index := 0;
     while byte_index < str.count
     {
-        `it, len := Unicode.character_utf8_to_utf32 (str.data + byte_index, str.count - byte_index);
+        `it, len := Unicode.character_utf8_to_utf32(str.data + byte_index, str.count - byte_index);
 
         defer {
             it_index += 1;
@@ -52,19 +52,19 @@ MakeString :: inline (cstr : *u8) -> string #must
     if !cstr
         return "";
 
-    return .{StringLength (cstr), cstr};
+    return .{StringLength(cstr), cstr};
 }
 
 StringFromArray :: inline (arr : []u8) -> string #must
 #deprecated "Use a cast"
 {
-    return MakeString (arr.count, arr.data);
+    return MakeString(arr.count, arr.data);
 }
 
 StringToArray :: inline (str : string) -> []u8 #must
 #deprecated "Use a cast"
 {
-    return MakeArray (str.count, str.data);
+    return MakeArray(str.count, str.data);
 }
 
 StringLength :: inline (str : *u8) -> s64 #must
@@ -79,26 +79,26 @@ StringLength :: inline (str : *u8) -> s64 #must
 StringCompare :: inline (a : string, b : string) -> int #must
 #no_abc
 {
-    n := Min (a.count, b.count);
+    n := Min(a.count, b.count);
     for i : 0..n - 1
     {
-        cmp := cast (int) a[i] - cast (int) b[i];
+        cmp := cast(int) a[i] - cast(int) b[i];
         if cmp != 0
             return cmp;
     }
 
     if a.count < b.count
-        return -cast (int) b[a.count];
+        return -cast(int) b[a.count];
     else if a.count > b.count
-        return cast (int) a[b.count];
+        return cast(int) a[b.count];
     else
         return 0;
 }
 
 StringClone :: inline (str : string) -> string #must
 {
-    data := cast (*u8) Alloc (str.count);
-    memcpy (data, str.data, str.count);
+    data := cast(*u8) Alloc(str.count);
+    memcpy(data, str.data, str.count);
 
     return .{str.count, data};
 }
@@ -106,8 +106,8 @@ StringClone :: inline (str : string) -> string #must
 CStringClone :: StringCloneToCString;
 StringCloneToCString :: inline (str : string) -> *u8 #must
 {
-    data := cast (*u8) Alloc (str.count + 1);
-    memcpy (data, str.data, str.count);
+    data := cast(*u8) Alloc(str.count + 1);
+    memcpy(data, str.data, str.count);
     data[str.count] = 0;
 
     return data;
@@ -185,7 +185,7 @@ StringAdvance :: inline (str : *string, count : int)
 StringAdvance :: inline (str : string, count : int) -> string #must
 {
     result := str;
-    StringAdvance (*result, count);
+    StringAdvance(*result, count);
 
     return result;
 }
@@ -200,12 +200,12 @@ StringJoin :: (args : ..string) -> string #must
     if total_size == 0
         return "";
 
-    data := cast (*u8) Alloc (total_size);
+    data := cast(*u8) Alloc(total_size);
 
     i := 0;
     for args
     {
-        memcpy (data + i, it.data, it.count);
+        memcpy(data + i, it.data, it.count);
         i += it.count;
     }
 
@@ -213,9 +213,9 @@ StringJoin :: (args : ..string) -> string #must
 }
 
 StringJoin :: (allocator : Allocator, args : ..string) -> string #must
-#deprecated "Use a context argument instead: StringJoin (\"Hello\", \"Sailor\",, allocator)"
+#deprecated "Use a context argument instead: StringJoin(\"Hello\", \"Sailor\",, allocator)"
 {
-    return StringJoin (..args,, allocator);
+    return StringJoin(..args,, allocator);
 }
 
 StringSplit :: (str : string, split : u8) -> [..]string #must
@@ -227,7 +227,7 @@ StringSplit :: (str : string, split : u8) -> [..]string #must
     offset := 0;
     while offset < str.count
     {
-        index := String.find_index_from_left (str, split, offset);
+        index := String.find_index_from_left(str, split, offset);
         if index == -1
             index = str.count;
 
@@ -235,7 +235,7 @@ StringSplit :: (str : string, split : u8) -> [..]string #must
         offset = index + 1;
 
         if line.count > 0
-            ArrayPush (*result, line);
+            ArrayPush(*result, line);
     }
 
     return result;
@@ -243,7 +243,7 @@ StringSplit :: (str : string, split : u8) -> [..]string #must
 
 StringTruncate :: inline (str : string, count : s64) -> string #must
 {
-    count = Max (count, str.count);
+    count = Max(count, str.count);
 
     return .{count, str.data};
 }

@@ -1,11 +1,11 @@
-#module_parameters () (Enable_Asserts := true);
+#module_parameters() (Enable_Asserts := true);
 
 InitContextBase :: ()
 {
     #if OS == .WINDOWS
     {
         Win32 :: #import "Win32" (Threads = true);
-        context.thread_index = xx Win32.GetCurrentThreadId ();
+        context.thread_index = xx Win32.GetCurrentThreadId();
     }
 }
 
@@ -23,7 +23,7 @@ FormatIntHex :: inline (value : Any, digits := 16) -> FormatInt #must
 FormatString :: (format_string : string, args : ..Any) -> string #must
 #deprecated "The name of this function has been changed to SPrint"
 {
-    return SPrint (format_string, ..args);
+    return SPrint(format_string, ..args);
 }
 @PrintLike
 
@@ -31,9 +31,9 @@ SPrint :: (format_string : string, args : ..Any) -> string #must
 {
     builder : StringBuilder;
     builder.allocator = context.allocator;
-    StringBuilderAppend (*builder, format_string, ..args);
+    StringBuilderAppend(*builder, format_string, ..args);
 
-    return StringBuilderBuild (*builder);
+    return StringBuilderBuild(*builder);
 }
 @PrintLike
 
@@ -41,27 +41,27 @@ TPrint :: (format_string : string, args : ..Any) -> string #must
 {
     builder : StringBuilder;
     builder.allocator = Temp;
-    StringBuilderAppend (*builder, format_string, ..args);
+    StringBuilderAppend(*builder, format_string, ..args);
 
-    return StringBuilderBuild (*builder ,, Temp);
+    return StringBuilderBuild(*builder ,, Temp);
 }
 @PrintLike
 
 FormatString :: (allocator : Allocator, format_string : string, args : ..Any) -> string #must
-#deprecated "Use a context argument instead: FormatString (\"...\", ... ,, allocator)"
+#deprecated "Use a context argument instead: FormatString(\"...\", ... ,, allocator)"
 {
     builder : StringBuilder;
     builder.allocator = allocator;
-    StringBuilderAppend (*builder, format_string, ..args);
+    StringBuilderAppend(*builder, format_string, ..args);
 
-    return StringBuilderBuild (*builder,, allocator);
+    return StringBuilderBuild(*builder,, allocator);
 }
 @PrintLike
 
 FormatToCString :: (format_string : string, args : ..Any) -> *u8 #must
 #deprecated "The name of this function has been changed to CSPrint"
 {
-    return CSprint (format_string, ..args);
+    return CSprint(format_string, ..args);
 }
 @PrintLike
 
@@ -69,9 +69,9 @@ CSPrint :: (format_string : string, args : ..Any) -> *u8 #must
 {
     builder : StringBuilder;
     builder.allocator = context.allocator;
-    StringBuilderAppend (*builder, format_string, ..args);
+    StringBuilderAppend(*builder, format_string, ..args);
 
-    return StringBuilderBuildCstr (*builder);
+    return StringBuilderBuildCstr(*builder);
 }
 @PrintLike
 
@@ -79,20 +79,20 @@ CTPrint :: (format_string : string, args : ..Any) -> *u8 #must
 {
     builder : StringBuilder;
     builder.allocator = Temp;
-    StringBuilderAppend (*builder, format_string, ..args);
+    StringBuilderAppend(*builder, format_string, ..args);
 
-    return StringBuilderBuildCstr (*builder ,, Temp);
+    return StringBuilderBuildCstr(*builder ,, Temp);
 }
 @PrintLike
 
 FormatToCString :: (allocator : Allocator, format_string : string, args : ..Any) -> *u8 #must
-#deprecated "Use a context argument instead: FormatToCString (\"...\", ... ,, allocator)"
+#deprecated "Use a context argument instead: FormatToCString(\"...\", ... ,, allocator)"
 {
     builder : StringBuilder;
     builder.allocator = allocator;
-    StringBuilderAppend (*builder, format_string, ..args);
+    StringBuilderAppend(*builder, format_string, ..args);
 
-    return StringBuilderBuildCstr (*builder,, allocator);
+    return StringBuilderBuildCstr(*builder,, allocator);
 }
 @PrintLike
 
@@ -102,8 +102,8 @@ Print :: Basic.print;
 
 Println :: inline (format_string : string, args : ..Any, to_standard_error := false) -> s64
 {
-    return Print (format_string, ..args, to_standard_error = to_standard_error)
-        + Print ("\n", to_standard_error = to_standard_error);
+    return Print(format_string, ..args, to_standard_error = to_standard_error)
+        + Print("\n", to_standard_error = to_standard_error);
 }
 @PrintLike
 
@@ -135,8 +135,8 @@ Assert :: (assertion : bool, format_string := "", args : ..Any, location := #cal
 {
     #if Enable_Asserts
     {
-        if !assertion && Basic.assert_helper (format_string, ..args, location)
-            debug_break ();
+        if !assertion && Basic.assert_helper(format_string, ..args, location)
+            debug_break();
     }
 }
 @PrintLike
@@ -148,38 +148,38 @@ Panic :: (format_string := "", args : ..Any, location := #caller_location) #expa
     context.panicking = true;
     defer context.panicking = false;
 
-    Assert (false, format_string, ..args, location = location);
+    Assert(false, format_string, ..args, location = location);
 }
 @PrintLike
 
 Initialize :: inline (item : *$T)
 {
-    initializer :: initializer_of (T);
+    initializer :: initializer_of(T);
     #if initializer
-        initializer (item);
+        initializer(item);
     else
-        memset (item, 0, size_of (T));
+        memset(item, 0, size_of(T));
 }
 
 Initialize :: inline (item : *$T, count : s64)
 {
-    initializer :: initializer_of (T);
+    initializer :: initializer_of(T);
     #if initializer
     {
         for i : 0..count - 1
-            initializer (item + i);
+            initializer(item + i);
     }
     else
     {
-        memset (item, 0, size_of (T) * count);
+        memset(item, 0, size_of(T) * count);
     }
 }
 
 OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
 {
-    dummy := cast (*T) null;
+    dummy := cast(*T) null;
 
-    #insert #run SPrint ("// OffsetOf %.%\nreturn cast (s64) *dummy.%;", T, member, member);
+    #insert #run SPrint("// OffsetOf %.%\nreturn cast(s64) *dummy.%;", T, member, member);
 }
 
 DefaultValue :: inline ($T : Type) -> T #must #no_context
@@ -193,7 +193,7 @@ DefaultValue :: inline ($T : Type) -> T #must #no_context
 
 IsNumeric :: inline (type : Type) -> bool
 {
-    info := cast (*Type_Info) type;
+    info := cast(*Type_Info) type;
 
     return info.type == .INTEGER || info.type == .FLOAT;
 }
@@ -201,19 +201,19 @@ IsNumeric :: inline (type : Type) -> bool
 #scope_export
 
 Min :: inline (a : $T, b : T) -> T #must #no_context
-#modify { return IsNumeric (T); }
+#modify { return IsNumeric(T); }
 {
     return ifx a < b then a else b;
 }
 
 Max :: inline (a : $T, b : T) -> T #must #no_context
-#modify { return IsNumeric (T); }
+#modify { return IsNumeric(T); }
 {
     return ifx a > b then a else b;
 }
 
 MinMax :: inline (a : $T, b : T) -> min : T, max : T #must #no_context
-#modify { return IsNumeric (T); }
+#modify { return IsNumeric(T); }
 {
     if a < b
         return a, b;
@@ -222,27 +222,27 @@ MinMax :: inline (a : $T, b : T) -> min : T, max : T #must #no_context
 }
 
 Clamp :: inline (x : $T, min : T, max : T) -> T #must #no_context
-#modify { return IsNumeric (T); }
+#modify { return IsNumeric(T); }
 {
-    return Min (Max (x, min), max);
+    return Min(Max(x, min), max);
 }
 
 Saturate :: inline (x : $T) -> T #must #no_context
-#modify { return IsNumeric (T); }
+#modify { return IsNumeric(T); }
 {
-    return Clamp (x, 0, 1);
+    return Clamp(x, 0, 1);
 }
 
 Abs :: inline (x : $T) -> T #must #no_context
-#modify { return IsNumeric (T); }
+#modify { return IsNumeric(T); }
 {
     return ifx x < 0 then -x else x;
 }
 
 Sign :: inline (x : $T) -> T #must #no_context
-#modify { return IsNumeric (T); }
+#modify { return IsNumeric(T); }
 {
-    return cast (T) ifx x < 0 then -1 else ifx x > 0 then 1 else 0;
+    return cast(T) ifx x < 0 then -1 else ifx x > 0 then 1 else 0;
 }
 
 Lerp :: inline (a : float, b : float, t : float) -> float #must #no_context
@@ -257,26 +257,26 @@ InverseLerp :: inline (a : float, b : float, t : float) -> float #must #no_conte
 
 Round :: inline (value : float) -> float #must #no_context
 {
-    return cast (float) (cast (int) (value + Sign (value) * 0.5));
+    return cast(float) (cast(int) (value + Sign(value) * 0.5));
 }
 
 SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     Math :: #import "Math";
 
-    return Math.floor (value / grid_size) * grid_size;
+    return Math.floor(value / grid_size) * grid_size;
 }
 
 Snap :: inline (value : float, grid_size : float) -> float #must #no_context
 {
-    return Round (value / grid_size) * grid_size;
+    return Round(value / grid_size) * grid_size;
 }
 
 SnapUp :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     Math :: #import "Math";
 
-    return Math.ceil (value / grid_size) * grid_size;
+    return Math.ceil(value / grid_size) * grid_size;
 }
 
 Swap :: inline (a : *$T, b : *T) #no_context
@@ -306,9 +306,9 @@ QuickSort :: inline (arr : []$T, user_data : $User, compare : (T, T, User) -> $R
 
         while true
         {
-            while compare (arr[i], pivot, user_data) < 0
+            while compare(arr[i], pivot, user_data) < 0
                 i += 1;
-            while compare (arr[j], pivot, user_data) > 0
+            while compare(arr[j], pivot, user_data) > 0
                 j -= 1;
 
             if i >= j
@@ -322,14 +322,14 @@ QuickSort :: inline (arr : []$T, user_data : $User, compare : (T, T, User) -> $R
             j -= 1;
         }
 
-        QuickSortHelper (arr, left, j, user_data, compare);
-        QuickSortHelper (arr, j + 1, right, user_data, compare);
+        QuickSortHelper(arr, left, j, user_data, compare);
+        QuickSortHelper(arr, j + 1, right, user_data, compare);
     }
 
     if arr.count < 2
         return;
 
-    QuickSortHelper (arr, 0, arr.count - 1, user_data, compare);
+    QuickSortHelper(arr, 0, arr.count - 1, user_data, compare);
 }
 
 QuickSort :: inline (arr : []$T, compare : (T, T) -> $R)
@@ -351,9 +351,9 @@ QuickSort :: inline (arr : []$T, compare : (T, T) -> $R)
 
         while true
         {
-            while compare (arr[i], pivot) < 0
+            while compare(arr[i], pivot) < 0
                 i += 1;
-            while compare (arr[j], pivot) > 0
+            while compare(arr[j], pivot) > 0
                 j -= 1;
 
             if i >= j
@@ -367,12 +367,12 @@ QuickSort :: inline (arr : []$T, compare : (T, T) -> $R)
             j -= 1;
         }
 
-        QuickSortHelper (arr, left, j, compare);
-        QuickSortHelper (arr, j + 1, right, compare);
+        QuickSortHelper(arr, left, j, compare);
+        QuickSortHelper(arr, j + 1, right, compare);
     }
 
     if arr.count < 2
         return;
 
-    QuickSortHelper (arr, 0, arr.count - 1, compare);
+    QuickSortHelper(arr, 0, arr.count - 1, compare);
 }

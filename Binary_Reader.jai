@@ -15,7 +15,7 @@ ReadBytes :: (reader : *BinaryReader, data : *void, size : s64) -> bool
     if reader.offset + size > reader.size
         return false;
 
-    memcpy (data, reader.data + reader.offset, size);
+    memcpy(data, reader.data + reader.offset, size);
     reader.offset += size;
 
     return true;
@@ -63,22 +63,22 @@ ReadNullTerminatedString :: (using reader : *BinaryReader) -> string, bool
 ReadValue :: (reader : *BinaryReader, $T : Type) -> T, bool
 {
     value : T = ---;
-    if reader.offset + size_of (T) > reader.size
+    if reader.offset + size_of(T) > reader.size
         return value, false;
 
-    value = (cast (*T) (reader.data + reader.offset)).*;
-    reader.offset += size_of (T);
+    value = (cast(*T) (reader.data + reader.offset)).*;
+    reader.offset += size_of(T);
 
     return value, true;
 }
 
 ReadArray :: (reader : *BinaryReader, data : []$T) -> bool
 {
-    if reader.offset + size_of (T) * data.count > reader.size
+    if reader.offset + size_of(T) * data.count > reader.size
         return false;
 
-    memcpy (data.data, reader.data + reader.offset, size_of (T) * data.count);
-    reader.offset += size_of (T) * data.count;
+    memcpy(data.data, reader.data + reader.offset, size_of(T) * data.count);
+    reader.offset += size_of(T) * data.count;
 
     return true;
 }

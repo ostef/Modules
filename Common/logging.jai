@@ -44,16 +44,16 @@ MultiLogger :: struct
 
 AddLogTarget :: (logger : *MultiLogger, data : *void, proc : Logger)
 {
-    ArrayPush (*logger.dispatch_targets, .{data, proc});
+    ArrayPush(*logger.dispatch_targets, .{data, proc});
 }
 
 MultiLoggerProc :: (message : string, data : *void, info : Log_Info)
 {
-    using _ := cast (*MultiLogger) data;
+    using _ := cast(*MultiLogger) data;
 
     for dispatch_targets
     {
-        it.proc (message, it.data, info);
+        it.proc(message, it.data, info);
     }
 }
 
@@ -83,15 +83,15 @@ AppendConsoleColor :: (builder : *StringBuilder, color : ConsoleColor)
     if #complete color ==
     {
     case .None;
-        StringBuilderAppendString (builder, None_Color_Str);
+        StringBuilderAppendString(builder, None_Color_Str);
     case .Info;
-        StringBuilderAppendString (builder, Info_Color_Str);
+        StringBuilderAppendString(builder, Info_Color_Str);
     case .Warning;
-        StringBuilderAppendString (builder, Warning_Color_Str);
+        StringBuilderAppendString(builder, Warning_Color_Str);
     case .Error;
-        StringBuilderAppendString (builder, Error_Color_Str);
+        StringBuilderAppendString(builder, Error_Color_Str);
     case .Fatal;
-        StringBuilderAppendString (builder, Fatal_Color_Str);
+        StringBuilderAppendString(builder, Fatal_Color_Str);
     }
 }
 
@@ -100,15 +100,15 @@ SetConsoleColor :: (color : ConsoleColor, to_standard_error := true)
     if #complete color ==
     {
     case .None;
-        write_string (None_Color_Str, to_standard_error = to_standard_error);
+        write_string(None_Color_Str, to_standard_error = to_standard_error);
     case .Info;
-        write_string (Info_Color_Str, to_standard_error = to_standard_error);
+        write_string(Info_Color_Str, to_standard_error = to_standard_error);
     case .Warning;
-        write_string (Warning_Color_Str, to_standard_error = to_standard_error);
+        write_string(Warning_Color_Str, to_standard_error = to_standard_error);
     case .Error;
-        write_string (Error_Color_Str, to_standard_error = to_standard_error);
+        write_string(Error_Color_Str, to_standard_error = to_standard_error);
     case .Fatal;
-        write_string (Fatal_Color_Str, to_standard_error = to_standard_error);
+        write_string(Fatal_Color_Str, to_standard_error = to_standard_error);
     }
 }
 
@@ -121,22 +121,22 @@ InitConsoleLogger :: (logger : *ConsoleLogger, print_colors := true)
     {
         Win32 :: #import "Win32" (Console = true);
 
-        std_out := Win32.GetStdHandle (Win32.STD_HANDLE.STD_OUTPUT_HANDLE);
-        std_err := Win32.GetStdHandle (Win32.STD_HANDLE.STD_ERROR_HANDLE);
+        std_out := Win32.GetStdHandle(Win32.STD_HANDLE.STD_OUTPUT_HANDLE);
+        std_err := Win32.GetStdHandle(Win32.STD_HANDLE.STD_ERROR_HANDLE);
 
         std_out_colors, std_err_colors : bool;
 
         mode : Win32.CONSOLE_MODE;
-        if Win32.GetConsoleMode (std_out, *mode)
+        if Win32.GetConsoleMode(std_out, *mode)
         {
-            if Win32.SetConsoleMode (std_out, mode | .ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+            if Win32.SetConsoleMode(std_out, mode | .ENABLE_VIRTUAL_TERMINAL_PROCESSING)
                 std_out_colors = true;
         }
 
         mode = 0;
-        if Win32.GetConsoleMode (std_err, *mode)
+        if Win32.GetConsoleMode(std_err, *mode)
         {
-            if Win32.SetConsoleMode (std_err, mode | .ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+            if Win32.SetConsoleMode(std_err, mode | .ENABLE_VIRTUAL_TERMINAL_PROCESSING)
                 std_err_colors = true;
         }
 
@@ -146,7 +146,7 @@ InitConsoleLogger :: (logger : *ConsoleLogger, print_colors := true)
     {
         POSIX :: #import "POSIX";
 
-        logger.print_colors = POSIX.isatty (POSIX.STDOUT_FILENO) && POSIX.isatty (POSIX.STDERR_FILENO);
+        logger.print_colors = POSIX.isatty(POSIX.STDOUT_FILENO) && POSIX.isatty(POSIX.STDERR_FILENO);
     }
 }
 
@@ -170,7 +170,7 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
         return;
     }
 
-    using logger := cast (*ConsoleLogger) data;
+    using logger := cast(*ConsoleLogger) data;
 
     builder : StringBuilder;
     builder.allocator = Temp;
@@ -178,37 +178,37 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
     if print_colors
     {
         if info.common_flags & .ERROR
-            AppendConsoleColor (*builder, .Error);
+            AppendConsoleColor(*builder, .Error);
         else if info.common_flags & .WARNING
-            AppendConsoleColor (*builder, .Warning);
+            AppendConsoleColor(*builder, .Warning);
     }
 
     if info.section
-        StringBuilderAppend (*builder, "[%] ", info.section.name);
+        StringBuilderAppend(*builder, "[%] ", info.section.name);
 
     // @Todo: reduce filename
     if report_filenames
-        StringBuilderAppend (*builder, "(%:%) ", info.location.fully_pathed_filename, info.location.line_number);
+        StringBuilderAppend(*builder, "(%:%) ", info.location.fully_pathed_filename, info.location.line_number);
 
-    StringBuilderAppendString (*builder, message);
+    StringBuilderAppendString(*builder, message);
 
     if message[message.count - 1] != #char "\n"
-        StringBuilderAppendString (*builder, "\n");
+        StringBuilderAppendString(*builder, "\n");
 
     if print_colors
-        AppendConsoleColor (*builder, .None);
+        AppendConsoleColor(*builder, .None);
 
-    str := StringBuilderBuild (*builder,, Temp);
+    str := StringBuilderBuild(*builder,, Temp);
 
     to_stderr := (info.common_flags | .ERROR) != 0;
 
-    write_string (str, to_standard_error = to_stderr);
+    write_string(str, to_standard_error = to_stderr);
 
 }
 
 LogMessage :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
 {
-    msg := SPrint (fmt_str, ..args,, Temp);
+    msg := SPrint(fmt_str, ..args,, Temp);
     if msg.count == 0
         return;
 
@@ -219,30 +219,30 @@ LogMessage :: inline (fmt_str : string, args : ..Any, location := #caller_locati
     info.user_flags   = user_flags;
     info.section      = context.log_section;
 
-    context.logger (msg, context.logger_data, info);
+    context.logger(msg, context.logger_data, info);
 }
 
 LogWarning :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
 {
-    LogMessage (fmt_str, ..args, location, flags | .WARNING, user_flags);
+    LogMessage(fmt_str, ..args, location, flags | .WARNING, user_flags);
 }
 
 LogError :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
 {
-    LogMessage (fmt_str, ..args, location, flags | .ERROR, user_flags);
+    LogMessage(fmt_str, ..args, location, flags | .ERROR, user_flags);
 }
 
 LogContentMessage :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
 {
-    LogMessage (fmt_str, ..args, location, flags | .CONTENT, user_flags);
+    LogMessage(fmt_str, ..args, location, flags | .CONTENT, user_flags);
 }
 
 LogContentWarning :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
 {
-    LogContentMessage (fmt_str, ..args, location, flags | .WARNING, user_flags);
+    LogContentMessage(fmt_str, ..args, location, flags | .WARNING, user_flags);
 }
 
 LogContentError :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
 {
-    LogContentMessage (fmt_str, ..args, location, flags | .ERROR, user_flags);
+    LogContentMessage(fmt_str, ..args, location, flags | .ERROR, user_flags);
 }

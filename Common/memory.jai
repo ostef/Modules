@@ -3,7 +3,7 @@ AllocOrNull :: inline (size : s64) -> *void #must
     if size <= 0
         return null;
 
-    return context.allocator.proc (.ALLOCATE, size, 0, null, context.allocator.data);
+    return context.allocator.proc(.ALLOCATE, size, 0, null, context.allocator.data);
 }
 
 Alloc :: inline (size : s64) -> *void #must
@@ -11,29 +11,29 @@ Alloc :: inline (size : s64) -> *void #must
     if size <= 0
         return null;
 
-    ptr := context.allocator.proc (.ALLOCATE, size, 0, null, context.allocator.data);
-    Assert (ptr != null, "Allocator % could not allocate % bytes", GetAllocatorName (context.allocator), size);
+    ptr := context.allocator.proc(.ALLOCATE, size, 0, null, context.allocator.data);
+    Assert(ptr != null, "Allocator % could not allocate % bytes", GetAllocatorName(context.allocator), size);
 
     #if Basic.MEMORY_DEBUGGER
-        Basic.Memory_Debugger.check_alloc (context.allocator, ptr, size);
+        Basic.Memory_Debugger.check_alloc(context.allocator, ptr, size);
 
     return ptr;
 }
 
 Alloc :: inline ($T : Type, $initialize := true) -> *T #must
 {
-    ptr := cast (*T) Alloc (size_of (T));
+    ptr := cast(*T) Alloc(size_of(T));
     #if initialize
-        Initialize (ptr);
+        Initialize(ptr);
 
     return ptr;
 }
 
 Alloc :: inline ($T : Type, count : s64, $initialize := false) -> *T #must
 {
-    ptr := cast (*T) Alloc (size_of (T) * count);
+    ptr := cast(*T) Alloc(size_of(T) * count);
     #if initialize
-        Initialize (ptr, count);
+        Initialize(ptr, count);
 
     return ptr;
 }
@@ -41,7 +41,7 @@ Alloc :: inline ($T : Type, count : s64, $initialize := false) -> *T #must
 AllocArray :: inline ($T : Type, count : s64, $initialize := false) -> []T #must
 {
     result : []T = ---;
-    result.data = Alloc (T, count, initialize);
+    result.data = Alloc(T, count, initialize);
     result.count = count;
 
     return result;
@@ -53,18 +53,18 @@ Free :: inline (ptr : *void)
         return;
 
     #if Basic.MEMORY_DEBUGGER
-        Basic.Memory_Debugger.check_free (context.allocator, ptr);
+        Basic.Memory_Debugger.check_free(context.allocator, ptr);
 
-    context.allocator.proc (.FREE, 0, 0, ptr, context.allocator.data);
+    context.allocator.proc(.FREE, 0, 0, ptr, context.allocator.data);
 }
 
 Realloc :: inline (ptr : *void, old_size : s64, size : s64) -> *void #must
 {
-    new_ptr := context.allocator.proc (.RESIZE, size, old_size, ptr, context.allocator.data);
-    Assert (new_ptr != null, "Allocator % failed to reallocate % bytes (previous size was %)", GetAllocatorName (context.allocator), size, old_size);
+    new_ptr := context.allocator.proc(.RESIZE, size, old_size, ptr, context.allocator.data);
+    Assert(new_ptr != null, "Allocator % failed to reallocate % bytes (previous size was %)", GetAllocatorName(context.allocator), size, old_size);
 
     #if Basic.MEMORY_DEBUGGER
-        Basic.Memory_Debugger.check_realloc (context.allocator, ptr, old_size, new_ptr, size);
+        Basic.Memory_Debugger.check_realloc(context.allocator, ptr, old_size, new_ptr, size);
 
     return new_ptr;
 }
@@ -72,14 +72,14 @@ Realloc :: inline (ptr : *void, old_size : s64, size : s64) -> *void #must
 GetAllocatorName :: inline (allocator : Allocator) -> string #must
 {
     name : string;
-    allocator.proc (.CAPS, 0, 0, *name, allocator.data);
+    allocator.proc(.CAPS, 0, 0, *name, allocator.data);
 
     return name;
 }
 
 GetAllocatorSpecs :: inline (allocator : Allocator) -> Allocator_Caps #must
 {
-    return cast, no_check (Allocator_Caps) allocator.proc (.CAPS, 0, 0, null, allocator.data);
+    return cast, no_check(Allocator_Caps) allocator.proc(.CAPS, 0, 0, null, allocator.data);
 }
 
 Trap :: Allocator.{ proc = TrapAllocatorProc, data = null };
@@ -93,16 +93,16 @@ TrapAllocatorProc :: (mode : Allocator_Mode, requested_size : s64, old_size : s6
 {
     if mode == .CAPS
     {
-        name_ptr := cast (*string) ptr;
+        name_ptr := cast(*string) ptr;
         name_ptr.* = "Trap Allocator";
     }
     else if mode == .ALLOCATE || mode == .RESIZE
     {
-        message := MakeString (cast (*u8) allocator_data);
+        message := MakeString(cast(*u8) allocator_data);
         if message
-            Panic ("Triggered an allocation trap: %", message);
+            Panic("Triggered an allocation trap: %", message);
         else
-            Panic ("Triggered an allocation trap");
+            Panic("Triggered an allocation trap");
     }
 
     return null;
@@ -132,6 +132,6 @@ ResetTemporaryStorage :: Basic.reset_temporary_storage;
 
 TemporaryStorageScope :: () #expand
 {
-    state := GetTemporaryStorageState ();
-    `defer SetTemporaryStorageState (state);
+    state := GetTemporaryStorageState();
+    `defer SetTemporaryStorageState(state);
 }

@@ -29,13 +29,13 @@ LexerIsAtEnd :: inline (using lexer : Lexer) -> bool #must
 LexerAdvance :: (using lexer : *Lexer, count := 1) -> int
 {
     i := 0;
-    while !LexerIsAtEnd (lexer) && i < count
+    while !LexerIsAtEnd(lexer) && i < count
     {
         str_to_check := string.{text.count - byte_index, text.data + byte_index};
         if str_to_check.count > count
             str_to_check.count = count;
 
-        newline_index := String.find_index_from_left (str_to_check, #char "\n");
+        newline_index := String.find_index_from_left(str_to_check, #char "\n");
         if newline_index != -1
         {
             byte_index += newline_index + 1;
@@ -63,14 +63,14 @@ LexerRemainingBytesString :: inline (using lexer : Lexer) -> string #must
 
 LexerRemainingBytes :: inline (using lexer : Lexer) -> int #must
 {
-    return Max (text.count - byte_index, 0);
+    return Max(text.count - byte_index, 0);
 }
 
 LexerGetLine :: inline (using lexer : Lexer) -> string #must
 {
-    remaining := LexerRemainingBytesString (lexer);
+    remaining := LexerRemainingBytesString(lexer);
 
-    newline_index := String.find_index_from_left (remaining, #char "\n");
+    newline_index := String.find_index_from_left(remaining, #char "\n");
     if newline_index != -1
         remaining.count = newline_index;
 
@@ -79,7 +79,7 @@ LexerGetLine :: inline (using lexer : Lexer) -> string #must
 
 LexerEqualsString :: inline (using lexer : Lexer, str : string) -> bool #must
 {
-    if LexerRemainingBytes (lexer) < str.count
+    if LexerRemainingBytes(lexer) < str.count
         return false;
 
     remaining_str : string = ---;
@@ -95,23 +95,23 @@ LexerAdvanceUntilMatches :: inline (using lexer : *Lexer, str : string) -> bool
     if str.count == 0
         return false;
 
-    while !LexerIsAtEnd (lexer)
+    while !LexerIsAtEnd(lexer)
     {
         remaining := string.{text.count - byte_index, text.data + byte_index};
-        index := String.find_index_from_left (remaining, str[0]);
+        index := String.find_index_from_left(remaining, str[0]);
         if index < 0
         {
-            LexerAdvance (lexer, remaining.count);
+            LexerAdvance(lexer, remaining.count);
 
             return false;
         }
 
-        LexerAdvance (lexer, index);
+        LexerAdvance(lexer, index);
 
-        if LexerEqualsString (lexer, str)
+        if LexerEqualsString(lexer, str)
             return true;
 
-        LexerAdvance (lexer);
+        LexerAdvance(lexer);
     }
 
     return false;
@@ -119,9 +119,9 @@ LexerAdvanceUntilMatches :: inline (using lexer : *Lexer, str : string) -> bool
 
 LexerMatchString :: inline (using lexer : *Lexer, str : string) -> bool #must
 {
-    if LexerEqualsString (lexer, str)
+    if LexerEqualsString(lexer, str)
     {
-        LexerAdvance (lexer, str.count);
+        LexerAdvance(lexer, str.count);
         return true;
     }
 
@@ -130,17 +130,17 @@ LexerMatchString :: inline (using lexer : *Lexer, str : string) -> bool #must
 
 LexerEqualsAlphaNumeric :: inline (using lexer : Lexer, str : string) -> bool #must
 {
-    if !LexerEqualsString (lexer, str)
+    if !LexerEqualsString(lexer, str)
         return false;
 
-    return LexerRemainingBytes (lexer) == str.count || !Basic.is_alnum (text[byte_index + str.count]);
+    return LexerRemainingBytes(lexer) == str.count || !Basic.is_alnum(text[byte_index + str.count]);
 }
 
 LexerMatchAlphaNumeric :: inline (using lexer : *Lexer, str : string) -> bool #must
 {
-    if LexerEqualsAlphaNumeric (lexer, str)
+    if LexerEqualsAlphaNumeric(lexer, str)
     {
-        LexerAdvance (lexer, str.count);
+        LexerAdvance(lexer, str.count);
         return true;
     }
 
@@ -149,13 +149,13 @@ LexerMatchAlphaNumeric :: inline (using lexer : *Lexer, str : string) -> bool #m
 
 LexerSkipSpacesUntilNewline :: inline (using lexer : *Lexer)
 {
-    while !LexerIsAtEnd (lexer)
+    while !LexerIsAtEnd(lexer)
     {
         if text[byte_index] == #char "\n"
             return;
 
-        if Basic.is_space (text[byte_index])
-            LexerAdvance (lexer);
+        if Basic.is_space(text[byte_index])
+            LexerAdvance(lexer);
         else
             break;
     }
@@ -163,34 +163,34 @@ LexerSkipSpacesUntilNewline :: inline (using lexer : *Lexer)
 
 LexerSkipWhitespacesAndComments :: inline (using lexer : *Lexer)
 {
-    while !LexerIsAtEnd (lexer)
+    while !LexerIsAtEnd(lexer)
     {
-        if Basic.is_space (text[byte_index])
+        if Basic.is_space(text[byte_index])
         {
-            LexerAdvance (lexer);
+            LexerAdvance(lexer);
         }
-        else if LexerMatchString (lexer, "//")
+        else if LexerMatchString(lexer, "//")
         {
-            while !LexerIsAtEnd (lexer) && text[byte_index] != #char "\n" && text[byte_index] != #char "\r"
-                LexerAdvance (lexer);
+            while !LexerIsAtEnd(lexer) && text[byte_index] != #char "\n" && text[byte_index] != #char "\r"
+                LexerAdvance(lexer);
         }
-        else if LexerEqualsString (lexer, "/*")
+        else if LexerEqualsString(lexer, "/*")
         {
-            LexerAdvance (lexer, 2);
+            LexerAdvance(lexer, 2);
 
             level := 1;
-            while !LexerIsAtEnd (lexer) && level > 0
+            while !LexerIsAtEnd(lexer) && level > 0
             {
-                if LexerMatchString (lexer, "/*")
+                if LexerMatchString(lexer, "/*")
                     level += 1;
-                else if LexerMatchString (lexer, "*/")
+                else if LexerMatchString(lexer, "*/")
                     level -= 1;
                 else
-                    LexerAdvance (lexer);
+                    LexerAdvance(lexer);
             }
 
             // if level != 0
-            //     syntax_error (tok, "unclosed comment");
+            //     syntax_error(tok, "unclosed comment");
         }
         else
             break;
@@ -199,7 +199,7 @@ LexerSkipWhitespacesAndComments :: inline (using lexer : *Lexer)
 
 LexerScanQuotedString :: (using lexer : *Lexer, allowed_quotes := "\"") -> string, bool
 {
-    if LexerIsAtEnd (lexer)
+    if LexerIsAtEnd(lexer)
         return "", false;
 
     quote : u8;
@@ -215,52 +215,52 @@ LexerScanQuotedString :: (using lexer : *Lexer, allowed_quotes := "\"") -> strin
     if !quote
         return "", false;
 
-    LexerAdvance (lexer);
+    LexerAdvance(lexer);
 
     builder : StringBuilder;
     builder.allocator = Temp;
 
-    while !LexerIsAtEnd (lexer) && text[byte_index] != quote
+    while !LexerIsAtEnd(lexer) && text[byte_index] != quote
     {
         if text[byte_index] == #char "\\"
         {
-            LexerAdvance (lexer);
+            LexerAdvance(lexer);
 
-            if LexerIsAtEnd (lexer)
+            if LexerIsAtEnd(lexer)
                 break;
 
             if text[byte_index] == quote
             {
-                StringBuilderAppendByte (*builder, quote);
+                StringBuilderAppendByte(*builder, quote);
             }
             else if text[byte_index] ==
             {
-            case #char "n";  StringBuilderAppendByte (*builder, #char "\n");
-            case #char "\\"; StringBuilderAppendByte (*builder, #char "\\");
-            case #char "r";  StringBuilderAppendByte (*builder, #char "\r");
-            case #char "t";  StringBuilderAppendByte (*builder, #char "\t");
+            case #char "n";  StringBuilderAppendByte(*builder, #char "\n");
+            case #char "\\"; StringBuilderAppendByte(*builder, #char "\\");
+            case #char "r";  StringBuilderAppendByte(*builder, #char "\r");
+            case #char "t";  StringBuilderAppendByte(*builder, #char "\t");
             }
 
-            LexerAdvance (lexer);
+            LexerAdvance(lexer);
         }
         else
         {
-            StringBuilderAppendByte (*builder, text[byte_index]);
-            LexerAdvance (lexer);
+            StringBuilderAppendByte(*builder, text[byte_index]);
+            LexerAdvance(lexer);
         }
     }
 
-    if LexerIsAtEnd (lexer)
+    if LexerIsAtEnd(lexer)
         return "", false;
 
-    LexerAdvance (lexer);
+    LexerAdvance(lexer);
 
-    return StringBuilderBuild (*builder), true;
+    return StringBuilderBuild(*builder), true;
 }
 
 SyntaxError :: (using lexer : *Lexer, fmt_str : string, args : ..Any)
 {
     has_errors = true;
-    msg := SPrint (fmt_str, ..args,, Temp);
-    LogError ("%:%:%, syntax error: %", name, line, column, msg);
+    msg := SPrint(fmt_str, ..args,, Temp);
+    LogError("%:%:%, syntax error: %", name, line, column, msg);
 }

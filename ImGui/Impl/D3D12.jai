@@ -69,8 +69,8 @@ ShaderConstantBuffer :: struct
 
 GetUserData :: inline () -> *UserData #must #no_context
 {
-    if ImGui.GetCurrentContext ()
-        return cast (*UserData) ImGui.GetIO ().BackendRendererUserData;
+    if ImGui.GetCurrentContext()
+        return cast(*UserData) ImGui.GetIO().BackendRendererUserData;
 
     return null;
 }
@@ -86,18 +86,18 @@ LogSystemError :: (function_name : string, error_code : u32, location := #caller
         Win32.FORMAT_MESSAGE_FROM_SYSTEM | Win32.FORMAT_MESSAGE_IGNORE_INSERTS,
         null,
         error_code,
-        Win32.MAKELANGID (0, 1),
+        Win32.MAKELANGID(0, 1),
         wide_buffer.data,
         wide_buffer.count,
         null
     );
 
-    utf8_count := Win32.WideCharToMultiByte (
+    utf8_count := Win32.WideCharToMultiByte(
         Win32.CP_UTF8,
         0,
         wide_buffer.data,
-        cast (s32) wide_count,
-        cast (*u8) utf8_buffer.data,
+        cast(s32) wide_count,
+        cast(*u8) utf8_buffer.data,
         utf8_buffer.count,
         null,
         null
@@ -107,61 +107,61 @@ LogSystemError :: (function_name : string, error_code : u32, location := #caller
 
     msg : string;
     if error_string
-        msg = SPrint ("% failed: %", function_name, error_string,, Temp);
+        msg = SPrint("% failed: %", function_name, error_string,, Temp);
     else
-        msg = SPrint ("% failed (%)", function_name, error_code,, Temp);
+        msg = SPrint("% failed (%)", function_name, error_code,, Temp);
 
     info : Log_Info;
     info.location     = location;
     info.common_flags = .ERROR;
     info.section      = context.log_section;
 
-    context.logger (msg, context.logger_data, info);
+    context.logger(msg, context.logger_data, info);
 }
 
 LogLastD3D12Error :: (function_name : string, error_code : Win32.HRESULT, location := #caller_location)
 {
-    LogSectionScope (*Log_ImGui_D3D12);
+    LogSectionScope(*Log_ImGui_D3D12);
 
-    data := GetUserData ();
+    data := GetUserData();
     if !data
     {
-        LogSystemError (function_name, Win32.HRESULT_CODE (error_code), location);
+        LogSystemError(function_name, Win32.HRESULT_CODE(error_code), location);
         return;
     }
 
     info_queue : *ID3D12InfoQueue;
-    defer Win32.SafeRelease (info_queue);
+    defer Win32.SafeRelease(info_queue);
 
-    result := data.device.QueryInterface (data.device, *info_queue.UUID, xx *info_queue);
+    result := data.device.QueryInterface(data.device, *info_queue.UUID, xx *info_queue);
 
     if result < 0
     {
-        LogSystemError (function_name, Win32.HRESULT_CODE (error_code), location);
+        LogSystemError(function_name, Win32.HRESULT_CODE(error_code), location);
         return;
     }
 
-    number_of_messages := info_queue.GetNumStoredMessagesAllowedByRetrievalFilter (info_queue);
+    number_of_messages := info_queue.GetNumStoredMessagesAllowedByRetrievalFilter(info_queue);
 
     if number_of_messages == 0
     {
-        LogSystemError (function_name, Win32.HRESULT_CODE (error_code), location);
+        LogSystemError(function_name, Win32.HRESULT_CODE(error_code), location);
         return;
     }
 
     length : u64;
-    result = info_queue.GetMessage (info_queue, 0, null, *length);
+    result = info_queue.GetMessage(info_queue, 0, null, *length);
     if result < 0
     {
-        LogSystemError (function_name, Win32.HRESULT_CODE (error_code), location);
+        LogSystemError(function_name, Win32.HRESULT_CODE(error_code), location);
         return;
     }
 
-    msg := cast (*D3D12_MESSAGE) Alloc (xx length,, Temp);
-    result = info_queue.GetMessage (info_queue, 0, msg, *length);
+    msg := cast(*D3D12_MESSAGE) Alloc(xx length,, Temp);
+    result = info_queue.GetMessage(info_queue, 0, msg, *length);
     if result < 0
     {
-        LogSystemError (function_name, Win32.HRESULT_CODE (error_code), location);
+        LogSystemError(function_name, Win32.HRESULT_CODE(error_code), location);
         return;
     }
 
@@ -170,14 +170,14 @@ LogLastD3D12Error :: (function_name : string, error_code : Win32.HRESULT, locati
     {
     case .CORRUPTION; #through;
     case .ERROR;
-        LogError ("%, %: %", msg.Severity, msg.Category, msg_string, location=location);
+        LogError("%, %: %", msg.Severity, msg.Category, msg_string, location=location);
 
     case .WARNING;
-        LogWarning ("%, %: %", msg.Severity, msg.Category, msg_string, location=location);
+        LogWarning("%, %: %", msg.Severity, msg.Category, msg_string, location=location);
 
     case .INFO; #through;
     case .MESSAGE;
-        LogMessage ("%, %: %", msg.Severity, msg.Category, msg_string, location=location);
+        LogMessage("%, %: %", msg.Severity, msg.Category, msg_string, location=location);
     }
 }
 
@@ -192,10 +192,10 @@ Init :: (
     font_srv_gpu_handle : D3D12_GPU_DESCRIPTOR_HANDLE
 ) -> bool
 {
-    io := ImGui.GetIO ();
-    Assert (io.BackendRendererUserData == null, "Renderer backend already initialized");
+    io := ImGui.GetIO();
+    Assert(io.BackendRendererUserData == null, "Renderer backend already initialized");
 
-    data := Alloc (UserData);
+    data := Alloc(UserData);
     data.jai_context = *context;
     io.BackendRendererUserData = data;
     io.BackendRendererName = "Direct3D12";
@@ -204,7 +204,7 @@ Init :: (
     // io.BackendFlags_ |= .RendererHasViewports;
 
     if (io.BackendFlags_ & .RendererHasViewports) && (io.ConfigFlags_ & .ViewportsEnable)
-        InitPlatformInterface ();
+        InitPlatformInterface();
 
     data.device = device;
     data.rtv_format = rtv_format;
@@ -213,48 +213,48 @@ Init :: (
     data.font_srv_cpu_handle = font_srv_cpu_handle;
     data.font_srv_gpu_handle = font_srv_gpu_handle;
 
-    viewport_data := Alloc (ViewportData);
+    viewport_data := Alloc(ViewportData);
     viewport_data.num_frames_in_flight = num_frames_in_flight;
-    viewport_data.frame_ctx = AllocArray (FrameContext, xx num_frames_in_flight, initialize = true);
-    viewport_data.frame_render_buffers = AllocArray (RenderBuffers, xx num_frames_in_flight, initialize = true);
+    viewport_data.frame_ctx = AllocArray(FrameContext, xx num_frames_in_flight, initialize = true);
+    viewport_data.frame_render_buffers = AllocArray(RenderBuffers, xx num_frames_in_flight, initialize = true);
 
-    ImGui.GetMainViewport ().RendererUserData = viewport_data;
+    ImGui.GetMainViewport().RendererUserData = viewport_data;
 
-    return CreateDeviceObjects ();
+    return CreateDeviceObjects();
 }
 
 Terminate :: ()
 {
-    data := GetUserData ();
-    Assert (data != null, "Renderer backend not initialized or already shut down");
+    data := GetUserData();
+    Assert(data != null, "Renderer backend not initialized or already shut down");
 
-    io := ImGui.GetIO ();
+    io := ImGui.GetIO();
 
-    main_viewport := ImGui.GetMainViewport ();
+    main_viewport := ImGui.GetMainViewport();
     if main_viewport.RendererUserData
     {
-        viewport_data := cast (*ViewportData) main_viewport.RendererUserData;
+        viewport_data := cast(*ViewportData) main_viewport.RendererUserData;
 
         for * viewport_data.frame_render_buffers
-            DestroyRenderBuffers (it);
+            DestroyRenderBuffers(it);
 
-        Free (viewport_data);
+        Free(viewport_data);
         main_viewport.RendererUserData = null;
     }
 
-    TerminatePlatformInterface ();
+    TerminatePlatformInterface();
 
-    DestroyDeviceObjects ();
+    DestroyDeviceObjects();
     io.BackendRendererName = null;
     io.BackendRendererUserData = null;
-    Free (data);
+    Free(data);
 }
 
 #scope_file
 
 SetupRenderState :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsCommandList, using buffers : *RenderBuffers) #no_context
 {
-    data := GetUserData ();
+    data := GetUserData();
 
     L := draw_data.DisplayPos.x;
     R := draw_data.DisplayPos.x + draw_data.DisplaySize.x;
@@ -276,30 +276,30 @@ SetupRenderState :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsCo
     viewport.MaxDepth = 1;
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
-    cmd_list.RSSetViewports (cmd_list, 1, *viewport);
+    cmd_list.RSSetViewports(cmd_list, 1, *viewport);
 
     offset : u64 = 0;
 
     vb_view : D3D12_VERTEX_BUFFER_VIEW;
-    vb_view.BufferLocation = vertex_buffer.GetGPUVirtualAddress (vertex_buffer) + offset;
-    vb_view.SizeInBytes = xx (vertex_buffer_size * size_of (ImDrawVert));
-    vb_view.StrideInBytes = size_of (ImDrawVert);
-    cmd_list.IASetVertexBuffers (cmd_list, 0, 1, *vb_view);
+    vb_view.BufferLocation = vertex_buffer.GetGPUVirtualAddress(vertex_buffer) + offset;
+    vb_view.SizeInBytes = xx (vertex_buffer_size * size_of(ImDrawVert));
+    vb_view.StrideInBytes = size_of(ImDrawVert);
+    cmd_list.IASetVertexBuffers(cmd_list, 0, 1, *vb_view);
 
     ib_view : D3D12_INDEX_BUFFER_VIEW;
-    ib_view.BufferLocation = index_buffer.GetGPUVirtualAddress (index_buffer);
-    ib_view.SizeInBytes = xx (index_buffer_size * size_of (ImDrawIdx));
-    ib_view.Format = ifx size_of (ImDrawIdx) == 2 then .R16_UINT else .R32_UINT;
-    cmd_list.IASetIndexBuffer (cmd_list, *ib_view);
+    ib_view.BufferLocation = index_buffer.GetGPUVirtualAddress(index_buffer);
+    ib_view.SizeInBytes = xx (index_buffer_size * size_of(ImDrawIdx));
+    ib_view.Format = ifx size_of(ImDrawIdx) == 2 then .R16_UINT else .R32_UINT;
+    cmd_list.IASetIndexBuffer(cmd_list, *ib_view);
 
-    cmd_list.IASetPrimitiveTopology (cmd_list, .TRIANGLELIST);
-    cmd_list.SetPipelineState (cmd_list, data.pipeline_state);
-    cmd_list.SetGraphicsRootSignature (cmd_list, data.root_signature);
-    cmd_list.SetGraphicsRoot32BitConstants (cmd_list, 0, 16, xx *shader_constant_buffer, 0);
-    cmd_list.SetDescriptorHeaps (cmd_list, 1, *data.srv_heap);
+    cmd_list.IASetPrimitiveTopology(cmd_list, .TRIANGLELIST);
+    cmd_list.SetPipelineState(cmd_list, data.pipeline_state);
+    cmd_list.SetGraphicsRootSignature(cmd_list, data.root_signature);
+    cmd_list.SetGraphicsRoot32BitConstants(cmd_list, 0, 16, xx *shader_constant_buffer, 0);
+    cmd_list.SetDescriptorHeaps(cmd_list, 1, *data.srv_heap);
 
     blend_factor : [4]float = .[0,0,0,0];
-    cmd_list.OMSetBlendFactor (cmd_list, xx *blend_factor);
+    cmd_list.OMSetBlendFactor(cmd_list, xx *blend_factor);
 }
 
 #scope_export
@@ -309,28 +309,28 @@ RenderDrawData :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsComm
     if draw_data.DisplaySize.x <= 0 || draw_data.DisplaySize.y <= 0
         return;
 
-    data := GetUserData ();
+    data := GetUserData();
 
-    viewport_data := cast (*ViewportData) draw_data.OwnerViewport.RendererUserData;
+    viewport_data := cast(*ViewportData) draw_data.OwnerViewport.RendererUserData;
     viewport_data.frame_index += 1;
 
     using buffers := *viewport_data.frame_render_buffers[viewport_data.frame_index % data.num_frames_in_flight];
 
     if !vertex_buffer || vertex_buffer_size < draw_data.TotalVtxCount
     {
-        Win32.SafeRelease (vertex_buffer);
+        Win32.SafeRelease(vertex_buffer);
 
         vertex_buffer_size = draw_data.TotalVtxCount + 5000;
         desc : D3D12_RESOURCE_DESC;
         desc.Dimension = .BUFFER;
-        desc.Width = xx (vertex_buffer_size * size_of (ImDrawVert));
+        desc.Width = xx (vertex_buffer_size * size_of(ImDrawVert));
         desc.Height = 1;
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
         desc.Layout = .ROW_MAJOR;
 
-        result := data.device.CreateCommittedResource (
+        result := data.device.CreateCommittedResource(
             data.device,
             *(D3D12_HEAP_PROPERTIES.{_Type=.UPLOAD}),
             .NONE,
@@ -342,26 +342,26 @@ RenderDrawData :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsComm
 
         if result < 0
         {
-            LogLastD3D12Error ("device.CreateCommittedResource", result);
+            LogLastD3D12Error("device.CreateCommittedResource", result);
             return;
         }
     }
 
     if !index_buffer || index_buffer_size < draw_data.TotalIdxCount
     {
-        Win32.SafeRelease (index_buffer);
+        Win32.SafeRelease(index_buffer);
 
         index_buffer_size = draw_data.TotalIdxCount + 10000;
         desc : D3D12_RESOURCE_DESC;
         desc.Dimension = .BUFFER;
-        desc.Width = xx (index_buffer_size * size_of (ImDrawIdx));
+        desc.Width = xx (index_buffer_size * size_of(ImDrawIdx));
         desc.Height = 1;
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.SampleDesc.Count = 1;
         desc.Layout = .ROW_MAJOR;
 
-        result := data.device.CreateCommittedResource (
+        result := data.device.CreateCommittedResource(
             data.device,
             *(D3D12_HEAP_PROPERTIES.{_Type=.UPLOAD}),
             .NONE,
@@ -374,32 +374,32 @@ RenderDrawData :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsComm
 
         if result < 0
         {
-            LogLastD3D12Error ("device.CreateCommittedResource", result);
+            LogLastD3D12Error("device.CreateCommittedResource", result);
             return;
         }
     }
 
     vtx_ptr : *ImDrawVert;
     idx_ptr : *ImDrawIdx;
-    if vertex_buffer.Map (vertex_buffer, 0, *(D3D12_RANGE.{0,0}), xx *vtx_ptr) < 0
+    if vertex_buffer.Map(vertex_buffer, 0, *(D3D12_RANGE.{0,0}), xx *vtx_ptr) < 0
         return;
-    if index_buffer.Map (index_buffer, 0, *(D3D12_RANGE.{0,0}), xx *idx_ptr) < 0
+    if index_buffer.Map(index_buffer, 0, *(D3D12_RANGE.{0,0}), xx *idx_ptr) < 0
         return;
 
     for i : 0..draw_data.CmdListsCount - 1
     {
         list := draw_data.CmdLists.Data[i];
-        memcpy (vtx_ptr, list.VtxBuffer.Data, list.VtxBuffer.Size * size_of (ImDrawVert));
-        memcpy (idx_ptr, list.IdxBuffer.Data, list.IdxBuffer.Size * size_of (ImDrawIdx));
+        memcpy(vtx_ptr, list.VtxBuffer.Data, list.VtxBuffer.Size * size_of(ImDrawVert));
+        memcpy(idx_ptr, list.IdxBuffer.Data, list.IdxBuffer.Size * size_of(ImDrawIdx));
 
         vtx_ptr += list.VtxBuffer.Size;
         idx_ptr += list.IdxBuffer.Size;
     }
 
-    vertex_buffer.Unmap (vertex_buffer, 0, *(D3D12_RANGE.{0,0}));
-    index_buffer.Unmap (index_buffer, 0, *(D3D12_RANGE.{0,0}));
+    vertex_buffer.Unmap(vertex_buffer, 0, *(D3D12_RANGE.{0,0}));
+    index_buffer.Unmap(index_buffer, 0, *(D3D12_RANGE.{0,0}));
 
-    SetupRenderState (draw_data, cmd_list, buffers);
+    SetupRenderState(draw_data, cmd_list, buffers);
 
     global_vtx_offset := 0;
     global_idx_offset := 0;
@@ -413,9 +413,9 @@ RenderDrawData :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsComm
             if cmd.UserCallback
             {
                 if cmd.UserCallback == xx ImGui.ImDrawCallback_ResetRenderState
-                    SetupRenderState (draw_data, cmd_list, buffers);
+                    SetupRenderState(draw_data, cmd_list, buffers);
                 else
-                    cmd.UserCallback (list, cmd);
+                    cmd.UserCallback(list, cmd);
             }
             else
             {
@@ -426,11 +426,11 @@ RenderDrawData :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsComm
 
                 rect := Win32.RECT.{xx clip_min.x, xx clip_min.y, xx clip_max.x, xx clip_max.y};
                 texture_handle : D3D12_GPU_DESCRIPTOR_HANDLE;
-                texture_handle.ptr = cast (u64) cmd.TextureId;
+                texture_handle.ptr = cast(u64) cmd.TextureId;
 
-                cmd_list.SetGraphicsRootDescriptorTable (cmd_list, 1, texture_handle);
-                cmd_list.RSSetScissorRects (cmd_list, 1, *rect);
-                cmd_list.DrawIndexedInstanced (cmd_list, cmd.ElemCount, 1, xx (cmd.IdxOffset + global_idx_offset), xx (cmd.VtxOffset + global_vtx_offset), 0);
+                cmd_list.SetGraphicsRootDescriptorTable(cmd_list, 1, texture_handle);
+                cmd_list.RSSetScissorRects(cmd_list, 1, *rect);
+                cmd_list.DrawIndexedInstanced(cmd_list, cmd.ElemCount, 1, xx (cmd.IdxOffset + global_idx_offset), xx (cmd.VtxOffset + global_vtx_offset), 0);
             }
         }
 
@@ -441,12 +441,12 @@ RenderDrawData :: (draw_data : *ImGui.ImDrawData, cmd_list : *ID3D12GraphicsComm
 
 CreateFontsTexture :: ()
 {
-    io := ImGui.GetIO ();
-    data := GetUserData ();
+    io := ImGui.GetIO();
+    data := GetUserData();
 
     pixels : *u8;
     width, height : s32;
-    io.Fonts.GetTexDataAsRGBA32 (io.Fonts, *pixels, *width, *height);
+    io.Fonts.GetTexDataAsRGBA32(io.Fonts, *pixels, *width, *height);
 
     // Upload texture
     desc : D3D12_RESOURCE_DESC;
@@ -461,7 +461,7 @@ CreateFontsTexture :: ()
     texture_desc := desc;
 
     texture : *ID3D12Resource;
-    data.device.CreateCommittedResource (
+    data.device.CreateCommittedResource(
         data.device,
         *(D3D12_HEAP_PROPERTIES.{_Type=.DEFAULT}),
         .NONE,
@@ -474,7 +474,7 @@ CreateFontsTexture :: ()
     upload_size: u64;
     footprint: D3D12_PLACED_SUBRESOURCE_FOOTPRINT;
 
-    data.device.GetCopyableFootprints (data.device,
+    data.device.GetCopyableFootprints(data.device,
         *desc, 0, 1, 0, *footprint, null, null, *upload_size);
 
     desc = .{};
@@ -487,7 +487,7 @@ CreateFontsTexture :: ()
     desc.Layout = .ROW_MAJOR;
 
     upload_buffer: *ID3D12Resource;
-    data.device.CreateCommittedResource (
+    data.device.CreateCommittedResource(
         data.device,
         *(D3D12_HEAP_PROPERTIES.{_Type=.UPLOAD}),
         0,
@@ -498,17 +498,17 @@ CreateFontsTexture :: ()
     );
 
     mapped : *u8;
-    upload_buffer.Map (upload_buffer, 0, *(D3D12_RANGE.{0,0}), xx *mapped);
+    upload_buffer.Map(upload_buffer, 0, *(D3D12_RANGE.{0,0}), xx *mapped);
 
     for y : 0..footprint.Footprint.Height - 1 {
         memcpy(
             mapped + y * footprint.Footprint.RowPitch,
-            pixels + y * cast (u32) width * 4,
+            pixels + y * cast(u32) width * 4,
             4 * width
         );
     }
 
-    upload_buffer.Unmap (upload_buffer, 0, *(D3D12_RANGE.{0,0}));
+    upload_buffer.Unmap(upload_buffer, 0, *(D3D12_RANGE.{0,0}));
 
     {
         src_location : D3D12_TEXTURE_COPY_LOCATION;
@@ -528,40 +528,40 @@ CreateFontsTexture :: ()
         barrier.Transition.StateAfter = .PIXEL_SHADER_RESOURCE;
 
         fence : *ID3D12Fence;
-        data.device.CreateFence (data.device, 0, .NONE, *fence.UUID, xx *fence);
+        data.device.CreateFence(data.device, 0, .NONE, *fence.UUID, xx *fence);
 
-        event := Win32.CreateEventW (null, 0, 0, null);
+        event := Win32.CreateEventW(null, 0, 0, null);
 
         queue_desc : D3D12_COMMAND_QUEUE_DESC;
         queue_desc._Type = .DIRECT;
         queue_desc.NodeMask = 1;
 
         cmd_queue : *ID3D12CommandQueue;
-        data.device.CreateCommandQueue (data.device, *queue_desc, *cmd_queue.UUID, xx *cmd_queue);
+        data.device.CreateCommandQueue(data.device, *queue_desc, *cmd_queue.UUID, xx *cmd_queue);
 
         cmd_alloc : *ID3D12CommandAllocator;
-        data.device.CreateCommandAllocator (data.device ,.DIRECT, *cmd_alloc.UUID, xx *cmd_alloc);
+        data.device.CreateCommandAllocator(data.device ,.DIRECT, *cmd_alloc.UUID, xx *cmd_alloc);
 
         cmd_list : *ID3D12GraphicsCommandList;
-        data.device.CreateCommandList (data.device, 0, .DIRECT, cmd_alloc, null, *cmd_list.UUID, xx *cmd_list);
+        data.device.CreateCommandList(data.device, 0, .DIRECT, cmd_alloc, null, *cmd_list.UUID, xx *cmd_list);
 
-        cmd_list.CopyTextureRegion (cmd_list, *dst_location, 0, 0, 0, *src_location, null);
-        cmd_list.ResourceBarrier (cmd_list, 1, *barrier);
+        cmd_list.CopyTextureRegion(cmd_list, *dst_location, 0, 0, 0, *src_location, null);
+        cmd_list.ResourceBarrier(cmd_list, 1, *barrier);
 
-        cmd_list.Close (cmd_list);
+        cmd_list.Close(cmd_list);
 
-        cmd_queue.ExecuteCommandLists (cmd_queue, 1, xx *cmd_list);
-        cmd_queue.Signal (cmd_queue, fence, 1);
+        cmd_queue.ExecuteCommandLists(cmd_queue, 1, xx *cmd_list);
+        cmd_queue.Signal(cmd_queue, fence, 1);
 
-        fence.SetEventOnCompletion (fence, 1, event);
-        Win32.WaitForSingleObject (event, Win32.INFINITE);
+        fence.SetEventOnCompletion(fence, 1, event);
+        Win32.WaitForSingleObject(event, Win32.INFINITE);
 
-        Win32.SafeRelease (cmd_list);
-        Win32.SafeRelease (cmd_alloc);
-        Win32.SafeRelease (cmd_queue);
-        Win32.CloseHandle (event);
-        Win32.SafeRelease (fence);
-        Win32.SafeRelease (upload_buffer);
+        Win32.SafeRelease(cmd_list);
+        Win32.SafeRelease(cmd_alloc);
+        Win32.SafeRelease(cmd_queue);
+        Win32.CloseHandle(event);
+        Win32.SafeRelease(fence);
+        Win32.SafeRelease(upload_buffer);
     }
 
     srv_desc : D3D12_SHADER_RESOURCE_VIEW_DESC;
@@ -570,9 +570,9 @@ CreateFontsTexture :: ()
     srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
     srv_desc.Texture2D.MostDetailedMip = 0;
     srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    data.device.CreateShaderResourceView (data.device, texture, *srv_desc, data.font_srv_cpu_handle);
+    data.device.CreateShaderResourceView(data.device, texture, *srv_desc, data.font_srv_cpu_handle);
 
-    Win32.SafeRelease (data.font_texture_resource);
+    Win32.SafeRelease(data.font_texture_resource);
     data.font_texture_resource = texture;
 
     // Store our identifier
@@ -582,20 +582,20 @@ CreateFontsTexture :: ()
     // [Solution 1] IDE/msbuild: in "Properties/C++/Preprocessor Definitions" add 'ImTextureID=ImU64' (this is what we do in the 'example_win32_direct12/example_win32_direct12.vcxproj' project file)
     // [Solution 2] IDE/msbuild: in "Properties/C++/Preprocessor Definitions" add 'IMGUI_USER_CONFIG="my_imgui_config.h"' and inside 'my_imgui_config.h' add '#define ImTextureID ImU64' and as many other options as you like.
     // [Solution 3] IDE/msbuild: edit imconfig.h and add '#define ImTextureID ImU64' (prefer solution 2 to create your own config file!)
-    // [Solution 4] command-line: add '/D ImTextureID=ImU64' to your cl.exe command-line (this is what we do in the example_win32_direct12/build_win32.bat file)
-    #assert size_of (ImGui.ImTextureID) >= size_of (D3D12_GPU_DESCRIPTOR_HANDLE);
+    // [Solution 4] command-line: add '/D ImTextureID=ImU64' to your cl.exe command-line(this is what we do in the example_win32_direct12/build_win32.bat file)
+    #assert size_of(ImGui.ImTextureID) >= size_of(D3D12_GPU_DESCRIPTOR_HANDLE);
 
-    io.Fonts.TexID = cast (ImGui.ImTextureID) data.font_srv_gpu_handle.ptr;
+    io.Fonts.TexID = cast(ImGui.ImTextureID) data.font_srv_gpu_handle.ptr;
 }
 
 CreateDeviceObjects :: () -> bool
 {
-    data := GetUserData ();
+    data := GetUserData();
     if !data || !data.device
         return false;
 
     if data.pipeline_state
-        DestroyDeviceObjects ();
+        DestroyDeviceObjects();
 
     result : Win32.HRESULT;
 
@@ -644,18 +644,18 @@ CreateDeviceObjects :: () -> bool
             | .DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
         blob : *ID3DBlob;
-        defer Win32.SafeRelease (blob);
+        defer Win32.SafeRelease(blob);
 
-        result = D3D12SerializeRootSignature (*desc, D3D_ROOT_SIGNATURE_VERSION_1, *blob, null);
+        result = D3D12SerializeRootSignature(*desc, D3D_ROOT_SIGNATURE_VERSION_1, *blob, null);
         if result < 0
         {
-            LogLastD3D12Error ("D3D12SerializeRootSignature", result);
+            LogLastD3D12Error("D3D12SerializeRootSignature", result);
             return false;
         }
 
-        data.device.CreateRootSignature (
+        data.device.CreateRootSignature(
             data.device, 0,
-            blob.GetBufferPointer (blob), blob.GetBufferSize (blob),
+            blob.GetBufferPointer(blob), blob.GetBufferSize(blob),
             *data.root_signature.UUID, xx *data.root_signature
         );
     }
@@ -674,64 +674,64 @@ CreateDeviceObjects :: () -> bool
         $name : string, $source : string, $entry_point : string, $version : string
     ) -> *IDxcBlob #must
     {
-        AllocatorScope (Temp);
+        AllocatorScope(Temp);
 
         arguments : [..]string;
-        ArrayPush (*arguments, name);
-        ArrayPush (*arguments, "-E");
-        ArrayPush (*arguments, entry_point);
-        ArrayPush (*arguments, "-T");
-        ArrayPush (*arguments, version);
-        ArrayPush (*arguments, "-HV 2021");
-        ArrayPush (*arguments, "-Od");           // Disable optimizations
+        ArrayPush(*arguments, name);
+        ArrayPush(*arguments, "-E");
+        ArrayPush(*arguments, entry_point);
+        ArrayPush(*arguments, "-T");
+        ArrayPush(*arguments, version);
+        ArrayPush(*arguments, "-HV 2021");
+        ArrayPush(*arguments, "-Od");           // Disable optimizations
 
         arguments_wide : [..]*u16;
 
         for arguments
-            ArrayPush (*arguments_wide, Win32.Utf8ToWide (it));
+            ArrayPush(*arguments_wide, Win32.Utf8ToWide(it));
 
         blob_encoding: *IDxcBlobEncoding;
-        defer Win32.SafeRelease (blob_encoding);
+        defer Win32.SafeRelease(blob_encoding);
 
-        result := dxc_utils.CreateBlobFromPinned (dxc_utils, source.data, xx source.count, .UTF8, *blob_encoding);
+        result := dxc_utils.CreateBlobFromPinned(dxc_utils, source.data, xx source.count, .UTF8, *blob_encoding);
         if result < 0
             return null;
 
         shader_buffer : DxcBuffer;
-        shader_buffer.Ptr      = blob_encoding.GetBufferPointer (blob_encoding);
-        shader_buffer.Size     = blob_encoding.GetBufferSize (blob_encoding);
+        shader_buffer.Ptr      = blob_encoding.GetBufferPointer(blob_encoding);
+        shader_buffer.Size     = blob_encoding.GetBufferSize(blob_encoding);
         shader_buffer.Encoding = 0;
 
         dxc_result: *IDxcResult;
-        defer Win32.SafeRelease (dxc_result);
+        defer Win32.SafeRelease(dxc_result);
 
-        result = dxc_compiler.Compile (
+        result = dxc_compiler.Compile(
             dxc_compiler,
             *shader_buffer,
-            cast (**u16) arguments_wide.data, xx arguments_wide.count,
+            cast(**u16) arguments_wide.data, xx arguments_wide.count,
             null,
             *dxc_result.UUID, xx *dxc_result
         );
 
         if result < 0
         {
-            LogLastD3D12Error ("dxc_compiler.Compile", result);
+            LogLastD3D12Error("dxc_compiler.Compile", result);
             return null;
         }
 
         // Check the compiler status and printing out any errors
-        dxc_result.GetStatus (dxc_result, *result);
+        dxc_result.GetStatus(dxc_result, *result);
         if result < 0
         {
             error_blob : *IDxcBlobUtf8;
-            defer Win32.SafeRelease (error_blob);
+            defer Win32.SafeRelease(error_blob);
 
-            dxc_result.GetOutput (dxc_result, .DXC_OUT_ERRORS, *error_blob.UUID, xx *error_blob, null);
+            dxc_result.GetOutput(dxc_result, .DXC_OUT_ERRORS, *error_blob.UUID, xx *error_blob, null);
 
-            if error_blob && error_blob.GetStringLength (error_blob) > 0
+            if error_blob && error_blob.GetStringLength(error_blob) > 0
             {
-                error_string := MakeString (error_blob.GetStringPointer (error_blob));
-                LogError (error_string);
+                error_string := MakeString(error_blob.GetStringPointer(error_blob));
+                LogError(error_string);
             }
 
             return null;
@@ -739,10 +739,10 @@ CreateDeviceObjects :: () -> bool
 
         blob : *IDxcBlob;
 
-        result = dxc_result.GetResult (dxc_result, *blob);
+        result = dxc_result.GetResult(dxc_result, *blob);
         if result < 0
         {
-            LogLastD3D12Error ("dxc_result.GetResult", result);
+            LogLastD3D12Error("dxc_result.GetResult", result);
             return null;
         }
 
@@ -750,7 +750,7 @@ CreateDeviceObjects :: () -> bool
     }
 
 Shader_Source :: #string HLSL
-cbuffer VSConstants : register (b0)
+cbuffer VSConstants : register(b0)
 {
     float4x4 projection_matrix;
 };
@@ -769,46 +769,46 @@ struct PSInput
     float2 tex_coords : TEX_COORDS;
 };
 
-PSInput VSMain (VSInput input)
+PSInput VSMain(VSInput input)
 {
     PSInput output;
-    output.position = mul (projection_matrix, float4 (input.position.xy, 0.0, 1.0));
+    output.position = mul(projection_matrix, float4(input.position.xy, 0.0, 1.0));
     output.color = input.color;
     output.tex_coords = input.tex_coords;
 
     return output;
 }
 
-SamplerState sampler0 : register (s0);
-Texture2D texture0 : register (t0);
+SamplerState sampler0 : register(s0);
+Texture2D texture0 : register(t0);
 
-float4 PSMain (PSInput input) : SV_TARGET
+float4 PSMain(PSInput input) : SV_TARGET
 {
-    return input.color * texture0.Sample (sampler0, input.tex_coords);
+    return input.color * texture0.Sample(sampler0, input.tex_coords);
 }
 HLSL
 
     dxc_utils : *IDxcUtils;
-    defer Win32.SafeRelease (dxc_utils);
+    defer Win32.SafeRelease(dxc_utils);
 
-    result = DxcCreateInstance (*CLSID_DxcUtils, *dxc_utils.UUID, xx *dxc_utils);
+    result = DxcCreateInstance(*CLSID_DxcUtils, *dxc_utils.UUID, xx *dxc_utils);
     if result < 0
     {
-        LogLastD3D12Error ("DxcCreateInstance (IDxcUtils)", result);
+        LogLastD3D12Error("DxcCreateInstance(IDxcUtils)", result);
         return false;
     }
 
     dxc_compiler : *IDxcCompiler3;
-    defer Win32.SafeRelease (dxc_compiler);
+    defer Win32.SafeRelease(dxc_compiler);
 
-    result = DxcCreateInstance (*CLSID_DxcCompiler, *dxc_compiler.UUID, xx *dxc_compiler);
+    result = DxcCreateInstance(*CLSID_DxcCompiler, *dxc_compiler.UUID, xx *dxc_compiler);
     if result < 0
     {
-        LogLastD3D12Error ("DxcCreateInstance (IDxcCompiler3)", result);
+        LogLastD3D12Error("DxcCreateInstance(IDxcCompiler3)", result);
         return false;
     }
 
-    vertex_shader_blob := DXCCompile (
+    vertex_shader_blob := DXCCompile(
         dxc_utils, dxc_compiler,
         "ImGui_Vertex_Shader", Shader_Source, "VSMain", "vs_6_0"
     );
@@ -816,14 +816,14 @@ HLSL
     if !vertex_shader_blob
         return false;
 
-    defer Win32.SafeRelease (vertex_shader_blob);
+    defer Win32.SafeRelease(vertex_shader_blob);
 
     pso_desc.VS = .{
-        vertex_shader_blob.GetBufferPointer (vertex_shader_blob),
-        vertex_shader_blob.GetBufferSize (vertex_shader_blob)
+        vertex_shader_blob.GetBufferPointer(vertex_shader_blob),
+        vertex_shader_blob.GetBufferSize(vertex_shader_blob)
     };
 
-    pixel_shader_blob := DXCCompile (
+    pixel_shader_blob := DXCCompile(
         dxc_utils, dxc_compiler,
         "ImGui_Pixel_Shader", Shader_Source, "PSMain", "ps_6_0"
     );
@@ -831,17 +831,17 @@ HLSL
     if !pixel_shader_blob
         return false;
 
-    defer Win32.SafeRelease (pixel_shader_blob);
+    defer Win32.SafeRelease(pixel_shader_blob);
 
     pso_desc.PS = .{
-        pixel_shader_blob.GetBufferPointer (pixel_shader_blob),
-        pixel_shader_blob.GetBufferSize (pixel_shader_blob)
+        pixel_shader_blob.GetBufferPointer(pixel_shader_blob),
+        pixel_shader_blob.GetBufferSize(pixel_shader_blob)
     };
 
     input_layout := D3D12_INPUT_ELEMENT_DESC.[
-        .{"POSITION", 0, .R32G32_FLOAT, 0, xx OffsetOf (ImDrawVert, "pos"), .PER_VERTEX_DATA, 0},
-        .{"TEX_COORDS", 0, .R32G32_FLOAT, 0, xx OffsetOf (ImDrawVert, "uv"), .PER_VERTEX_DATA, 0},
-        .{"COLOR", 0, .R8G8B8A8_UNORM, 0, xx OffsetOf (ImDrawVert, "col"), .PER_VERTEX_DATA, 0},
+        .{"POSITION", 0, .R32G32_FLOAT, 0, xx OffsetOf(ImDrawVert, "pos"), .PER_VERTEX_DATA, 0},
+        .{"TEX_COORDS", 0, .R32G32_FLOAT, 0, xx OffsetOf(ImDrawVert, "uv"), .PER_VERTEX_DATA, 0},
+        .{"COLOR", 0, .R8G8B8A8_UNORM, 0, xx OffsetOf(ImDrawVert, "col"), .PER_VERTEX_DATA, 0},
     ];
 
     pso_desc.InputLayout = .{input_layout.data, input_layout.count};
@@ -885,36 +885,36 @@ HLSL
         BackFace = FrontFace;
     }
 
-    result = data.device.CreateGraphicsPipelineState (data.device, *pso_desc, *data.pipeline_state.UUID, xx *data.pipeline_state);
+    result = data.device.CreateGraphicsPipelineState(data.device, *pso_desc, *data.pipeline_state.UUID, xx *data.pipeline_state);
     if result < 0
     {
-        LogLastD3D12Error ("device.CreateGraphicsPipelineState", result);
+        LogLastD3D12Error("device.CreateGraphicsPipelineState", result);
         return false;
     }
 
-    CreateFontsTexture ();
+    CreateFontsTexture();
 
     return true;
 }
 
 DestroyDeviceObjects :: ()
 {
-    using data := GetUserData ();
+    using data := GetUserData();
     if !data || !data.device
         return;
 
-    Win32.SafeRelease (data.root_signature);
-    Win32.SafeRelease (data.pipeline_state);
-    Win32.SafeRelease (data.font_texture_resource);
+    Win32.SafeRelease(data.root_signature);
+    Win32.SafeRelease(data.pipeline_state);
+    Win32.SafeRelease(data.font_texture_resource);
 
-    io := ImGui.GetIO ();
-    io.Fonts.TexID = cast (ImGui.ImTextureID) 0;
+    io := ImGui.GetIO();
+    io.Fonts.TexID = cast(ImGui.ImTextureID) 0;
 }
 
 DestroyRenderBuffers :: (buffers : *RenderBuffers)
 {
-    Win32.SafeRelease (buffers.index_buffer);
-    Win32.SafeRelease (buffers.vertex_buffer);
+    Win32.SafeRelease(buffers.index_buffer);
+    Win32.SafeRelease(buffers.vertex_buffer);
     buffers.* = .{};
 }
 
@@ -926,7 +926,7 @@ DestroyRenderBuffers :: (buffers : *RenderBuffers)
 
 InitPlatformInterface :: ()
 {
-    platform_io := ImGui.GetPlatformIO ();
+    platform_io := ImGui.GetPlatformIO();
     platform_io.Renderer_CreateWindow = null; //CreateWindow;
     platform_io.Renderer_DestroyWindow = null; //DestroyWindow;
     platform_io.Renderer_SetWindowSize = null; //SetWindowSize;
@@ -936,5 +936,5 @@ InitPlatformInterface :: ()
 
 TerminatePlatformInterface :: ()
 {
-    ImGui.DestroyPlatformWindows ();
+    ImGui.DestroyPlatformWindows();
 }

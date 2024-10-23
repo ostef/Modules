@@ -28,7 +28,7 @@ HashSet :: struct (
     #if hash_func
         HashValue :: hash_func;
     else
-        HashValue :: (key) => get_hash (key);
+        HashValue :: (key) => get_hash(key);
 
     #if comp_func
         CompareKeys :: comp_func;
@@ -43,13 +43,13 @@ Hash_Set_First_Occupied_Hash :: 2;
 
 HashSetGetMinCapacityForElementCount :: inline (set : HashSet, count : s64) -> s64 #must
 {
-    return HashSetGetMinCapacityForElementCount (set.Load_Factor, count);
+    return HashSetGetMinCapacityForElementCount(set.Load_Factor, count);
 }
 
 HashSetGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64 #must
 {
     capacity := count + (count * (100 - load_factor)) / 100 + 1;
-    capacity = Max (capacity, Hash_Set_Min_Capacity);
+    capacity = Max(capacity, Hash_Set_Min_Capacity);
 
     pow := 1;
     while capacity > pow
@@ -61,9 +61,9 @@ HashSetGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) 
 
 HashSetInit :: inline (set : *HashSet, capacity : s64)
 {
-    Initialize (set);
+    Initialize(set);
 
-    capacity = Max (capacity, Hash_Set_Min_Capacity);
+    capacity = Max(capacity, Hash_Set_Min_Capacity);
 
     pow := 1;
     while capacity > pow
@@ -72,7 +72,7 @@ HashSetInit :: inline (set : *HashSet, capacity : s64)
 
     set.allocated = capacity;
     set.allocator = context.allocator;
-    set.entries = Alloc (set.Entry, capacity);
+    set.entries = Alloc(set.Entry, capacity);
 
     for i : 0..set.allocated - 1
         set.entries[i].hash = Hash_Set_Never_Occupied_Hash;
@@ -80,7 +80,7 @@ HashSetInit :: inline (set : *HashSet, capacity : s64)
 
 HashSetInitFromPreallocatedMemory :: inline (set : *HashSet, data : *void, capacity : s64, allocator : Allocator)
 {
-    Initialize (set);
+    Initialize(set);
 
     set.allocated = capacity;
     set.allocator = allocator;
@@ -92,7 +92,7 @@ HashSetInitFromPreallocatedMemory :: inline (set : *HashSet, data : *void, capac
 
 HashSetFree :: inline (using set : *HashSet)
 {
-    Free (entries,, allocator);
+    Free(entries,, allocator);
     entries = null;
     count = 0;
     occupied = 0;
@@ -117,11 +117,11 @@ HashSetGrow :: (set : *HashSet)
     old_entries.data = set.entries;
     old_entries.count = set.allocated;
 
-    defer Free (old_entries.data,, set.allocator);
+    defer Free(old_entries.data,, set.allocator);
 
-    new_capacity := Max (set.allocated * 2, Hash_Set_Min_Capacity);
+    new_capacity := Max(set.allocated * 2, Hash_Set_Min_Capacity);
 
-    set.entries = Alloc (set.Entry, new_capacity,, set.allocator);
+    set.entries = Alloc(set.Entry, new_capacity,, set.allocator);
     set.count = 0;
     set.occupied = 0;
     set.allocated = new_capacity;
@@ -132,14 +132,14 @@ HashSetGrow :: (set : *HashSet)
     for entry : old_entries
     {
         if entry.hash >= Hash_Set_First_Occupied_Hash
-            HashSetInsert (set, entry.value);
+            HashSetInsert(set, entry.value);
     }
 }
 
 HashSetProbe :: (set : HashSet, value : set.T) -> h : set.HashType, index : s64, is_present : bool
 {
-    mask := cast, trunc (set.HashType) (set.allocated - 1);
-    hash := set.HashValue (value);
+    mask := cast, trunc(set.HashType) (set.allocated - 1);
+    hash := set.HashValue(value);
     if hash < Hash_Set_First_Occupied_Hash
         hash += Hash_Set_First_Occupied_Hash;
 
@@ -149,24 +149,24 @@ HashSetProbe :: (set : HashSet, value : set.T) -> h : set.HashType, index : s64,
     {
         entry := *set.entries[index];
 
-        if entry.hash == hash && set.CompareKeys (entry.value, value)
-            return hash, cast (s64) index, true;
+        if entry.hash == hash && set.CompareKeys(entry.value, value)
+            return hash, cast(s64) index, true;
 
         index += increment;
         index &= mask;
         increment += 1;
     }
 
-    return hash, cast (s64) index, false;
+    return hash, cast(s64) index, false;
 }
 
 HashSetInsert :: (set : *HashSet, value : set.T) -> *set.T, was_present : bool
 {
     if (set.occupied + 1) * 100 >= set.allocated * set.Load_Factor
-        HashSetGrow (set);
+        HashSetGrow(set);
 
-    Assert (set.occupied <= set.allocated);
-    hash, index, is_present := HashSetProbe (set, value);
+    Assert(set.occupied <= set.allocated);
+    hash, index, is_present := HashSetProbe(set, value);
 
     entry := *set.entries[index];
     entry.value = value;
@@ -182,7 +182,7 @@ HashSetInsert :: (set : *HashSet, value : set.T) -> *set.T, was_present : bool
 
 HashSetRemove :: inline (set : *HashSet, value : set.T) -> found : bool
 {
-    hash, index, is_present := HashSetProbe (set, value);
+    hash, index, is_present := HashSetProbe(set, value);
     if !is_present
         return false;
 
@@ -198,7 +198,7 @@ HashSetGetPtr :: inline (set : *HashSet, value : set.T) -> *set.T #must
     if set.count == 0
         return null;
 
-    hash, index, is_present := HashSetProbe (set, value);
+    hash, index, is_present := HashSetProbe(set, value);
     if is_present
         return *set.entries[index].value;
 
@@ -222,6 +222,6 @@ for_expansion :: (set : *HashSet, body : Code, flags : For_Flags) #expand
         else
             `it := entry.value;
 
-        #insert (remove = { entry.hash = Hash_Set_Removed_Hash; set.count -= 1; }) body;
+        #insert(remove = { entry.hash = Hash_Set_Removed_Hash; set.count -= 1; }) body;
     }
 }

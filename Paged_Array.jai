@@ -69,12 +69,12 @@ EnsureInit :: inline (using array : *PagedArray)
 
 PagedArrayReset :: (using array : *PagedArray)
 {
-    EnsureInit (array);
+    EnsureInit(array);
 
     for page : all_pages
-        Free (page,, allocator);
+        Free(page,, allocator);
 
-    ArrayFree (*all_pages);
+    ArrayFree(*all_pages);
     count = 0;
     free_pages = null;
     full_pages = null;
@@ -82,7 +82,7 @@ PagedArrayReset :: (using array : *PagedArray)
 
 PagedArrayClearPage :: (using array : *PagedArray, page : *array.Page)
 {
-    EnsureInit (array);
+    EnsureInit(array);
 
     for * slot, si : page.slots
     {
@@ -106,7 +106,7 @@ PagedArrayClearPage :: (using array : *PagedArray, page : *array.Page)
 
 PagedArrayFindSlot :: (using array : *PagedArray, $initialize := true) -> *array.T, PagedArraySlotInfo, is_new_page : bool
 {
-    EnsureInit (array);
+    EnsureInit(array);
 
     is_new_page := false;
 
@@ -115,29 +115,29 @@ PagedArrayFindSlot :: (using array : *PagedArray, $initialize := true) -> *array
     {
         is_new_page = true;
 
-        page = Alloc (Page,, allocator);
+        page = Alloc(Page,, allocator);
 
-        ListPushFront (*free_pages, page);
-        ArrayPush (*all_pages, page);
+        ListPushFront(*free_pages, page);
+        ArrayPush(*all_pages, page);
 
-        page.index = cast (s32) (all_pages.count - 1);
+        page.index = cast(s32) (all_pages.count - 1);
 
-        PagedArrayClearPage (array, page);
+        PagedArrayClearPage(array, page);
     }
 
-    Assert (page.count < Page_Size, "Page is full even though it is in the free pages list");
-    Assert (page.free_slots != null, "Could not find free slot even though the page is in the free pages list");
+    Assert(page.count < Page_Size, "Page is full even though it is in the free pages list");
+    Assert(page.free_slots != null, "Could not find free slot even though the page is in the free pages list");
 
-    slot := ListPopFront (*page.free_slots);
-    Assert (!slot.occupied, "Slot is occupied");
+    slot := ListPopFront(*page.free_slots);
+    Assert(!slot.occupied, "Slot is occupied");
 
-    ListPushFront (*page.occupied_slots, slot);
+    ListPushFront(*page.occupied_slots, slot);
 
     // If there are no more free slots, add the page to the full pages list
     if !page.free_slots
     {
-        page = ListPopFront (*free_pages);
-        ListPushFront (*full_pages, page);
+        page = ListPopFront(*free_pages);
+        ListPushFront(*full_pages, page);
     }
 
     slot.occupied = true;
@@ -155,37 +155,37 @@ PagedArrayFindSlot :: (using array : *PagedArray, $initialize := true) -> *array
     info : PagedArraySlotInfo;
     info.version = slot.version;
     info.page_index = page.index;
-    info.slot_index = cast (s32) (slot - page.slots.data);
+    info.slot_index = cast(s32) (slot - page.slots.data);
 
     item := *page.items[info.slot_index];
 
     #if initialize
-        Initialize (item);
+        Initialize(item);
 
     return item, info, is_new_page;
 }
 
 PagedArrayFreeSlot :: (using array : *PagedArray, info : PagedArraySlotInfo, check_occupied := true, check_version := true)
 {
-    EnsureInit (array);
+    EnsureInit(array);
 
     page := all_pages[info.page_index];
     page_was_full := page.free_slots == null;
 
     slot := *page.slots[info.slot_index];
-    Assert (!check_occupied || slot.occupied, "Freeing unoccupied slot %", info);
-    Assert (!check_version || slot.version == info.version, "Mismatching version when freeing slot % (got %)", info, slot.version);
+    Assert(!check_occupied || slot.occupied, "Freeing unoccupied slot %", info);
+    Assert(!check_version || slot.version == info.version, "Mismatching version when freeing slot % (got %)", info, slot.version);
 
     slot.occupied = false;
 
-    ListRemove (*page.occupied_slots, slot);
-    ListPushFront (*page.free_slots, slot);
+    ListRemove(*page.occupied_slots, slot);
+    ListPushFront(*page.free_slots, slot);
 
     // Add the page to the free pages list if it was full previously
     if page_was_full
     {
-        ListRemove (*full_pages, page);
-        ListPushFront (*free_pages, page);
+        ListRemove(*full_pages, page);
+        ListPushFront(*free_pages, page);
     }
 
     page.count -= 1;
@@ -195,13 +195,13 @@ PagedArrayFreeSlot :: (using array : *PagedArray, info : PagedArraySlotInfo, che
 // This procedure cannot work for item sizes of 0
 // The reason for this is that we cannot differentiate between items
 // because they all have the same address.
-PagedArrayFreeSlot :: inline (using array : *PagedArray ($T, $N), item : *T)
-#modify { return (cast (*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
+PagedArrayFreeSlot :: inline (using array : *PagedArray($T, $N), item : *T)
+#modify { return (cast(*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
 {
-    valid, info := PagedArrayGetSlotInfo (array, item);
-    Assert (valid, "Item is not in paged array");
+    valid, info := PagedArrayGetSlotInfo(array, item);
+    Assert(valid, "Item is not in paged array");
 
-    PagedArrayFreeSlot (array, info);
+    PagedArrayFreeSlot(array, info);
 }
 
 PagedArrayFreeAllSlots :: (using array : *PagedArray)
@@ -221,7 +221,7 @@ PagedArrayFreeAllSlots :: (using array : *PagedArray)
         else
             page.next = null;
 
-        PagedArrayClearPage (array, page);
+        PagedArrayClearPage(array, page);
     }
 
     free_pages = all_pages[0];
@@ -231,19 +231,19 @@ PagedArrayFreeAllSlots :: (using array : *PagedArray)
 // This procedure cannot work for item sizes of 0
 // The reason for this is that we cannot differentiate between items
 // because they all have the same address.
-PagedArrayGetSlotInfo :: (using array : PagedArray ($T, $N), item : *T) -> valid : bool, PagedArraySlotInfo, occupied : bool
-#modify { return (cast (*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
+PagedArrayGetSlotInfo :: (using array : PagedArray($T, $N), item : *T) -> valid : bool, PagedArraySlotInfo, occupied : bool
+#modify { return (cast(*Type_Info) T).runtime_size != 0, "This procedure cannot work for item sizes of 0"; }
 {
     info : PagedArraySlotInfo;
     for page : all_pages
     {
-        slot_index := ArrayGetIndex (page.items, item);
+        slot_index := ArrayGetIndex(page.items, item);
 
         if slot_index != -1
         {
             info.version = page.slots[slot_index].version;
             info.page_index = page.index;
-            info.slot_index = cast (s32) slot_index;
+            info.slot_index = cast(s32) slot_index;
 
             return true, info, page.slots[slot_index].occupied;
         }
@@ -270,21 +270,21 @@ PagedArrayIsSlotValid :: (using array : PagedArray, info : PagedArraySlotInfo) -
 
 PagedArrayGetItem :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T #must
 {
-    Assert (info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
-    Assert (info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");
+    Assert(info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
+    Assert(info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");
 
     slot := *all_pages[info.page_index].slots[info.slot_index];
 
-    Assert (slot.occupied, "Slot is not occupied");
-    Assert (slot.version == info.version, "Slot has different version (requested %, got %)", info.version, slot.version);
+    Assert(slot.occupied, "Slot is not occupied");
+    Assert(slot.version == info.version, "Slot has different version (requested %, got %)", info.version, slot.version);
 
     return *all_pages[info.page_index].items[info.slot_index];
 }
 
 PagedArrayGetItemOrNull :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T #must
 {
-    Assert (info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
-    Assert (info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");
+    Assert(info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
+    Assert(info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");
 
     slot := *all_pages[info.page_index].slots[info.slot_index];
 
@@ -306,17 +306,17 @@ for_expansion :: (array : *PagedArray, body : Code, flags : For_Flags) #expand
         for slot, _ : page.occupied_slots
         {
             it_index.version = slot.version;
-            it_index.page_index = cast (s32) pi;
-            it_index.slot_index = cast (s32) (slot - page.slots.data);
+            it_index.page_index = cast(s32) pi;
+            it_index.slot_index = cast(s32) (slot - page.slots.data);
 
             #if flags & .POINTER
                 `it := *page.items[it_index.slot_index];
             else
                 `it := page.items[it_index.slot_index];
 
-            #insert (
+            #insert(
                 break = break page,
-                remove = PagedArrayFreeSlot (array, it_index)
+                remove = PagedArrayFreeSlot(array, it_index)
             ) body;
         }
     }

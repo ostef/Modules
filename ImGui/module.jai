@@ -63,7 +63,7 @@ ImBitArray :: struct (BITCOUNT: s32, OFFSET: s32 = 0)
     Storage : [(BITCOUNT + 31) >> 5]ImU32;
 }
 
-ImBitArrayForNamedKeys :: ImBitArray (cast (s32) Key.NamedKey_COUNT, -cast (s32) Key.NamedKey_BEGIN);
+ImBitArrayForNamedKeys :: ImBitArray(cast(s32) Key.NamedKey_COUNT, -cast(s32) Key.NamedKey_BEGIN);
 
 ImVector :: struct (T : Type)
 {
@@ -73,7 +73,7 @@ ImVector :: struct (T : Type)
 
     Free :: inline (using vec : *ImVector)
     {
-        MemFree (Data);
+        MemFree(Data);
         Data = null;
         Size = 0;
         Capacity = 0;
@@ -84,13 +84,13 @@ ImVector :: struct (T : Type)
         if new_capacity < Capacity
             return;
 
-        new_data := MemAlloc (xx (new_capacity * size_of (T)));
-        assert (new_data != null);
+        new_data := MemAlloc(xx (new_capacity * size_of(T)));
+        assert(new_data != null);
 
         if Data
         {
-            memcpy (new_data, Data, Size * size_of (T));
-            MemFree (Data);
+            memcpy(new_data, Data, Size * size_of(T));
+            MemFree(Data);
         }
 
         Data = new_data;
@@ -100,7 +100,7 @@ ImVector :: struct (T : Type)
     Push :: inline (using vec : *ImVector, val : T)
     {
         if Size >= Capacity
-            Reserve (vec, Capacity * 2 + 8);
+            Reserve(vec, Capacity * 2 + 8);
 
         Data[Size] = val;
         Size += 1;
@@ -108,7 +108,7 @@ ImVector :: struct (T : Type)
 
     Pop :: inline (using vec : *ImVector)
     {
-        assert (Size > 0);
+        assert(Size > 0);
 
         Size -= 1;
     }
@@ -116,7 +116,7 @@ ImVector :: struct (T : Type)
 
 operator *[] :: inline (vec : *ImVector, index : s64) -> *vec.T #must
 {
-    assert (index >= 0 && index < vec.Size);
+    assert(index >= 0 && index < vec.Size);
 
     return *vec.Data[index];
 }

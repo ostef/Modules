@@ -1,4 +1,4 @@
-#module_parameters (Enable_Profiling := true);
+#module_parameters(Enable_Profiling := true);
 
 #import "Common";
 #import "Hash_Map";
@@ -6,7 +6,7 @@
 #scope_file
 
 Basic :: #import "Basic";
-using, only (.["+", "-", "*", "/", ">", "<"]) Basic;
+using, only(.["+", "-", "*", "/", ">", "<"]) Basic;
 
 Threads :: #import "Thread";
 Hash :: #import "Hash";
@@ -20,9 +20,9 @@ operator== :: inline (a : Source_Code_Location, b : Source_Code_Location) -> boo
 
 #scope_export
 
-ProfilingEntriesMap :: HashMap (
+ProfilingEntriesMap :: HashMap(
     ProfilingKey, ProfilingData,
-    hash_func = (key) => Hash.sdbm_hash (*key, size_of (ProfilingKey)),
+    hash_func = (key) => Hash.sdbm_hash(*key, size_of(ProfilingKey)),
     comp_func = (a, b) => a == b
 );
 
@@ -56,27 +56,27 @@ ProfilingData :: struct
 
 ProfilingInit :: ()
 {
-    Threads.init (*g_global_profiling_mutex, "Global Profiling Data");
-    HashMapInit (*g_global_profiling_data, 100);
+    Threads.init(*g_global_profiling_mutex, "Global Profiling Data");
+    HashMapInit(*g_global_profiling_data, 100);
 }
 
 LockGlobalProfilingData :: inline () -> *ProfilingEntriesMap #must
 {
-    Threads.lock (*g_global_profiling_mutex);
+    Threads.lock(*g_global_profiling_mutex);
 
     return *g_global_profiling_data;
 }
 
 UnlockGlobalProfilingData :: inline ()
 {
-    Threads.unlock (*g_global_profiling_mutex);
+    Threads.unlock(*g_global_profiling_mutex);
 }
 
 CopyProfilingData :: (dest : *ProfilingEntriesMap, source : ProfilingEntriesMap)
 {
     for source
     {
-        ptr, is_new := HashMapInsert (dest, it_index);
+        ptr, is_new := HashMapInsert(dest, it_index);
         ptr.key = it_index;
         ptr.total_time += it.total_time;
         ptr.number_of_times_profiled += it.number_of_times_profiled;
@@ -88,20 +88,20 @@ AddGlobalProfilingData :: (entries : *ProfilingEntriesMap, free_entries := true)
     if entries.count == 0
         return;
 
-    global_entries := LockGlobalProfilingData ();
-    defer UnlockGlobalProfilingData ();
+    global_entries := LockGlobalProfilingData();
+    defer UnlockGlobalProfilingData();
 
-    CopyProfilingData (global_entries, entries);
+    CopyProfilingData(global_entries, entries);
 
     if free_entries
-        HashMapFree (entries);
+        HashMapFree(entries);
 }
 
 #add_context profiling_entries : ProfilingEntriesMap;
 
 GetProfilingData :: inline (proc_name : string, name : string, location : Source_Code_Location) -> *ProfilingData #must
 {
-    ptr, new := HashMapInsert (*context.profiling_entries, .{location, proc_name, name});
+    ptr, new := HashMapInsert(*context.profiling_entries, .{location, proc_name, name});
     ptr.key = .{location, proc_name, name};
 
     return ptr;
@@ -111,12 +111,12 @@ ProfileBlock :: (name := "", divide_by := 0, location := #caller_location) #expa
 {
     #if Enable_Profiling
     {
-        start_time := Basic.current_time_monotonic ();
+        start_time := Basic.current_time_monotonic();
 
         `defer {
-            end_time := Basic.current_time_monotonic ();
+            end_time := Basic.current_time_monotonic();
 
-            data := GetProfilingData (#procedure_name (), name, location);
+            data := GetProfilingData(#procedure_name(), name, location);
             if divide_by > 0
                 data.total_time += (end_time - start_time) / divide_by;
             else
@@ -130,13 +130,13 @@ ProfileBlock :: (name := "", divide_by := 0, location := #caller_location) #expa
 PrintProfilingData :: (builder : *StringBuilder, using data : ProfilingData)
 {
     if name
-        StringBuilderAppendLine (builder, "% - %    (%:%:%)",
+        StringBuilderAppendLine(builder, "% - %    (%:%:%)",
             proc_name, name, location.fully_pathed_filename, location.line_number, location.character_number);
     else
-        StringBuilderAppendLine (builder, "%    (%:%:%)",
+        StringBuilderAppendLine(builder, "%    (%:%:%)",
             proc_name, location.fully_pathed_filename, location.line_number, location.character_number);
 
-    avg_time_secs := Basic.to_float64_seconds (total_time / number_of_times_profiled);
+    avg_time_secs := Basic.to_float64_seconds(total_time / number_of_times_profiled);
 
     avg_time_fmt : FormatFloat;
     avg_time_fmt.value = avg_time_secs;
@@ -160,7 +160,7 @@ PrintProfilingData :: (builder : *StringBuilder, using data : ProfilingData)
         unit = "ms";
     }
 
-    StringBuilderAppendLine (builder, "avg: % %, profiled % times",
+    StringBuilderAppendLine(builder, "avg: % %, profiled % times",
         avg_time_fmt, unit, number_of_times_profiled);
 }
 
@@ -177,7 +177,7 @@ PrintProfilingData :: (builder : *StringBuilder, entries : ProfilingEntriesMap, 
 
     sorted_entries : [..]ProfilingData;
     for entries
-        ArrayPush (*sorted_entries, it);
+        ArrayPush(*sorted_entries, it);
 
     CompareAverageTimes :: (a : ProfilingData, b : ProfilingData) -> int
     {
@@ -204,14 +204,14 @@ PrintProfilingData :: (builder : *StringBuilder, entries : ProfilingEntriesMap, 
 
     CompareNames :: (a : ProfilingData, b : ProfilingData) -> int
     {
-        result := StringCompare (a.proc_name, b.proc_name);
+        result := StringCompare(a.proc_name, b.proc_name);
         if result == 0
-            return StringCompare (a.name, b.name);
+            return StringCompare(a.name, b.name);
 
         return result;
     }
 
-    compare : type_of (CompareNames);
+    compare : type_of(CompareNames);
     if #complete sort_by ==
     {
     case .Average_Time; compare = CompareAverageTimes;
@@ -219,12 +219,12 @@ PrintProfilingData :: (builder : *StringBuilder, entries : ProfilingEntriesMap, 
     case .Name; compare = CompareNames;
     }
 
-    QuickSort (sorted_entries, compare);
+    QuickSort(sorted_entries, compare);
 
     for sorted_entries
     {
-        PrintProfilingData (builder, it);
-        StringBuilderAppend (builder, "\n");
+        PrintProfilingData(builder, it);
+        StringBuilderAppend(builder, "\n");
     }
 }
 
@@ -249,9 +249,9 @@ QuickSort :: inline (arr : []$T, compare : (T, T) -> $R)
 
         while true
         {
-            while compare (arr[i], pivot) < 0
+            while compare(arr[i], pivot) < 0
                 i += 1;
-            while compare (arr[j], pivot) > 0
+            while compare(arr[j], pivot) > 0
                 j -= 1;
 
             if i >= j
@@ -265,12 +265,12 @@ QuickSort :: inline (arr : []$T, compare : (T, T) -> $R)
             j -= 1;
         }
 
-        QuickSortHelper (arr, left, j, compare);
-        QuickSortHelper (arr, j + 1, right, compare);
+        QuickSortHelper(arr, left, j, compare);
+        QuickSortHelper(arr, j + 1, right, compare);
     }
 
     if arr.count < 2
         return;
 
-    QuickSortHelper (arr, 0, arr.count - 1, compare);
+    QuickSortHelper(arr, 0, arr.count - 1, compare);
 }
