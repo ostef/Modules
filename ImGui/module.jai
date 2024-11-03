@@ -22,6 +22,8 @@ case .WINDOWS;
 
 case .LINUX;
     #load "imgui_linux.jai";
+
+    libm :: #system_library,link_always "libm";
 case .MACOS;
     #load "imgui_macos.jai";
 case;

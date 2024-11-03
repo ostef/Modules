@@ -90,7 +90,7 @@ Init :: (window : *Fenetres.Window)
 
     main_viewport := ImGui.GetMainViewport();
     main_viewport.PlatformHandle = window;
-    main_viewport.PlatformHandleRaw = Fenetres.GetPlatformHandle(window);
+    main_viewport.PlatformHandleRaw = xx Fenetres.GetPlatformHandle(window);
 }
 
 Terminate :: ()
@@ -618,7 +618,7 @@ CreateWindow :: (viewport : *ImGui.Viewport) #c_call
         }
 
         viewport.PlatformHandle = vp_data.window;
-        viewport.PlatformHandleRaw = Fenetres.GetPlatformHandle(vp_data.window);
+        viewport.PlatformHandleRaw = xx Fenetres.GetPlatformHandle(vp_data.window);
     }
 }
 
@@ -661,7 +661,7 @@ ShowWindow :: (viewport : *ImGui.Viewport) #c_call
 }
 
 // Why does the binding generator not put #cpp_return_type_is_non_pod? I don't know
-#if OS == .MACOS
+#if OS == .MACOS || OS == .LINUX
 {
     GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
     {
@@ -690,7 +690,7 @@ SetWindowPos :: (viewport : *ImGui.Viewport, pos : ImVec2) #c_call
     Fenetres.SetViewportPosition(vp_data.window, xx pos.x, xx pos.y);
 }
 
-#if OS == .MACOS
+#if OS == .MACOS || OS == .LINUX
 {
 
 GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
