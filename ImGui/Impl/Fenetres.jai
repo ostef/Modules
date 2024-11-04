@@ -604,8 +604,7 @@ CreateWindow :: (viewport : *ImGui.Viewport) #c_call
 
         #if Graphics_Backend == .OpenGL
         {
-            vp_data.gl_context = Fenetres_GL.CreateContext(vp_data.window);
-            Fenetres_GL.ShareContexts(main_viewport_data.gl_context, vp_data.gl_context);
+            vp_data.gl_context = Fenetres_GL.CreateContext(vp_data.window, share_context=main_viewport_data.gl_context);
 
             backup_window := Fenetres_GL.GetCurrentWindow();
             backup_context := Fenetres_GL.GetCurrentContext();
