@@ -61,6 +61,7 @@ ConsoleLogger :: struct
 {
     report_filenames := false;
     print_colors := false;
+    print_stack_trace := false;
 }
 
 None_Color_Str    :: "\x1b[0m";
@@ -204,6 +205,10 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
 
     write_string(str, to_standard_error = to_stderr);
 
+    if print_stack_trace
+    {
+        Basic.print_stack_trace(context.stack_trace, to_standard_error=to_stderr);
+    }
 }
 
 LogMessage :: inline (fmt_str : string, args : ..Any, location := #caller_location, flags := Log_Flags.NONE, user_flags : u32 = 0)
