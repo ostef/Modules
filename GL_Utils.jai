@@ -186,7 +186,7 @@ CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_locat
     return status != 0;
 }
 
-CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$geometry_source := "", print_shader_on_error := true, location := #caller_location) -> GLuint #must
+CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$geometry_source := "", print_shader_on_error := true, name := "", location := #caller_location) -> GLuint #must
 {
     AllocatorScope(Temp);
 
@@ -195,6 +195,10 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
 
     vertex_shader := glCreateShader(GL_VERTEX_SHADER);
     defer glDeleteShader(vertex_shader);
+
+    vertex_name := ifx name then TPrint("Vertex Shader '%'", name);
+    if name && glObjectLabel
+        glObjectLabel(GL_SHADER, vertex_shader, xx vertex_name.count, vertex_name.data);
 
     #if is_constant(vertex_source)
         cstr_vertex_source := vertex_source.data;
@@ -220,6 +224,10 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
     {
         geometry_shader = glCreateShader(GL_GEOMETRY_SHADER);
 
+        geometry_name := ifx name then TPrint("Geometry Shader '%'", name);
+        if name && glObjectLabel
+            glObjectLabel(GL_SHADER, geometry_shader, xx geometry_name.count, geometry_name.data);
+
         #if is_constant(geometry_source)
             cstr_geometry_source := geometry_source.data;
         else
@@ -241,6 +249,10 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
     fragment_shader := glCreateShader(GL_FRAGMENT_SHADER);
     defer glDeleteShader(fragment_shader);
 
+    fragment_name := ifx name then TPrint("Fragment Shader '%'", name);
+    if name && glObjectLabel
+        glObjectLabel(GL_SHADER, fragment_shader, xx fragment_name.count, fragment_name.data);
+
     #if is_constant(fragment_source)
         cstr_fragment_source := fragment_source.data;
     else
@@ -259,6 +271,10 @@ CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$
         return 0;
 
     shader_program := glCreateProgram();
+
+    program_name := ifx name then TPrint("Shader '%'", name);
+    if name && glObjectLabel
+        glObjectLabel(GL_PROGRAM, shader_program, xx program_name.count, program_name.data);
 
     glAttachShader(shader_program, vertex_shader);
     if geometry_shader
