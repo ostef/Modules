@@ -1,4 +1,5 @@
 #import "Thread";
+#import "File";
 
 #add_context log_section : *Log_Section;
 
@@ -208,6 +209,65 @@ ConsoleLoggerProc :: (message : string, data : *void, info : Log_Info)
     if print_stack_trace
     {
         Basic.print_stack_trace(context.stack_trace, to_standard_error=to_stderr);
+    }
+}
+
+FileLogger :: struct
+{
+    report_filenames := false;
+    file : File;
+}
+
+InitFileLogger :: (logger : *FileLogger, filename : string) -> bool
+{
+    ok : bool;
+    logger.file, ok = file_open(filename, for_writing=true);
+
+    return ok;
+}
+
+FileLoggerProc :: (message : string, data : *void, info : Log_Info)
+{
+    if !message
+        return;
+
+    if context.log_level == .NORMAL
+    && (info.common_flags & .VERBOSE_ONLY || info.common_flags & .VERY_VERBOSE_ONLY)
+    {
+        return;
+    }
+
+    if context.log_level == .VERBOSE
+    && info.common_flags & .VERY_VERBOSE_ONLY
+    {
+        return;
+    }
+
+    using logger := cast(*FileLogger) data;
+
+    builder : StringBuilder;
+    builder.allocator = Temp;
+
+    if info.section
+        StringBuilderAppend(*builder, "[%] ", info.section.name);
+
+    // @Todo: reduce filename
+    if report_filenames
+        StringBuilderAppend(*builder, "(%:%) ", info.location.fully_pathed_filename, info.location.line_number);
+
+    StringBuilderAppendString(*builder, message);
+
+    if message[message.count - 1] != #char "\n"
+        StringBuilderAppendString(*builder, "\n");
+
+    file_write(*file, *builder);
+
+    // Flush the file
+    #if OS == .LINUX
+    {
+        libc :: #system_library "libc";
+        fflush :: (file : *void) -> s32 #foreign libc;
+        fflush(file.handle);
     }
 }
 
