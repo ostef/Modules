@@ -112,6 +112,7 @@ Println :: inline (format_string : string, args : ..Any, to_standard_error := fa
 #load "string.jai";
 #load "string_builder.jai";
 #load "logging.jai";
+#load "unicode.jai";
 
 #if Basic.MEMORY_DEBUGGER
 {
@@ -264,6 +265,8 @@ SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     Math :: #import "Math";
 
+    push_context,defer_pop;
+
     return Math.floor(value / grid_size) * grid_size;
 }
 
@@ -275,6 +278,8 @@ Snap :: inline (value : float, grid_size : float) -> float #must #no_context
 SnapUp :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     Math :: #import "Math";
+
+    push_context,defer_pop;
 
     return Math.ceil(value / grid_size) * grid_size;
 }
