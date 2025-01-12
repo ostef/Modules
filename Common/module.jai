@@ -1,5 +1,12 @@
 #module_parameters() (Enable_Asserts := true);
 
+#load "memory.jai";
+#load "array.jai";
+#load "string.jai";
+#load "string_builder.jai";
+#load "logging.jai";
+#load "unicode.jai";
+
 InitContextBase :: ()
 {
     #if OS == .WINDOWS
@@ -106,13 +113,6 @@ Println :: inline (format_string : string, args : ..Any, to_standard_error := fa
         + Print("\n", to_standard_error = to_standard_error);
 }
 @PrintLike
-
-#load "memory.jai";
-#load "array.jai";
-#load "string.jai";
-#load "string_builder.jai";
-#load "logging.jai";
-#load "unicode.jai";
 
 #if Basic.MEMORY_DEBUGGER
 {
