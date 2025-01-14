@@ -30,7 +30,7 @@ ArrayTruncate :: inline (arr : []$T, count : s64) -> []T #must
 
     res : []T = ---;
     res.data = arr.data;
-    res.data = arr.count - count;
+    res.count = arr.count - count;
 
     return res;
 }
@@ -41,7 +41,7 @@ ArrayAdvance :: inline (arr : []$T, count : s64) -> []T #must
 
     res : []T = ---;
     res.data = arr.data + count;
-    res.data = arr.count - count;
+    res.count = arr.count - count;
 
     return res;
 }
