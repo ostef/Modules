@@ -157,7 +157,7 @@ ArrayOrderedInsert :: inline (arr : *[..]$T, index : s64, $initialize := true) -
         ArrayReserve(arr, arr.allocated * 2 + 8);
 
     arr.count += 1;
-    for < i : arr.count - 1..index + 1
+    for #v2 < i : index + 1..arr.count - 1
     {
         arr.data[i] = arr.data[i - 1];
     }

@@ -122,7 +122,7 @@ StringFindFirst :: inline (str : string, to_find : string) -> s64 #must
 StringFindLast :: inline (str : string, to_find : string) -> s64 #must
 #no_abc
 {
-    for < i : str.count - 1..0
+    for #v2 < i : 0..str.count - 1
     {
         for j : 0..to_find.count - 1
         {
