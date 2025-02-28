@@ -24,7 +24,7 @@ ImVec2 :: ImGui.ImVec2;
 
 UserData :: struct
 {
-    jai_context : *Context;
+    jai_context : *#Context;
     window : *Fenetres.Window;
     mouse_window : *Fenetres.Window;
     mouse_buttons_down : int;
@@ -724,7 +724,7 @@ SetWindowTitle :: (viewport : *ImGui.Viewport, title : *u8) #c_call
 {
     vp_data := cast(*ViewportData) viewport.PlatformUserData;
 
-    ctx : Context;
+    ctx : #Context;
     push_context ctx
     {
         Fenetres.SetWindowTitle(vp_data.window, MakeString(title));

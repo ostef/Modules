@@ -14,7 +14,7 @@ ImDrawIdx :: ImGui.ImDrawIdx;
 
 UserData :: struct
 {
-    jai_context : *Context;
+    jai_context : *#Context;
     gl_version : int;
     shader_handle : GLuint;
     font_texture : GLuint;
