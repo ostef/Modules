@@ -5,7 +5,7 @@ BinaryReader :: struct
     offset : s64;
 }
 
-MakeBinaryReader :: inline (data : string) -> BinaryReader #must
+MakeBinaryReader :: inline (data : []u8) -> BinaryReader #must
 {
     return .{data = data.data, size = data.count, offset = 0};
 }
