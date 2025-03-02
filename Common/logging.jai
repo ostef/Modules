@@ -226,6 +226,11 @@ InitFileLogger :: (logger : *FileLogger, filename : string) -> bool
     return ok;
 }
 
+CloseFileLogger :: (logger : *FileLogger)
+{
+    file_close(*logger.file);
+}
+
 FileLoggerProc :: (message : string, data : *void, info : Log_Info)
 {
     if !message
@@ -268,6 +273,12 @@ FileLoggerProc :: (message : string, data : *void, info : Log_Info)
         libc :: #system_library "libc";
         fflush :: (file : *void) -> s32 #foreign libc;
         fflush(file.handle);
+    }
+    else #if OS == .WINDOWS
+    {
+        Kernel32 :: #system_library "Kernel32";
+        FlushFileBuffers :: (hFile : *void) -> s32 #foreign Kernel32;
+        FlushFileBuffers(file.handle);
     }
 }
 
