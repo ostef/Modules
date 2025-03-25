@@ -91,6 +91,7 @@ Init :: (window : *Fenetres.Window)
     main_viewport := ImGui.GetMainViewport();
     main_viewport.PlatformHandle = window;
     main_viewport.PlatformHandleRaw = xx Fenetres.GetPlatformHandle(window);
+    InitPlatformInterfaceNoGraphicsBackend(window);
 }
 
 Terminate :: ()
@@ -783,6 +784,17 @@ InitPlatformInterfaceForGL :: inline (window : *Fenetres.Window, gl_context : Fe
 
 InitPlatformInterfaceNoGraphicsBackend :: inline (window : *Fenetres.Window)
 {
+    main_viewport := ImGui.GetMainViewport();
+    if main_viewport.PlatformUserData // Already initialized
+        return;
+
+    vp_data := Alloc(ViewportData);
+    vp_data.window = window;
+    vp_data.window_owned = false;
+
+    main_viewport.PlatformUserData = vp_data;
+    main_viewport.PlatformHandle = window;
+
     using platform_io := ImGui.GetPlatformIO();
     Platform_CreateWindow = CreateWindow;
     Platform_DestroyWindow = DestroyWindow;
@@ -797,14 +809,6 @@ InitPlatformInterfaceNoGraphicsBackend :: inline (window : *Fenetres.Window)
     Platform_SetWindowTitle = SetWindowTitle;
     Platform_RenderWindow = RenderWindow;
     Platform_SwapBuffers = SwapBuffers;
-
-    vp_data := Alloc(ViewportData);
-    vp_data.window = window;
-    vp_data.window_owned = false;
-
-    main_viewport := ImGui.GetMainViewport();
-    main_viewport.PlatformUserData = vp_data;
-    main_viewport.PlatformHandle = window;
 }
 
 TerminatePlatformInterface :: inline ()
