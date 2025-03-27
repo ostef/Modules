@@ -2,6 +2,9 @@
 
 #import "Common";
 #import "SDL";
+
+SDL_free :: (ptr : *void) #foreign SDL2;
+
 ImGui :: #import "ImGui";
 Math :: #import "Math";
 
@@ -11,7 +14,7 @@ ImVec2 :: ImGui.ImVec2;
 
 UserData :: struct
 {
-    jai_context : *Context;
+    jai_context : *#Context;
     window : *SDL_Window;
     time : u64;
     mouse_window_id : u32;
@@ -26,7 +29,13 @@ GetUserData :: inline () -> *UserData #must #no_context
     return ifx ImGui.GetCurrentContext() then cast(*UserData) ImGui.GetIO().BackendPlatformUserData else null;
 }
 
-Init :: (window : *SDL_Window, gl_context : SDL_GLContext)
+InitForGL :: (window : *SDL_Window, gl_context : SDL_GLContext)
+{
+    if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
+        InitPlatformInterfaceForGL(window, gl_context);
+}
+
+Init :: (window : *SDL_Window)
 {
     io := ImGui.GetIO();
     Assert(io.BackendPlatformUserData == null, "Platform implementation already initialized");
@@ -74,7 +83,7 @@ Init :: (window : *SDL_Window, gl_context : SDL_GLContext)
         #if OS == .WINDOWS
             main_viewport.PlatformHandleRaw = info.info.win.window;
         else #if OS == .MACOS
-            main_viweport.PlatformHandleRaw = info.info.cocoa.window;
+            main_viewport.PlatformHandleRaw = info.info.cocoa.window;
     }
 
     // Set SDL hint to receive mouse click events on window focus, otherwise SDL doesn't emit the event.
@@ -88,7 +97,7 @@ Init :: (window : *SDL_Window, gl_context : SDL_GLContext)
 
     // We need SDL_CaptureMouse(), SDL_GetGlobalMouseState() from SDL 2.0.4+ to support multiple viewports.
     if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
-        InitPlatformInterface(window, gl_context);
+        InitPlatformInterface(window);
 }
 
 Terminate :: ()
@@ -563,7 +572,7 @@ CreateWindow :: (viewport : *ImGui.Viewport) #c_call
             #if OS == .WINDOWS
                 viewport.PlatformHandleRaw = info.info.win.window;
             else #if OS == .MACOS
-                viweport.PlatformHandleRaw = info.info.cocoa.window;
+                viewport.PlatformHandleRaw = info.info.cocoa.window;
         }
     }
 }
@@ -599,6 +608,31 @@ ShowWindow :: (viewport : *ImGui.Viewport) #c_call
     SDL_ShowWindow(vp_data.window);
 }
 
+#if OS == .MACOS // #cpp_return_type_is_non_pod is not set on MacOS for some reason
+{
+
+GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
+{
+    vp_data := cast(*ViewportData) viewport.PlatformUserData;
+    x, y : s32;
+    SDL_GetWindowPosition(vp_data.window, *x, *y);
+
+    return .{xx x, xx y};
+}
+
+GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
+{
+    vp_data := cast(*ViewportData) viewport.PlatformUserData;
+    w, h : s32;
+    SDL_GetWindowSize(vp_data.window, *w, *h);
+
+    return .{xx w, xx h};
+}
+
+}
+else
+{
+
 GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type_is_non_pod
 {
     vp_data := cast(*ViewportData) viewport.PlatformUserData;
@@ -608,12 +642,6 @@ GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type_
     return .{xx x, xx y};
 }
 
-SetWindowPos :: (viewport : *ImGui.Viewport, pos : ImVec2) #c_call
-{
-    vp_data := cast(*ViewportData) viewport.PlatformUserData;
-    SDL_SetWindowPosition(vp_data.window, xx pos.x, xx pos.y);
-}
-
 GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type_is_non_pod
 {
     vp_data := cast(*ViewportData) viewport.PlatformUserData;
@@ -621,6 +649,14 @@ GetWindowSize :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call #cpp_return_type
     SDL_GetWindowSize(vp_data.window, *w, *h);
 
     return .{xx w, xx h};
+}
+
+}
+
+SetWindowPos :: (viewport : *ImGui.Viewport, pos : ImVec2) #c_call
+{
+    vp_data := cast(*ViewportData) viewport.PlatformUserData;
+    SDL_SetWindowPosition(vp_data.window, xx pos.x, xx pos.y);
 }
 
 SetWindowSize :: (viewport : *ImGui.Viewport, size : ImVec2) #c_call
@@ -670,7 +706,20 @@ SwapBuffers :: (viewport : *ImGui.Viewport, *void) #c_call
     }
 }
 
-InitPlatformInterface :: inline (window : *SDL_Window, gl_context : SDL_GLContext)
+InitPlatformInterfaceForGL :: inline (window : *SDL_Window, gl_context : SDL_GLContext)
+{
+    using platform_io := ImGui.GetPlatformIO();
+    Platform_RenderWindow = RenderWindow;
+    Platform_SwapBuffers = SwapBuffers;
+
+    main_viewport := ImGui.GetMainViewport();
+    vp_data := cast(*ViewportData, main_viewport.PlatformUserData);
+    Assert(vp_data != null);
+
+    vp_data.gl_context = gl_context;
+}
+
+InitPlatformInterface :: inline (window : *SDL_Window)
 {
     using platform_io := ImGui.GetPlatformIO();
     Platform_CreateWindow = CreateWindow;
@@ -684,14 +733,11 @@ InitPlatformInterface :: inline (window : *SDL_Window, gl_context : SDL_GLContex
     Platform_GetWindowFocus = GetWindowFocus;
     Platform_GetWindowMinimized = GetWindowMinimized;
     Platform_SetWindowTitle = SetWindowTitle;
-    Platform_RenderWindow = RenderWindow;
-    Platform_SwapBuffers = SwapBuffers;
 
     vp_data := Alloc(ViewportData);
     vp_data.window = window;
     vp_data.window_id = SDL_GetWindowID(window);
     vp_data.window_owned = false;
-    vp_data.gl_context = gl_context;
 
     main_viewport := ImGui.GetMainViewport();
     main_viewport.PlatformUserData = vp_data;
