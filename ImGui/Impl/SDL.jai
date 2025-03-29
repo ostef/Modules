@@ -31,6 +31,8 @@ GetUserData :: inline () -> *UserData #must #no_context
 
 InitForGL :: (window : *SDL_Window, gl_context : SDL_GLContext)
 {
+    io := ImGui.GetIO();
+
     if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
         InitPlatformInterfaceForGL(window, gl_context);
 }

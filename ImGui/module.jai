@@ -18,7 +18,7 @@ FILE :: void;
 case .WINDOWS;
     #load "imgui_windows.jai";
 
-    user32 :: #system_library "User32";	// Needed unless ImGui is compiled with IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCS
+    user32 :: #system_library,link_always "User32"; // Needed unless ImGui is compiled with IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCS
 
 case .LINUX;
     #load "imgui_linux.jai";
