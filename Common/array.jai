@@ -204,6 +204,15 @@ ArrayFindFirst :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a
     return -1;
 }
 
+ArrayFindFirstPtr :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> *T #must
+{
+    index := ArrayFindFirst(arr, item, compare);
+    if index < 0
+        return null;
+
+    return *arr[index];
+}
+
 ArrayFindLast :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> s64 #must
 {
     for < arr
@@ -213,6 +222,15 @@ ArrayFindLast :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a 
     }
 
     return -1;
+}
+
+ArrayFindLastPtr :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> *T #must
+{
+    index := ArrayFindLast(arr, item, compare);
+    if index < 0
+        return null;
+
+    return *arr[index];
 }
 
 ArrayPushUnique :: (arr : *[..]$T, item : T) -> bool
