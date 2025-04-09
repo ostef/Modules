@@ -610,7 +610,7 @@ ShowWindow :: (viewport : *ImGui.Viewport) #c_call
     SDL_ShowWindow(vp_data.window);
 }
 
-#if OS == .MACOS // #cpp_return_type_is_non_pod is not set on MacOS for some reason
+#if OS == .MACOS || OS == .LINUX // #cpp_return_type_is_non_pod is not set on MacOS for some reason
 {
 
 GetWindowPos :: (viewport : *ImGui.Viewport) -> ImVec2 #c_call
