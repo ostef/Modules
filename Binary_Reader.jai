@@ -10,6 +10,11 @@ MakeBinaryReader :: inline (data : []u8) -> BinaryReader #must
     return .{data = data.data, size = data.count, offset = 0};
 }
 
+IsAtEnd :: (reader : BinaryReader) -> bool #must
+{
+    return reader.offset >= reader.size;
+}
+
 ReadBytes :: (reader : *BinaryReader, data : *void, size : s64) -> bool
 {
     if reader.offset + size > reader.size
