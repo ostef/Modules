@@ -235,7 +235,7 @@ HandleWindowEvent :: (event : SDL_Event) -> handled : bool
     return false;
 }
 
-NewFrame :: ()
+NewFrame :: (allow_mouse_input := true)
 {
     data := GetUserData();
     Assert(data != null, "ImGui platform backend not initialized");
@@ -274,20 +274,26 @@ NewFrame :: ()
         io.AddMousePosEvent(io, -Math.FLOAT32_MAX, -Math.FLOAT32_MAX);
     }
 
-    UpdateMouseData();
+    UpdateMouseData(allow_mouse_input);
     UpdateMouseCursor();
 }
 
-UpdateMouseData :: ()
+UpdateMouseData :: (allow_mouse_input : bool)
 {
     data := GetUserData();
     io := ImGui.GetIO();
 
-    SDL_CaptureMouse(xx (data.mouse_buttons_down != 0));
+    if allow_mouse_input
+        SDL_CaptureMouse(xx (data.mouse_buttons_down != 0));
+
     focused_window := SDL_GetKeyboardFocus();
     is_app_focused := focused_window && (data.window == focused_window || ImGui.FindViewportByPlatformHandle(focused_window));
 
-    if is_app_focused
+    if !allow_mouse_input
+    {
+        io.AddMousePosEvent(io, -Math.FLOAT32_MAX, -Math.FLOAT32_MAX);
+    }
+    else if is_app_focused
     {
         if io.WantSetMousePos
         {
