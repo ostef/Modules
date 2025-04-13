@@ -141,6 +141,7 @@ Assert :: (assertion : bool, format_string := "", args : ..Any, location := #cal
     }
 }
 @PrintLike
+@NoProfile
 
 #add_context panicking := false;
 
@@ -152,6 +153,7 @@ Panic :: (format_string := "", args : ..Any, location := #caller_location) #expa
     Assert(false, format_string, ..args, location = location);
 }
 @PrintLike
+@NoProfile
 
 Initialize :: inline (item : *$T)
 {
@@ -161,6 +163,7 @@ Initialize :: inline (item : *$T)
     else
         memset(item, 0, size_of(T));
 }
+@NoProfile
 
 Initialize :: inline (item : *$T, count : s64)
 {
@@ -175,6 +178,7 @@ Initialize :: inline (item : *$T, count : s64)
         memset(item, 0, size_of(T) * count);
     }
 }
+@NoProfile
 
 OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
 {
@@ -182,6 +186,7 @@ OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
 
     #insert #run SPrint("// OffsetOf %.%\nreturn cast(s64) *dummy.%;", T, member, member);
 }
+@NoProfile
 
 DefaultValue :: inline ($T : Type) -> T #must #no_context
 {
@@ -189,6 +194,7 @@ DefaultValue :: inline ($T : Type) -> T #must #no_context
 
     return val;
 }
+@NoProfile
 
 #scope_file
 
@@ -198,6 +204,7 @@ IsNumeric :: inline (type : Type) -> bool
 
     return info.type == .INTEGER || info.type == .FLOAT;
 }
+@NoProfile
 
 #scope_export
 
@@ -206,12 +213,14 @@ Min :: inline (a : $T, b : T) -> T #must #no_context
 {
     return ifx a < b then a else b;
 }
+@NoProfile
 
 Max :: inline (a : $T, b : T) -> T #must #no_context
 #modify { return IsNumeric(T); }
 {
     return ifx a > b then a else b;
 }
+@NoProfile
 
 MinMax :: inline (a : $T, b : T) -> min : T, max : T #must #no_context
 #modify { return IsNumeric(T); }
@@ -221,45 +230,53 @@ MinMax :: inline (a : $T, b : T) -> min : T, max : T #must #no_context
     else
         return b, a;
 }
+@NoProfile
 
 Clamp :: inline (x : $T, min : T, max : T) -> T #must #no_context
 #modify { return IsNumeric(T); }
 {
     return Min(Max(x, min), max);
 }
+@NoProfile
 
 Saturate :: inline (x : $T) -> T #must #no_context
 #modify { return IsNumeric(T); }
 {
     return Clamp(x, 0, 1);
 }
+@NoProfile
 
 Abs :: inline (x : $T) -> T #must #no_context
 #modify { return IsNumeric(T); }
 {
     return ifx x < 0 then -x else x;
 }
+@NoProfile
 
 Sign :: inline (x : $T) -> T #must #no_context
 #modify { return IsNumeric(T); }
 {
     return cast(T) ifx x < 0 then -1 else ifx x > 0 then 1 else 0;
 }
+@NoProfile
 
 Lerp :: inline (a : float, b : float, t : float) -> float #must #no_context
 {
     return a * (1 - t) + b * t;
 }
+@NoProfile
 
 InverseLerp :: inline (a : float, b : float, t : float) -> float #must #no_context
 {
     return (t - a) / (b - a);
 }
+@NoProfile
 
 Round :: inline (value : float) -> float #must #no_context
 {
     return cast(float) (cast(int) (value + Sign(value) * 0.5));
 }
+@NoProfile
 
 SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
 {
@@ -269,11 +286,13 @@ SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
 
     return Math.floor(value / grid_size) * grid_size;
 }
+@NoProfile
 
 Snap :: inline (value : float, grid_size : float) -> float #must #no_context
 {
     return Round(value / grid_size) * grid_size;
 }
+@NoProfile
 
 SnapUp :: inline (value : float, grid_size : float) -> float #must #no_context
 {
@@ -283,6 +302,7 @@ SnapUp :: inline (value : float, grid_size : float) -> float #must #no_context
 
     return Math.ceil(value / grid_size) * grid_size;
 }
+@NoProfile
 
 Swap :: inline (a : *$T, b : *T) #no_context
 {
@@ -290,6 +310,7 @@ Swap :: inline (a : *$T, b : *T) #no_context
     a.* = b.*;
     b.* = tmp;
 }
+@NoProfile
 
 QuickSort :: inline (arr : []$T, user_data : $User, compare : (T, T, User) -> $R)
 {
