@@ -5,17 +5,17 @@ StringBuilderFree :: inline (builder : *StringBuilder)
     Basic.reset(builder);
 }
 
-StringBuilderLength :: inline (builder : *StringBuilder) -> s64 #must
+StringBuilderLength :: inline (builder : *StringBuilder) -> s64
 {
     return Basic.builder_string_length(builder);
 }
 
-StringBuilderBuild :: inline (builder : *StringBuilder, reset_builder := true) -> string #must
+StringBuilderBuild :: inline (builder : *StringBuilder, reset_builder := true) -> string
 {
     return Basic.builder_to_string(builder, do_reset = reset_builder);
 }
 
-StringBuilderBuildCstr :: (builder : *StringBuilder, reset_builder := true) -> *u8 #must
+StringBuilderBuildCstr :: (builder : *StringBuilder, reset_builder := true) -> *u8
 {
     if !builder.initialized
         Basic.init_string_builder(builder);

@@ -8,13 +8,13 @@ g_error_utf8_buffer : [512]u8;
 
 #scope_export
 
-GetLastErrorString :: inline () -> string #must
+GetLastErrorString :: inline () -> string
 {
     return GetErrorString(Win32.GetLastError());
 }
 
 // This function uses a static buffer, so calling it will modify the result  of the previous call
-GetErrorString :: inline (error_code : u32) -> string #must
+GetErrorString :: inline (error_code : u32) -> string
 {
     wide_count := Win32.FormatMessageW (
         Win32.FORMAT_MESSAGE_FROM_SYSTEM | Win32.FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -45,7 +45,7 @@ GetErrorString :: inline (error_code : u32) -> string #must
 }
 
 // The result is null terminated even though a Jai string is returned
-WideToUtf8 :: (data : *u16) -> string #must, success : bool
+WideToUtf8 :: (data : *u16) -> string, success : bool
 {
     result_length := Win32.WideCharToMultiByte(Win32.CP_UTF8, 0, data, -1, null, 0, null, null);
     if result_length <= 0
@@ -67,7 +67,7 @@ WideToUtf8 :: (data : *u16) -> string #must, success : bool
 }
 
 // The result is null terminated
-Utf8ToWide :: (utf8_str : string) -> wide_str : *u16 #must, length : s32
+Utf8ToWide :: (utf8_str : string) -> wide_str : *u16, length : s32
 {
     if !utf8_str
     {

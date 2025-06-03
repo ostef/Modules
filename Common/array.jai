@@ -1,4 +1,4 @@
-MakeArray :: inline (count : s64, data : *$T) -> []T #must
+MakeArray :: inline (count : s64, data : *$T) -> []T
 {
     arr : []T = ---;
     arr.count = count;
@@ -7,7 +7,7 @@ MakeArray :: inline (count : s64, data : *$T) -> []T #must
     return arr;
 }
 
-ArrayClone :: inline (arr : []$T) -> []T #must
+ArrayClone :: inline (arr : []$T) -> []T
 {
     result := AllocArray(T, arr.count);
     memcpy(result.data, arr.data, size_of(T) * arr.count);
@@ -15,7 +15,7 @@ ArrayClone :: inline (arr : []$T) -> []T #must
     return result;
 }
 
-ArraySlice :: inline (arr : []$T, start : s64, count : s64) -> []T #must
+ArraySlice :: inline (arr : []$T, start : s64, count : s64) -> []T
 {
     res : []T = ---;
     res.data = arr.data + Clamp(start, 0, arr.count);
@@ -24,7 +24,7 @@ ArraySlice :: inline (arr : []$T, start : s64, count : s64) -> []T #must
     return res;
 }
 
-ArrayTruncate :: inline (arr : []$T, count : s64) -> []T #must
+ArrayTruncate :: inline (arr : []$T, count : s64) -> []T
 {
     count = Clamp(count, 0, arr.count);
 
@@ -35,7 +35,7 @@ ArrayTruncate :: inline (arr : []$T, count : s64) -> []T #must
     return res;
 }
 
-ArrayAdvance :: inline (arr : []$T, count : s64) -> []T #must
+ArrayAdvance :: inline (arr : []$T, count : s64) -> []T
 {
     count = Clamp(count, 0, arr.count);
 
@@ -72,14 +72,14 @@ ArrayReserve :: inline (arr : *[..]$T, new_capacity : s64)
     arr.allocated = new_capacity;
 }
 
-ArrayTop :: inline (arr : []$T) -> *T #must
+ArrayTop :: inline (arr : []$T) -> *T
 {
     Assert(arr.count > 0);
 
     return *arr.data[arr.count - 1];
 }
 
-ArrayPush :: inline (arr : *[..]$T, $initialize := true) -> *T #must
+ArrayPush :: inline (arr : *[..]$T, $initialize := true) -> *T
 {
     if arr.count >= arr.allocated
         ArrayReserve(arr, arr.allocated * 2 + 8);
@@ -116,7 +116,7 @@ ArrayPop :: inline (arr : *[..]$T)
     arr.count -= 1;
 }
 
-ArrayInsert :: inline (arr : *[..]$T, index : s64, $initialize := true) -> *T #must
+ArrayInsert :: inline (arr : *[..]$T, index : s64, $initialize := true) -> *T
 {
     Assert(index >= 0 && index <= arr.count, "Index out of bounds (index is %, bounds are [0, %])", index, arr.count);
 
@@ -149,7 +149,7 @@ ArrayRemove :: inline (arr : *[..]$T, index : s64)
     arr.data[index] = arr.data[arr.count];
 }
 
-ArrayOrderedInsert :: inline (arr : *[..]$T, index : s64, $initialize := true) -> *T #must
+ArrayOrderedInsert :: inline (arr : *[..]$T, index : s64, $initialize := true) -> *T
 {
     Assert(index >= 0 && index <= arr.count, "Index out of bounds (index is %, bounds are [0, %])", index, arr.count);
 
@@ -185,7 +185,7 @@ ArrayOrderedRemove :: inline (arr : *[..]$T, index : s64)
     arr.count -= 1;
 }
 
-ArrayGetIndex :: inline (arr : []$T, item : *T) -> s64 #must
+ArrayGetIndex :: inline (arr : []$T, item : *T) -> s64
 {
     if item >= arr.data && item < arr.data + arr.count
         return item - arr.data;
@@ -193,7 +193,7 @@ ArrayGetIndex :: inline (arr : []$T, item : *T) -> s64 #must
     return -1;
 }
 
-ArrayFindFirst :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> s64 #must
+ArrayFindFirst :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> s64
 {
     for arr
     {
@@ -204,7 +204,7 @@ ArrayFindFirst :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a
     return -1;
 }
 
-ArrayFindFirstPtr :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> *T #must
+ArrayFindFirstPtr :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> *T
 {
     index := ArrayFindFirst(arr, item, compare);
     if index < 0
@@ -213,7 +213,7 @@ ArrayFindFirstPtr :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) =
     return *arr[index];
 }
 
-ArrayFindLast :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> s64 #must
+ArrayFindLast :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> s64
 {
     for < arr
     {
@@ -224,7 +224,7 @@ ArrayFindLast :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a 
     return -1;
 }
 
-ArrayFindLastPtr :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> *T #must
+ArrayFindLastPtr :: (arr : []$T, item : T, $compare : (T, T) -> bool = (a, b) => a == b) -> *T
 {
     index := ArrayFindLast(arr, item, compare);
     if index < 0

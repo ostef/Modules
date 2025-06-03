@@ -40,7 +40,7 @@ ProfilingKey :: struct
     name : string;
 }
 
-operator== :: inline (a : ProfilingKey, b : ProfilingKey) -> bool #must
+operator== :: inline (a : ProfilingKey, b : ProfilingKey) -> bool
 {
     return a.location == b.location
         && a.proc_name == b.proc_name
@@ -60,7 +60,7 @@ ProfilingInit :: ()
     HashMapInit(*g_global_profiling_data, 100);
 }
 
-LockGlobalProfilingData :: inline () -> *ProfilingEntriesMap #must
+LockGlobalProfilingData :: inline () -> *ProfilingEntriesMap
 {
     Threads.lock(*g_global_profiling_mutex);
 
@@ -99,7 +99,7 @@ AddGlobalProfilingData :: (entries : *ProfilingEntriesMap, free_entries := true)
 
 #add_context profiling_entries : ProfilingEntriesMap;
 
-GetProfilingData :: inline (proc_name : string, name : string, location : Source_Code_Location) -> *ProfilingData #must
+GetProfilingData :: inline (proc_name : string, name : string, location : Source_Code_Location) -> *ProfilingData
 {
     ptr, new := HashMapInsert(*context.profiling_entries, .{location, proc_name, name});
     ptr.key = .{location, proc_name, name};

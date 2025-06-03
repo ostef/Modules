@@ -41,12 +41,12 @@ Hash_Set_Never_Occupied_Hash :: 0;
 Hash_Set_Removed_Hash        :: 1;
 Hash_Set_First_Occupied_Hash :: 2;
 
-HashSetGetMinCapacityForElementCount :: inline (set : HashSet, count : s64) -> s64 #must
+HashSetGetMinCapacityForElementCount :: inline (set : HashSet, count : s64) -> s64
 {
     return HashSetGetMinCapacityForElementCount(set.Load_Factor, count);
 }
 
-HashSetGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64 #must
+HashSetGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64
 {
     capacity := count + (count * (100 - load_factor)) / 100 + 1;
     capacity = Max(capacity, Hash_Set_Min_Capacity);
@@ -193,7 +193,7 @@ HashSetRemove :: inline (set : *HashSet, value : set.T) -> found : bool
     return true;
 }
 
-HashSetGetPtr :: inline (set : *HashSet, value : set.T) -> *set.T #must
+HashSetGetPtr :: inline (set : *HashSet, value : set.T) -> *set.T
 {
     if set.count == 0
         return null;

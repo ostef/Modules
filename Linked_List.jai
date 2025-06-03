@@ -1,8 +1,8 @@
 #import "Common";
 
-IsListNode :: (type : Type) -> bool #must
+IsListNode :: (type : Type) -> bool
 {
-    IsPointerTo :: inline (type : *Type_Info, to : *Type_Info) -> bool #must
+    IsPointerTo :: inline (type : *Type_Info, to : *Type_Info) -> bool
     {
         ptr_info := cast(*Type_Info_Pointer) type;
 
@@ -68,7 +68,7 @@ ListRemove :: (list : **$T, node : *T)
     }
 }
 
-ListPopFront :: (list : **$T) -> *T #must
+ListPopFront :: (list : **$T) -> *T
 #modify { return IsListNode(T); }
 {
     node := list.*;

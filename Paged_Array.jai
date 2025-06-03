@@ -8,7 +8,7 @@ PagedArraySlotInfo :: struct
     slot_index : s32;
 }
 
-operator == :: inline (a : PagedArraySlotInfo, b : PagedArraySlotInfo) -> bool #must
+operator == :: inline (a : PagedArraySlotInfo, b : PagedArraySlotInfo) -> bool
 {
     return a.version == b.version && a.page_index == b.page_index && a.slot_index == b.slot_index;
 }
@@ -252,7 +252,7 @@ PagedArrayGetSlotInfo :: (using array : PagedArray($T, $N), item : *T) -> valid 
     return false, info, false;
 }
 
-PagedArrayIsSlotValid :: (using array : PagedArray, info : PagedArraySlotInfo) -> bool #must, invalid_indices : bool, not_occupied : bool, version_mismatch : bool
+PagedArrayIsSlotValid :: (using array : PagedArray, info : PagedArraySlotInfo) -> bool, invalid_indices : bool, not_occupied : bool, version_mismatch : bool
 {
     if info.slot_index < 0 && info.slot_index >= Page_Size
         return false, true, false, false;
@@ -268,7 +268,7 @@ PagedArrayIsSlotValid :: (using array : PagedArray, info : PagedArraySlotInfo) -
     return true, false, false, false;
 }
 
-PagedArrayGetItem :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T #must
+PagedArrayGetItem :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T
 {
     Assert(info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
     Assert(info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");
@@ -281,7 +281,7 @@ PagedArrayGetItem :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *
     return *all_pages[info.page_index].items[info.slot_index];
 }
 
-PagedArrayGetItemOrNull :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T #must
+PagedArrayGetItemOrNull :: (using array : *PagedArray, info : PagedArraySlotInfo) -> *array.T
 {
     Assert(info.slot_index >= 0 && info.slot_index < Page_Size, "Invalid slot index");
     Assert(info.page_index >= 0 && info.page_index < all_pages.count, "Invalid page index");

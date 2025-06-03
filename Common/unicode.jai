@@ -7,12 +7,12 @@ Utf8String :: struct
     as_string : string;
 }
 
-MakeUtf8String :: inline (str : string) -> Utf8String #must
+MakeUtf8String :: inline (str : string) -> Utf8String
 {
     return .{str.count, str.data};
 }
 
-MakeUtf8String :: inline (count : s64, data : *u8) -> Utf8String #must
+MakeUtf8String :: inline (count : s64, data : *u8) -> Utf8String
 {
     return .{count, data};
 }
@@ -92,7 +92,7 @@ UnicodeResult :: enum
     Source_Illegal;
 }
 
-Utf8Length :: (str : string) -> s64 #must, UnicodeResult #must
+Utf8Length :: (str : string) -> s64, UnicodeResult
 {
     len := 0;
     i := 0;
@@ -113,7 +113,7 @@ Utf8Length :: (str : string) -> s64 #must, UnicodeResult #must
     return len, .Ok;
 }
 
-GetUtf8DecodingSize :: inline (first : u8) -> s64 #must
+GetUtf8DecodingSize :: inline (first : u8) -> s64
 {
     if first < 0x80
         return 1;
@@ -127,7 +127,7 @@ GetUtf8DecodingSize :: inline (first : u8) -> s64 #must
         return 0;
 }
 
-DecodeUtf8String :: (str : string) -> []u32 #must, UnicodeResult
+DecodeUtf8String :: (str : string) -> []u32, UnicodeResult
 {
     length, result := Utf8Length(str);
     if result != .Ok
@@ -141,7 +141,7 @@ DecodeUtf8String :: (str : string) -> []u32 #must, UnicodeResult
     return buffer, result;
 }
 
-DecodeUtf8String :: (str : string, buffer : []u32) -> written : s64 #must, UnicodeResult
+DecodeUtf8String :: (str : string, buffer : []u32) -> written : s64, UnicodeResult
 {
     i := 0;
     byte_offset := 0;
@@ -164,7 +164,7 @@ DecodeUtf8String :: (str : string, buffer : []u32) -> written : s64 #must, Unico
 
 // Should we change `buffer : []u8` to `str : string` ?
 // Note: The encode functions take a []u8 as the output buffer
-DecodeUtf8Character :: (buffer : []u8, byte_offset : s64) -> codepoint : u32 #must, size : s64 #must, UnicodeResult
+DecodeUtf8Character :: (buffer : []u8, byte_offset : s64) -> codepoint : u32, size : s64, UnicodeResult
 {
     buff := buffer;
     buff.data += byte_offset;
@@ -197,7 +197,7 @@ DecodeUtf8Character :: (buffer : []u8, byte_offset : s64) -> codepoint : u32 #mu
     return codepoint, size, .Ok;
 }
 
-GetUtf8EncodingSize :: inline (codepoint : u32) -> s64 #must
+GetUtf8EncodingSize :: inline (codepoint : u32) -> s64
 {
     if codepoint <= 0x7f
         return 1;
@@ -211,7 +211,7 @@ GetUtf8EncodingSize :: inline (codepoint : u32) -> s64 #must
     return 3; // Encoding size for Unicode_Replacement
 }
 
-GetUtf8EncodingSize :: inline (str : []u32) -> s64 #must
+GetUtf8EncodingSize :: inline (str : []u32) -> s64
 {
     size := 0;
     for str
@@ -220,7 +220,7 @@ GetUtf8EncodingSize :: inline (str : []u32) -> s64 #must
     return size;
 }
 
-EncodeStringAsUtf8 :: (str : []u32) -> string #must, UnicodeResult
+EncodeStringAsUtf8 :: (str : []u32) -> string, UnicodeResult
 {
     length := GetUtf8EncodingSize(str);
     buffer := AllocArray(u8, length, initialize=false);
@@ -231,7 +231,7 @@ EncodeStringAsUtf8 :: (str : []u32) -> string #must, UnicodeResult
     return cast(string) buffer, result;
 }
 
-EncodeStringAsUtf8 :: (str : []u32, buffer : []u8) -> written : s64 #must, UnicodeResult
+EncodeStringAsUtf8 :: (str : []u32, buffer : []u8) -> written : s64, UnicodeResult
 {
     byte_offset := 0;
     for i : 0..str.count - 1
@@ -247,7 +247,7 @@ EncodeStringAsUtf8 :: (str : []u32, buffer : []u8) -> written : s64 #must, Unico
     return byte_offset, .Ok;
 }
 
-EncodeCharacterAsUtf8 :: (codepoint : u32, buffer : []u8, byte_offset : s64) -> s64 #must, UnicodeResult
+EncodeCharacterAsUtf8 :: (codepoint : u32, buffer : []u8, byte_offset : s64) -> s64, UnicodeResult
 {
     // Should we return .Source_Illegal for this?
     if codepoint > Unicode_Max

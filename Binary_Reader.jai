@@ -5,12 +5,12 @@ BinaryReader :: struct
     offset : s64;
 }
 
-MakeBinaryReader :: inline (data : []u8) -> BinaryReader #must
+MakeBinaryReader :: inline (data : []u8) -> BinaryReader
 {
     return .{data = data.data, size = data.count, offset = 0};
 }
 
-IsAtEnd :: (reader : BinaryReader) -> bool #must
+IsAtEnd :: (reader : BinaryReader) -> bool
 {
     return reader.offset >= reader.size;
 }

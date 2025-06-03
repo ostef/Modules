@@ -22,19 +22,19 @@ FormatFloat :: Basic.FormatFloat;
 FormatStruct :: Basic.FormatStruct;
 FormatArray :: Basic.FormatArray;
 
-FormatIntHex :: inline (value : Any, digits := 16) -> FormatInt #must
+FormatIntHex :: inline (value : Any, digits := 16) -> FormatInt
 {
     return .{value=value, base=16, minimum_digits=digits, padding=#char"0"};
 }
 
-FormatString :: (format_string : string, args : ..Any) -> string #must
+FormatString :: (format_string : string, args : ..Any) -> string
 #deprecated "The name of this function has been changed to SPrint"
 {
     return SPrint(format_string, ..args);
 }
 @PrintLike
 
-SPrint :: (format_string : string, args : ..Any) -> string #must
+SPrint :: (format_string : string, args : ..Any) -> string
 {
     builder : StringBuilder;
     builder.allocator = context.allocator;
@@ -44,7 +44,7 @@ SPrint :: (format_string : string, args : ..Any) -> string #must
 }
 @PrintLike
 
-TPrint :: (format_string : string, args : ..Any) -> string #must
+TPrint :: (format_string : string, args : ..Any) -> string
 {
     builder : StringBuilder;
     builder.allocator = Temp;
@@ -54,7 +54,7 @@ TPrint :: (format_string : string, args : ..Any) -> string #must
 }
 @PrintLike
 
-FormatString :: (allocator : Allocator, format_string : string, args : ..Any) -> string #must
+FormatString :: (allocator : Allocator, format_string : string, args : ..Any) -> string
 #deprecated "Use a context argument instead: FormatString(\"...\", ... ,, allocator)"
 {
     builder : StringBuilder;
@@ -65,14 +65,14 @@ FormatString :: (allocator : Allocator, format_string : string, args : ..Any) ->
 }
 @PrintLike
 
-FormatToCString :: (format_string : string, args : ..Any) -> *u8 #must
+FormatToCString :: (format_string : string, args : ..Any) -> *u8
 #deprecated "The name of this function has been changed to CSPrint"
 {
     return CSprint(format_string, ..args);
 }
 @PrintLike
 
-CSPrint :: (format_string : string, args : ..Any) -> *u8 #must
+CSPrint :: (format_string : string, args : ..Any) -> *u8
 {
     builder : StringBuilder;
     builder.allocator = context.allocator;
@@ -82,7 +82,7 @@ CSPrint :: (format_string : string, args : ..Any) -> *u8 #must
 }
 @PrintLike
 
-CTPrint :: (format_string : string, args : ..Any) -> *u8 #must
+CTPrint :: (format_string : string, args : ..Any) -> *u8
 {
     builder : StringBuilder;
     builder.allocator = Temp;
@@ -92,7 +92,7 @@ CTPrint :: (format_string : string, args : ..Any) -> *u8 #must
 }
 @PrintLike
 
-FormatToCString :: (allocator : Allocator, format_string : string, args : ..Any) -> *u8 #must
+FormatToCString :: (allocator : Allocator, format_string : string, args : ..Any) -> *u8
 #deprecated "Use a context argument instead: FormatToCString(\"...\", ... ,, allocator)"
 {
     builder : StringBuilder;
@@ -180,7 +180,7 @@ Initialize :: inline (item : *$T, count : s64)
 }
 @NoProfile
 
-OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
+OffsetOf :: inline ($T : Type, $member : string) -> s64 #no_context
 {
     dummy := cast(*T) null;
 
@@ -188,7 +188,7 @@ OffsetOf :: inline ($T : Type, $member : string) -> s64 #must #no_context
 }
 @NoProfile
 
-DefaultValue :: inline ($T : Type) -> T #must #no_context
+DefaultValue :: inline ($T : Type) -> T #no_context
 {
     val : T;
 
@@ -208,21 +208,21 @@ IsNumeric :: inline (type : Type) -> bool
 
 #scope_export
 
-Min :: inline (a : $T, b : T) -> T #must #no_context
+Min :: inline (a : $T, b : T) -> T #no_context
 #modify { return IsNumeric(T); }
 {
     return ifx a < b then a else b;
 }
 @NoProfile
 
-Max :: inline (a : $T, b : T) -> T #must #no_context
+Max :: inline (a : $T, b : T) -> T #no_context
 #modify { return IsNumeric(T); }
 {
     return ifx a > b then a else b;
 }
 @NoProfile
 
-MinMax :: inline (a : $T, b : T) -> min : T, max : T #must #no_context
+MinMax :: inline (a : $T, b : T) -> min : T, max : T #no_context
 #modify { return IsNumeric(T); }
 {
     if a < b
@@ -232,53 +232,53 @@ MinMax :: inline (a : $T, b : T) -> min : T, max : T #must #no_context
 }
 @NoProfile
 
-Clamp :: inline (x : $T, min : T, max : T) -> T #must #no_context
+Clamp :: inline (x : $T, min : T, max : T) -> T #no_context
 #modify { return IsNumeric(T); }
 {
     return Min(Max(x, min), max);
 }
 @NoProfile
 
-Saturate :: inline (x : $T) -> T #must #no_context
+Saturate :: inline (x : $T) -> T #no_context
 #modify { return IsNumeric(T); }
 {
     return Clamp(x, 0, 1);
 }
 @NoProfile
 
-Abs :: inline (x : $T) -> T #must #no_context
+Abs :: inline (x : $T) -> T #no_context
 #modify { return IsNumeric(T); }
 {
     return ifx x < 0 then -x else x;
 }
 @NoProfile
 
-Sign :: inline (x : $T) -> T #must #no_context
+Sign :: inline (x : $T) -> T #no_context
 #modify { return IsNumeric(T); }
 {
     return cast(T) ifx x < 0 then -1 else ifx x > 0 then 1 else 0;
 }
 @NoProfile
 
-Lerp :: inline (a : float, b : float, t : float) -> float #must #no_context
+Lerp :: inline (a : float, b : float, t : float) -> float #no_context
 {
     return a * (1 - t) + b * t;
 }
 @NoProfile
 
-InverseLerp :: inline (a : float, b : float, t : float) -> float #must #no_context
+InverseLerp :: inline (a : float, b : float, t : float) -> float #no_context
 {
     return (t - a) / (b - a);
 }
 @NoProfile
 
-Round :: inline (value : float) -> float #must #no_context
+Round :: inline (value : float) -> float #no_context
 {
     return cast(float) (cast(int) (value + Sign(value) * 0.5));
 }
 @NoProfile
 
-SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
+SnapDown :: inline (value : float, grid_size : float) -> float #no_context
 {
     Math :: #import "Math";
 
@@ -288,13 +288,13 @@ SnapDown :: inline (value : float, grid_size : float) -> float #must #no_context
 }
 @NoProfile
 
-Snap :: inline (value : float, grid_size : float) -> float #must #no_context
+Snap :: inline (value : float, grid_size : float) -> float #no_context
 {
     return Round(value / grid_size) * grid_size;
 }
 @NoProfile
 
-SnapUp :: inline (value : float, grid_size : float) -> float #must #no_context
+SnapUp :: inline (value : float, grid_size : float) -> float #no_context
 {
     Math :: #import "Math";
 

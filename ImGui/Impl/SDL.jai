@@ -24,7 +24,7 @@ UserData :: struct
     clipboard_text_data : *u8;
 }
 
-GetUserData :: inline () -> *UserData #must #no_context
+GetUserData :: inline () -> *UserData #no_context
 {
     return ifx ImGui.GetCurrentContext() then cast(*UserData) ImGui.GetIO().BackendPlatformUserData else null;
 }
@@ -383,7 +383,7 @@ UpdateMonitors :: ()
     }
 }
 
-GetClipboardText :: inline (user_data : *void) -> *u8 #must #c_call
+GetClipboardText :: inline (user_data : *void) -> *u8 #c_call
 {
     data := GetUserData();
     if data.clipboard_text_data
@@ -399,7 +399,7 @@ SetClipboardText :: inline (user_data : *void, text : *u8) #c_call
     SDL_SetClipboardText(text);
 }
 
-KeycodeToImGuiKey :: inline (keycode : SDL_Keycode) -> ImGui.Key #must
+KeycodeToImGuiKey :: inline (keycode : SDL_Keycode) -> ImGui.Key
 {
     if keycode ==
     {

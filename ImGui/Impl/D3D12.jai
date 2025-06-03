@@ -67,7 +67,7 @@ ShaderConstantBuffer :: struct
     model_view_projection : [4][4]float;
 }
 
-GetUserData :: inline () -> *UserData #must #no_context
+GetUserData :: inline () -> *UserData #no_context
 {
     if ImGui.GetCurrentContext()
         return cast(*UserData) ImGui.GetIO().BackendRendererUserData;
@@ -672,7 +672,7 @@ CreateDeviceObjects :: () -> bool
     DXCCompile :: (
         dxc_utils : *IDxcUtils, dxc_compiler : *IDxcCompiler3,
         $name : string, $source : string, $entry_point : string, $version : string
-    ) -> *IDxcBlob #must
+    ) -> *IDxcBlob
     {
         AllocatorScope(Temp);
 

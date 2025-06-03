@@ -9,7 +9,7 @@ ErrorInfo :: struct
     message : string;
 }
 
-ParseErrorMessage :: (str : string) -> []ErrorInfo #must
+ParseErrorMessage :: (str : string) -> []ErrorInfo
 {
     Basic :: #import "Basic";
     String :: #import "String";
@@ -52,7 +52,7 @@ ParseErrorMessage :: (str : string) -> []ErrorInfo #must
     return result;
 }
 
-MakeShaderStringWithLineNumbers :: (shader : string, errors : []ErrorInfo) -> string #must
+MakeShaderStringWithLineNumbers :: (shader : string, errors : []ErrorInfo) -> string
 {
     line_count := 1;
     for i : 0..shader.count - 1
@@ -118,7 +118,7 @@ MakeShaderStringWithLineNumbers :: (shader : string, errors : []ErrorInfo) -> st
 
 #scope_export
 
-CheckShader :: (handle : GLuint, desc : string, source : string, location := #caller_location) -> bool #must
+CheckShader :: (handle : GLuint, desc : string, source : string, location := #caller_location) -> bool
 {
     status, log_length : GLint;
     glGetShaderiv(handle, GL_COMPILE_STATUS, *status);
@@ -165,7 +165,7 @@ CheckShader :: (handle : GLuint, desc : string, source : string, location := #ca
     return status != 0;
 }
 
-CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_location) -> bool #must
+CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_location) -> bool
 {
     status, log_length : GLint;
     glGetProgramiv(handle, GL_LINK_STATUS, *status);
@@ -186,7 +186,7 @@ CheckShaderProgram :: (handle : GLuint, desc : string, location := #caller_locat
     return status != 0;
 }
 
-CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$geometry_source := "", print_shader_on_error := true, name := "", location := #caller_location) -> GLuint #must
+CreateShaderProgram :: ($$vertex_source : string, $$fragment_source : string, $$geometry_source := "", print_shader_on_error := true, name := "", location := #caller_location) -> GLuint
 {
     AllocatorScope(Temp);
 

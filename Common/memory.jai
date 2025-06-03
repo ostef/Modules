@@ -1,4 +1,4 @@
-AllocOrNull :: inline (size : s64) -> *void #must
+AllocOrNull :: inline (size : s64) -> *void
 {
     if size <= 0
         return null;
@@ -6,7 +6,7 @@ AllocOrNull :: inline (size : s64) -> *void #must
     return context.allocator.proc(.ALLOCATE, size, 0, null, context.allocator.data);
 }
 
-Alloc :: inline (size : s64) -> *void #must
+Alloc :: inline (size : s64) -> *void
 {
     if size <= 0
         return null;
@@ -20,7 +20,7 @@ Alloc :: inline (size : s64) -> *void #must
     return ptr;
 }
 
-Alloc :: inline ($T : Type, $initialize := true) -> *T #must
+Alloc :: inline ($T : Type, $initialize := true) -> *T
 {
     ptr := cast(*T) Alloc(size_of(T));
     #if initialize
@@ -29,7 +29,7 @@ Alloc :: inline ($T : Type, $initialize := true) -> *T #must
     return ptr;
 }
 
-Alloc :: inline ($T : Type, count : s64, $initialize := false) -> *T #must
+Alloc :: inline ($T : Type, count : s64, $initialize := false) -> *T
 {
     ptr := cast(*T) Alloc(size_of(T) * count);
     #if initialize
@@ -38,7 +38,7 @@ Alloc :: inline ($T : Type, count : s64, $initialize := false) -> *T #must
     return ptr;
 }
 
-AllocArray :: inline ($T : Type, count : s64, $initialize := false) -> []T #must
+AllocArray :: inline ($T : Type, count : s64, $initialize := false) -> []T
 {
     result : []T = ---;
     result.data = Alloc(T, count, initialize);
@@ -58,7 +58,7 @@ Free :: inline (ptr : *void)
     context.allocator.proc(.FREE, 0, 0, ptr, context.allocator.data);
 }
 
-Realloc :: inline (ptr : *void, old_size : s64, size : s64) -> *void #must
+Realloc :: inline (ptr : *void, old_size : s64, size : s64) -> *void
 {
     new_ptr := context.allocator.proc(.RESIZE, size, old_size, ptr, context.allocator.data);
     Assert(new_ptr != null, "Allocator % failed to reallocate % bytes (previous size was %)", GetAllocatorName(context.allocator), size, old_size);
@@ -69,7 +69,7 @@ Realloc :: inline (ptr : *void, old_size : s64, size : s64) -> *void #must
     return new_ptr;
 }
 
-GetAllocatorName :: inline (allocator : Allocator) -> string #must
+GetAllocatorName :: inline (allocator : Allocator) -> string
 {
     name : string;
     allocator.proc(.CAPS, 0, 0, *name, allocator.data);
@@ -77,14 +77,14 @@ GetAllocatorName :: inline (allocator : Allocator) -> string #must
     return name;
 }
 
-GetAllocatorSpecs :: inline (allocator : Allocator) -> Allocator_Caps #must
+GetAllocatorSpecs :: inline (allocator : Allocator) -> Allocator_Caps
 {
     return cast, no_check(Allocator_Caps) allocator.proc(.CAPS, 0, 0, null, allocator.data);
 }
 
 Trap :: Allocator.{ proc = TrapAllocatorProc, data = null };
 
-TrapAllocator :: inline (message : *u8) -> Allocator #must
+TrapAllocator :: inline (message : *u8) -> Allocator
 {
     return .{data = message, proc = TrapAllocatorProc };
 }

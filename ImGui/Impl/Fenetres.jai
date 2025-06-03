@@ -33,7 +33,7 @@ UserData :: struct
     want_update_monitors : bool;
 }
 
-GetUserData :: inline () -> *UserData #must #no_context
+GetUserData :: inline () -> *UserData #no_context
 {
     return ifx ImGui.GetCurrentContext() then cast(*UserData) ImGui.GetIO().BackendPlatformUserData else null;
 }
@@ -361,7 +361,7 @@ UpdateMonitors :: ()
     }
 }
 
-GetClipboardText :: inline (user_data : *void) -> *u8 #must #c_call
+GetClipboardText :: inline (user_data : *void) -> *u8 #c_call
 {
     data := GetUserData();
     ctx := data.jai_context.*;
@@ -386,7 +386,7 @@ SetClipboardText :: inline (user_data : *void, text : *u8) #c_call
     }
 }
 
-ImGuiCursorToSystemCursor :: (cursor : ImGui.MouseCursor) -> Fenetres.SystemCursor #must
+ImGuiCursorToSystemCursor :: (cursor : ImGui.MouseCursor) -> Fenetres.SystemCursor
 {
     if cursor ==
     {
@@ -413,7 +413,7 @@ ImGuiCursorToSystemCursor :: (cursor : ImGui.MouseCursor) -> Fenetres.SystemCurs
     return .Arrow;
 }
 
-KeycodeToImGuiKey :: inline (keycode : Fenetres.KeyCode) -> ImGui.Key #must
+KeycodeToImGuiKey :: inline (keycode : Fenetres.KeyCode) -> ImGui.Key
 {
     if keycode ==
     {
@@ -546,7 +546,7 @@ ViewportData :: struct
         gl_context : Fenetres_GL.GLContext;
 }
 
-GetWindowFlagsFromViewportFlags :: inline (flags : ImGui.ViewportFlags) -> Fenetres.WindowFlags #must #no_context
+GetWindowFlagsFromViewportFlags :: inline (flags : ImGui.ViewportFlags) -> Fenetres.WindowFlags #no_context
 {
     result : Fenetres.WindowFlags;
     if flags & .NoDecoration

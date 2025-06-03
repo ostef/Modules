@@ -39,17 +39,17 @@ ImRect :: struct
     Min : ImVec2; // Upper-left
     Max : ImVec2; // Lower-right
 
-    GetWidth :: inline (using this : *ImRect) -> float #must
+    GetWidth :: inline (using this : *ImRect) -> float
     {
         return Max.x - Min.x;
     }
 
-    GetHeight :: inline (using this : *ImRect) -> float #must
+    GetHeight :: inline (using this : *ImRect) -> float
     {
         return Max.y - Min.y;
     }
 
-    GetSize :: inline (using this : *ImRect) -> ImVec2 #must
+    GetSize :: inline (using this : *ImRect) -> ImVec2
     {
         return .{
             Max.x - Min.x,
@@ -116,7 +116,7 @@ ImVector :: struct (T : Type)
     }
 }
 
-operator *[] :: inline (vec : *ImVector, index : s64) -> *vec.T #must
+operator *[] :: inline (vec : *ImVector, index : s64) -> *vec.T
 {
     assert(index >= 0 && index < vec.Size);
 
@@ -128,12 +128,12 @@ ImDrawCallback_ResetRenderState :: -1;
 
 // Inlined functions are not generated so we need to write them ourselves
 
-GetCurrentWindowRead :: inline () -> *Window #must #no_context
+GetCurrentWindowRead :: inline () -> *Window #no_context
 {
     return GImGui.CurrentWindow;
 }
 
-GetCurrentWindow :: inline () -> *Window #must #no_context
+GetCurrentWindow :: inline () -> *Window #no_context
 {
     GImGui.CurrentWindow.WriteAccessed = true;
 

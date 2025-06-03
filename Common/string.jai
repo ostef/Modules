@@ -1,4 +1,4 @@
-MakeString :: inline (count : s64, data : *u8) -> string #must
+MakeString :: inline (count : s64, data : *u8) -> string
 #deprecated "Use a struct literal directly"
 {
     str : string = ---;
@@ -8,7 +8,7 @@ MakeString :: inline (count : s64, data : *u8) -> string #must
     return str;
 }
 
-MakeString :: inline (cstr : *u8) -> string #must
+MakeString :: inline (cstr : *u8) -> string
 {
     if !cstr
         return "";
@@ -16,19 +16,19 @@ MakeString :: inline (cstr : *u8) -> string #must
     return .{StringLength(cstr), cstr};
 }
 
-StringFromArray :: inline (arr : []u8) -> string #must
+StringFromArray :: inline (arr : []u8) -> string
 #deprecated "Use a cast"
 {
     return MakeString(arr.count, arr.data);
 }
 
-StringToArray :: inline (str : string) -> []u8 #must
+StringToArray :: inline (str : string) -> []u8
 #deprecated "Use a cast"
 {
     return MakeArray(str.count, str.data);
 }
 
-StringLength :: inline (str : *u8) -> s64 #must
+StringLength :: inline (str : *u8) -> s64
 {
     i := 0;
     while str[i]
@@ -37,7 +37,7 @@ StringLength :: inline (str : *u8) -> s64 #must
     return i;
 }
 
-StringCompare :: inline (a : string, b : string) -> int #must
+StringCompare :: inline (a : string, b : string) -> int
 #no_abc
 {
     n := Min(a.count, b.count);
@@ -56,7 +56,7 @@ StringCompare :: inline (a : string, b : string) -> int #must
         return 0;
 }
 
-StringClone :: inline (str : string) -> string #must
+StringClone :: inline (str : string) -> string
 {
     data := cast(*u8) Alloc(str.count);
     memcpy(data, str.data, str.count);
@@ -65,7 +65,7 @@ StringClone :: inline (str : string) -> string #must
 }
 
 CStringClone :: StringCloneToCString;
-StringCloneToCString :: inline (str : string) -> *u8 #must
+StringCloneToCString :: inline (str : string) -> *u8
 {
     data := cast(*u8) Alloc(str.count + 1);
     memcpy(data, str.data, str.count);
@@ -74,7 +74,7 @@ StringCloneToCString :: inline (str : string) -> *u8 #must
     return data;
 }
 
-StringStartsWith :: inline (str : string, with : string) -> bool #must
+StringStartsWith :: inline (str : string, with : string) -> bool
 #no_abc
 {
     if str.count < with.count
@@ -89,7 +89,7 @@ StringStartsWith :: inline (str : string, with : string) -> bool #must
     return true;
 }
 
-StringEndsWith :: inline (str : string, with : string) -> bool #must
+StringEndsWith :: inline (str : string, with : string) -> bool
 #no_abc
 {
     if str.count < with.count
@@ -104,7 +104,7 @@ StringEndsWith :: inline (str : string, with : string) -> bool #must
     return true;
 }
 
-StringFindFirst :: inline (str : string, to_find : string) -> s64 #must
+StringFindFirst :: inline (str : string, to_find : string) -> s64
 #no_abc
 {
     for i : 0..str.count - 1
@@ -119,7 +119,7 @@ StringFindFirst :: inline (str : string, to_find : string) -> s64 #must
     return -1;
 }
 
-StringFindLast :: inline (str : string, to_find : string) -> s64 #must
+StringFindLast :: inline (str : string, to_find : string) -> s64
 #no_abc
 {
     for #v2 < i : 0..str.count - 1
@@ -143,7 +143,7 @@ StringAdvance :: inline (str : *string, count : int)
     str.count -= count;
 }
 
-StringAdvance :: inline (str : string, count : int) -> string #must
+StringAdvance :: inline (str : string, count : int) -> string
 {
     result := str;
     StringAdvance(*result, count);
@@ -151,7 +151,7 @@ StringAdvance :: inline (str : string, count : int) -> string #must
     return result;
 }
 
-StringJoin :: (args : ..string) -> string #must
+StringJoin :: (args : ..string) -> string
 #no_abc
 {
     total_size := 0;
@@ -173,13 +173,13 @@ StringJoin :: (args : ..string) -> string #must
     return .{total_size, data};
 }
 
-StringJoin :: (allocator : Allocator, args : ..string) -> string #must
+StringJoin :: (allocator : Allocator, args : ..string) -> string
 #deprecated "Use a context argument instead: StringJoin(\"Hello\", \"Sailor\",, allocator)"
 {
     return StringJoin(..args,, allocator);
 }
 
-StringSplit :: (str : string, split : u8) -> [..]string #must
+StringSplit :: (str : string, split : u8) -> [..]string
 {
     String :: #import "String";
 
@@ -202,7 +202,7 @@ StringSplit :: (str : string, split : u8) -> [..]string #must
     return result;
 }
 
-StringTruncate :: inline (str : string, count : s64) -> string #must
+StringTruncate :: inline (str : string, count : s64) -> string
 {
     count = Max(count, str.count);
 

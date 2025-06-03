@@ -29,7 +29,7 @@ UserData :: struct
     use_buffer_sub_data : bool;
 }
 
-GetUserData :: inline () -> *UserData #must #no_context
+GetUserData :: inline () -> *UserData #no_context
 {
     if ImGui.GetCurrentContext()
         return cast(*UserData) ImGui.GetIO().BackendRendererUserData;

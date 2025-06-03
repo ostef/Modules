@@ -21,7 +21,7 @@ Lexer :: struct
     has_errors : bool;
 }
 
-LexerIsAtEnd :: inline (using lexer : Lexer) -> bool #must
+LexerIsAtEnd :: inline (using lexer : Lexer) -> bool
 {
     return byte_index >= text.count;
 }
@@ -56,17 +56,17 @@ LexerAdvance :: (using lexer : *Lexer, count := 1) -> int
     return i;
 }
 
-LexerRemainingBytesString :: inline (using lexer : Lexer) -> string #must
+LexerRemainingBytesString :: inline (using lexer : Lexer) -> string
 {
     return string.{text.count - byte_index, text.data + byte_index};
 }
 
-LexerRemainingBytes :: inline (using lexer : Lexer) -> int #must
+LexerRemainingBytes :: inline (using lexer : Lexer) -> int
 {
     return Max(text.count - byte_index, 0);
 }
 
-LexerGetLine :: inline (using lexer : Lexer) -> string #must
+LexerGetLine :: inline (using lexer : Lexer) -> string
 {
     remaining := LexerRemainingBytesString(lexer);
 
@@ -77,7 +77,7 @@ LexerGetLine :: inline (using lexer : Lexer) -> string #must
     return remaining;
 }
 
-LexerEqualsString :: inline (using lexer : Lexer, str : string) -> bool #must
+LexerEqualsString :: inline (using lexer : Lexer, str : string) -> bool
 {
     if LexerRemainingBytes(lexer) < str.count
         return false;
@@ -117,7 +117,7 @@ LexerAdvanceUntilMatches :: inline (using lexer : *Lexer, str : string) -> bool
     return false;
 }
 
-LexerMatchString :: inline (using lexer : *Lexer, str : string) -> bool #must
+LexerMatchString :: inline (using lexer : *Lexer, str : string) -> bool
 {
     if LexerEqualsString(lexer, str)
     {
@@ -128,7 +128,7 @@ LexerMatchString :: inline (using lexer : *Lexer, str : string) -> bool #must
     return false;
 }
 
-LexerEqualsAlphaNumeric :: inline (using lexer : Lexer, str : string) -> bool #must
+LexerEqualsAlphaNumeric :: inline (using lexer : Lexer, str : string) -> bool
 {
     if !LexerEqualsString(lexer, str)
         return false;
@@ -136,7 +136,7 @@ LexerEqualsAlphaNumeric :: inline (using lexer : Lexer, str : string) -> bool #m
     return LexerRemainingBytes(lexer) == str.count || !Basic.is_alnum(text[byte_index + str.count]);
 }
 
-LexerMatchAlphaNumeric :: inline (using lexer : *Lexer, str : string) -> bool #must
+LexerMatchAlphaNumeric :: inline (using lexer : *Lexer, str : string) -> bool
 {
     if LexerEqualsAlphaNumeric(lexer, str)
     {

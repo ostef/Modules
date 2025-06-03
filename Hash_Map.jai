@@ -43,12 +43,12 @@ Hash_Map_Never_Occupied_Hash :: 0;
 Hash_Map_Removed_Hash        :: 1;
 Hash_Map_First_Occupied_Hash :: 2;
 
-HashMapGetMinCapacityForElementCount :: inline (map : HashMap, count : s64) -> s64 #must
+HashMapGetMinCapacityForElementCount :: inline (map : HashMap, count : s64) -> s64
 {
     return HashMapGetMinCapacityForElementCount(map.Load_Factor, count);
 }
 
-HashMapGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64 #must
+HashMapGetMinCapacityForElementCount :: inline (load_factor : s64, count : s64) -> s64
 {
     capacity := count + (count * (100 - load_factor)) / 100 + 1;
     capacity = Max(capacity, Hash_Map_Min_Capacity);
@@ -164,7 +164,7 @@ HashMapProbe :: (map : HashMap, key : map.Key) -> h : map.HashType, index : s64,
     return hash, cast(s64) index, false;
 }
 
-HashMapInsert :: (map : *HashMap, key : map.Key, $initialize_if_new := true) -> *map.Value #must, was_present : bool
+HashMapInsert :: (map : *HashMap, key : map.Key, $initialize_if_new := true) -> *map.Value, was_present : bool
 {
     if (map.occupied + 1) * 100 >= map.allocated * map.Load_Factor
         HashMapGrow(map);
@@ -218,7 +218,7 @@ HashMapSet :: inline (map : *HashMap, key : map.Key, value : map.Value)
         ptr.* = value;
 }
 
-HashMapGetPtr :: inline (map : *HashMap, key : map.Key) -> *map.Value #must
+HashMapGetPtr :: inline (map : *HashMap, key : map.Key) -> *map.Value
 {
     if map.count == 0
         return null;
@@ -230,7 +230,7 @@ HashMapGetPtr :: inline (map : *HashMap, key : map.Key) -> *map.Value #must
     return null;
 }
 
-HashMapGet :: inline (map : *HashMap, key : map.Key, fallback : map.Value) -> map.Value #must, found : bool
+HashMapGet :: inline (map : *HashMap, key : map.Key, fallback : map.Value) -> map.Value, found : bool
 {
     ptr := HashMapGetPtr(map, key);
     if ptr
@@ -239,7 +239,7 @@ HashMapGet :: inline (map : *HashMap, key : map.Key, fallback : map.Value) -> ma
     return fallback, false;
 }
 
-HashMapGet :: inline (map : *HashMap, key : map.Key) -> map.Value #must, found : bool
+HashMapGet :: inline (map : *HashMap, key : map.Key) -> map.Value, found : bool
 {
     ptr := HashMapGetPtr(map, key);
     if ptr
