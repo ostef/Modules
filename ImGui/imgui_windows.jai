@@ -3346,10 +3346,10 @@ TableSortSpecs :: struct {
 
 // Sorting specification for one column of a table (sizeof == 12 bytes)
 TableColumnSortSpecs :: struct {
-    ColumnUserID:  ID; // User id of the column (if specified by a TableSetupColumn() call)
-    ColumnIndex:   ImS16; // Index of the column
-    SortOrder:     ImS16; // Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables sorted on a single criteria will always have a 0 here)
-    SortDirection: u8; // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending
+    ColumnUserID:   ID; // User id of the column (if specified by a TableSetupColumn() call)
+    ColumnIndex:    ImS16; // Index of the column
+    SortOrder:      ImS16; // Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables sorted on a single criteria will always have a 0 here)
+    SortDirection_: SortDirection; /* 8 bits */ // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending
 }
 
 //-----------------------------------------------------------------------------
@@ -3358,8 +3358,11 @@ TableColumnSortSpecs :: struct {
 // Defining a custom placement new() with a custom parameter allows us to bypass including <new> which on some platforms complains when user has disabled exceptions.
 //-----------------------------------------------------------------------------
 ImNewWrapper :: struct {
-    __empty_struct_padding: u8; // C++ makes empty structs have length 1
+    using imnewwrapper__raw: ImNewWrapper__RAW;
+    __empty_struct_padding:  u8; // C++ makes empty structs have length 1
 }
+// ImNewWrapper without empty struct padding. Needed to generate a C++-equivalent struct layout when "inheriting" from ImNewWrapper
+ImNewWrapper__RAW :: struct {}
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImGuiStyle
@@ -4150,18 +4153,22 @@ ImFontConfig :: struct {
 // Hold rendering data for one glyph.
 // (Note: some language parsers may fail to convert the 31+1 bitfield members, in this case maybe drop store a single u32 or we can rework this)
 ImFontGlyph :: struct {
-    Colored:   u32; // Flag to indicate glyph is colored and should generally ignore tinting (make it usable with no shift on little-endian as this is used in loops)
-    #place Colored; /*bitfield 1*/ Visible:   u32; // Flag to indicate glyph has no visible pixels (e.g. space). Allow early out when rendering.
-    #place Colored; /*bitfield 2*/ Codepoint: u32; // 0x0000..0x10FFFF
-    AdvanceX:  float; // Distance to next character (= data from font + ImFontConfig::GlyphExtraSpacing.x baked in)
-    X0:        float; // Glyph corners
-    Y0:        float; // Glyph corners
-    X1:        float; // Glyph corners
-    Y1:        float; // Glyph corners
-    U0:        float; // Texture coordinates
-    V0:        float; // Texture coordinates
-    U1:        float; // Texture coordinates
-    V1:        float; // Texture coordinates
+    __bitfield: u32;
+    /* 
+        Colored: u32; /* 1 bits */ // Flag to indicate glyph is colored and should generally ignore tinting (make it usable with no shift on little-endian as this is used in loops)
+        Visible: u32; /* 1 bits */ // Flag to indicate glyph has no visible pixels (e.g. space). Allow early out when rendering.
+        Codepoint: u32; /* 30 bits */ // 0x0000..0x10FFFF;
+    */
+
+    AdvanceX:   float; // Distance to next character (= data from font + ImFontConfig::GlyphExtraSpacing.x baked in)
+    X0:         float; // Glyph corners
+    Y0:         float; // Glyph corners
+    X1:         float; // Glyph corners
+    Y1:         float; // Glyph corners
+    U0:         float; // Texture coordinates
+    V0:         float; // Texture coordinates
+    U1:         float; // Texture coordinates
+    V1:         float; // Texture coordinates
 }
 
 // Helper to build glyph ranges from text/string data. Feed your application strings/characters to it then call BuildRanges().
@@ -5290,7 +5297,7 @@ NextItemData :: struct {
     Width:              float; // Set by SetNextItemWidth()
     Shortcut:           KeyChord; // Set by SetNextItemShortcut()
     OpenVal:            bool; // Set by SetNextItemOpen()
-    OpenCond:           u8;
+    OpenCond:           Cond; /* 8 bits */
 }
 
 // Status storage for the last submitted item
@@ -5919,20 +5926,24 @@ DockNode :: struct {
     SelectedTabId:          ID; // [Leaf node only] Which of our tab/window is selected.
     WantCloseTabId:         ID; // [Leaf node only] Set when closing a specific tab/window.
     RefViewportId:          ID; // Reference viewport ID from visible window when HostWindow == NULL.
-    AuthorityForPos:        u16;
-    #place AuthorityForPos; /*bitfield 3*/ AuthorityForSize:       u16;
-    #place AuthorityForPos; /*bitfield 6*/ AuthorityForViewport:   u16;
-    IsVisible:              bool; // Set to false when the node is hidden (usually disabled as it has no active window)
-    #place IsVisible; /*bitfield 1*/ IsFocused:              bool;
-    #place IsVisible; /*bitfield 2*/ IsBgDrawnThisFrame:     bool;
-    #place IsVisible; /*bitfield 3*/ HasCloseButton:         bool; // Provide space for a close button (if any of the docked window has one). Note that button may be hidden on window without one.
-    #place IsVisible; /*bitfield 4*/ HasWindowMenuButton:    bool;
-    #place IsVisible; /*bitfield 5*/ HasCentralNodeChild:    bool;
-    #place IsVisible; /*bitfield 6*/ WantCloseAll:           bool; // Set when closing all tabs at once.
-    #place IsVisible; /*bitfield 7*/ WantLockSizeOnce:       bool;
-    WantMouseMove:          bool; // After a node extraction we need to transition toward moving the newly created host window
-    #place WantMouseMove; /*bitfield 1*/ WantHiddenTabBarUpdate: bool;
-    #place WantMouseMove; /*bitfield 2*/ WantHiddenTabBarToggle: bool;
+    __bitfield:             DataAuthority;
+    /* 
+        AuthorityForPos: DataAuthority; /* 3 bits */
+        AuthorityForSize: DataAuthority; /* 3 bits */
+        AuthorityForViewport: DataAuthority; /* 3 bits */;
+    */
+
+    IsVisible:              bool; /* 1 bits */ // Set to false when the node is hidden (usually disabled as it has no active window)
+    IsFocused:              bool #align 1; /* 1 bits */
+    IsBgDrawnThisFrame:     bool #align 1; /* 1 bits */
+    HasCloseButton:         bool #align 1; /* 1 bits */ // Provide space for a close button (if any of the docked window has one). Note that button may be hidden on window without one.
+    HasWindowMenuButton:    bool #align 1; /* 1 bits */
+    HasCentralNodeChild:    bool #align 1; /* 1 bits */
+    WantCloseAll:           bool #align 1; /* 1 bits */ // Set when closing all tabs at once.
+    WantLockSizeOnce:       bool #align 1; /* 1 bits */
+    WantMouseMove:          bool; /* 1 bits */ // After a node extraction we need to transition toward moving the newly created host window
+    WantHiddenTabBarUpdate: bool #align 1; /* 1 bits */
+    WantHiddenTabBarToggle: bool #align 1; /* 1 bits */
 
     Constructor :: (this: *DockNode, id: ID) -> void #cpp_method #foreign imgui "??0ImGuiDockNode@@QEAA@I@Z";
     Destructor :: (this: *DockNode) -> void #cpp_method #foreign imgui "??1ImGuiDockNode@@QEAA@XZ";
@@ -6118,8 +6129,8 @@ StackLevelInfo :: struct {
     ID_:             ID;
     QueryFrameCount: ImS8; // >= 1: Query in progress
     QuerySuccess:    bool; // Obtained result from DebugHookIdInfo()
-    DataType:        u8;
-    Desc:            [57] u8 #align 4; // Arbitrarily sized buffer to hold a result (FIXME: could replace Results[] with a chunk stream?) FIXME: Now that we added CTRL+C this should be fixed.
+    DataType_:       DataType; /* 8 bits */
+    Desc:            [57] u8; // Arbitrarily sized buffer to hold a result (FIXME: could replace Results[] with a chunk stream?) FIXME: Now that we added CTRL+C this should be fixed.
 }
 
 // State for ID Stack tool queries
@@ -6232,7 +6243,7 @@ Context :: struct #type_info_none {
     ActiveIdHasBeenEditedBefore:              bool; // Was the value associated to the widget Edited over the course of the Active state.
     ActiveIdHasBeenEditedThisFrame:           bool;
     ActiveIdFromShortcut:                     bool;
-    ActiveIdMouseButton:                      u8;
+    ActiveIdMouseButton:                      s32; /* 8 bits */
     ActiveIdClickOffset:                      ImVec2; // Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior)
     ActiveIdWindow:                           *Window;
     ActiveIdSource:                           InputSource; // Activating source: ImGuiInputSource_Mouse OR ImGuiInputSource_Keyboard OR ImGuiInputSource_Gamepad
@@ -6610,10 +6621,14 @@ Window :: struct {
     HiddenFramesCannotSkipItems:        ImS8; // Hide the window for N frames while allowing items to be submitted so we can measure their size
     HiddenFramesForRenderOnly:          ImS8; // Hide the window until frame N at Render() time only
     DisableInputsFrames:                ImS8; // Disable window interactions for N frames
-    SetWindowPosAllowFlags:             Cond; // store acceptable condition flags for SetNextWindowPos() use.
-    #place SetWindowPosAllowFlags; /*bitfield 8*/ SetWindowSizeAllowFlags:            Cond; // store acceptable condition flags for SetNextWindowSize() use.
-    #place SetWindowPosAllowFlags; /*bitfield 16*/ SetWindowCollapsedAllowFlags:       Cond; // store acceptable condition flags for SetNextWindowCollapsed() use.
-    #place SetWindowPosAllowFlags; /*bitfield 24*/ SetWindowDockAllowFlags:            Cond; // store acceptable condition flags for SetNextWindowDock() use.
+    __bitfield:                         Cond;
+    /* 
+        SetWindowPosAllowFlags: Cond; /* 8 bits */ // store acceptable condition flags for SetNextWindowPos() use.
+        SetWindowSizeAllowFlags: Cond; /* 8 bits */ // store acceptable condition flags for SetNextWindowSize() use.
+        SetWindowCollapsedAllowFlags: Cond; /* 8 bits */ // store acceptable condition flags for SetNextWindowCollapsed() use.
+        SetWindowDockAllowFlags: Cond; /* 8 bits */ // store acceptable condition flags for SetNextWindowDock() use.;
+    */
+
     SetWindowPosVal:                    ImVec2; // store window position when using a non-zero Pivot (position set needs to be processed when we know the window size)
     SetWindowPosPivot:                  ImVec2; // store window pivot for positioning. ImVec2(0, 0) when positioning from top-left corner; ImVec2(0.5f, 0.5f) for centering; ImVec2(1, 1) for bottom right.
 
@@ -6661,10 +6676,10 @@ Window :: struct {
     MemoryDrawListVtxCapacity:          s32;
     MemoryCompacted:                    bool; // Set when window extraneous data have been garbage collected
 
-    DockIsActive:                       bool; // When docking artifacts are actually visible. When this is set, DockNode is guaranteed to be != NULL. ~~ (DockNode != NULL) && (DockNode->Windows.Size > 1).
-    #place DockIsActive; /*bitfield 1*/ DockNodeIsVisible:                  bool;
-    #place DockIsActive; /*bitfield 2*/ DockTabIsVisible:                   bool; // Is our window visible this frame? ~~ is the corresponding tab selected?
-    #place DockIsActive; /*bitfield 3*/ DockTabWantClose:                   bool;
+    DockIsActive:                       bool; /* 1 bits */ // When docking artifacts are actually visible. When this is set, DockNode is guaranteed to be != NULL. ~~ (DockNode != NULL) && (DockNode->Windows.Size > 1).
+    DockNodeIsVisible:                  bool #align 1; /* 1 bits */
+    DockTabIsVisible:                   bool #align 1; /* 1 bits */ // Is our window visible this frame? ~~ is the corresponding tab selected?
+    DockTabWantClose:                   bool #align 1; /* 1 bits */
     DockOrder:                          s16; // Order of the last time the window was visible within its DockNode. This is used to reorder windows that are reappearing on the same frame. Same value between windows that were active and windows that were none are possible.
     DockStyle:                          WindowDockStyle;
     DockNode_:                          *DockNode; // Which node are we docked into. Important: Prefer testing DockIsActive in many cases as this will still be set when the dock node is hidden.
@@ -6822,9 +6837,13 @@ TableColumn :: struct {
     NavLayerCurrent:          ImS8; // ImGuiNavLayer in 1 byte
     AutoFitQueue:             ImU8; // Queue of 8 values for the next 8 frames to request auto-fit
     CannotSkipItemsQueue:     ImU8; // Queue of 8 values for the next 8 frames to disable Clipped/SkipItem
-    SortDirection:            ImU8; // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending
-    #place SortDirection; /*bitfield 2*/ SortDirectionsAvailCount: ImU8; // Number of available sort directions (0 to 3)
-    #place SortDirection; /*bitfield 4*/ SortDirectionsAvailMask:  ImU8; // Mask of available sort directions (1-bit each)
+    __bitfield:               ImU8;
+    /* 
+        SortDirection: ImU8; /* 2 bits */ // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending
+        SortDirectionsAvailCount: ImU8; /* 2 bits */ // Number of available sort directions (0 to 3)
+        SortDirectionsAvailMask: ImU8; /* 4 bits */ // Mask of available sort directions (1-bit each);
+    */
+
     SortDirectionsAvailList:  ImU8; // Ordered list of available sort directions (2-bits each, total 8-bits)
 }
 
@@ -6873,8 +6892,12 @@ Table :: struct {
     RowCellPaddingY:            float; // Top and bottom padding. Reloaded during row change.
     RowTextBaseline:            float;
     RowIndentOffsetX:           float;
-    RowFlags:                   TableRowFlags; // Current row flags, see ImGuiTableRowFlags_
-    #place RowFlags; /*bitfield 16*/ LastRowFlags:               TableRowFlags;
+    __bitfield:                 TableRowFlags;
+    /* 
+        RowFlags: TableRowFlags; /* 16 bits */ // Current row flags, see ImGuiTableRowFlags_
+        LastRowFlags: TableRowFlags; /* 16 bits */;
+    */
+
     RowBgColorCounter:          s32; // Counter for alternating background colors (can be fast-forwarded by e.g clipper), not same as CurrentRow because header rows typically don't increase this.
     RowBgColor:                 [2] ImU32; // Background color override for current row.
     BorderColorStrong:          ImU32;
@@ -6997,9 +7020,12 @@ TableColumnSettings :: struct {
     Index:         TableColumnIdx;
     DisplayOrder:  TableColumnIdx;
     SortOrder:     TableColumnIdx;
-    SortDirection: ImU8;
-    #place SortDirection; /*bitfield 2*/ IsEnabled:     ImU8; // "Visible" in ini file
-    #place SortDirection; /*bitfield 3*/ IsStretch:     ImU8;
+    __bitfield:    ImU8;
+    /* 
+        SortDirection: ImU8; /* 2 bits */
+        IsEnabled: ImU8; /* 1 bits */ // "Visible" in ini file
+        IsStretch: ImU8; /* 1 bits */;
+    */
 }
 
 // This is designed to be stored in a single ImChunkStream (1 header followed by N ImGuiTableColumnSettings, etc.)
