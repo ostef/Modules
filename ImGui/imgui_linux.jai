@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai ./Modules ./Source/Modules Build.jai - -generate_bindings
+// jai generate.jai
 //
 
 
@@ -3360,8 +3360,11 @@ TableColumnSortSpecs :: struct {
 // Defining a custom placement new() with a custom parameter allows us to bypass including <new> which on some platforms complains when user has disabled exceptions.
 //-----------------------------------------------------------------------------
 ImNewWrapper :: struct {
-    __empty_struct_padding: u8; // C++ makes empty structs have length 1
+    using imnewwrapper__raw: ImNewWrapper__RAW;
+    __empty_struct_padding:  u8; // C++ makes empty structs have length 1
 }
+// ImNewWrapper without empty struct padding. Needed to generate a C++-equivalent struct layout when "inheriting" from ImNewWrapper
+ImNewWrapper__RAW :: struct {}
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImGuiStyle
@@ -5902,21 +5905,22 @@ DockNode :: struct {
         AuthorityForViewport: DataAuthority; /* 3 bits */;
     */
 
-    IsVisible:              bool; /* 1 bits */ // Set to false when the node is hidden (usually disabled as it has no active window)
-    IsFocused:              bool; /* 1 bits */
-    IsBgDrawnThisFrame:     bool; /* 1 bits */
-    HasCloseButton:         bool; /* 1 bits */ // Provide space for a close button (if any of the docked window has one). Note that button may be hidden on window without one.
-    HasWindowMenuButton:    bool; /* 1 bits */
-    HasCentralNodeChild:    bool; /* 1 bits */
-    WantCloseAll:           bool; /* 1 bits */ // Set when closing all tabs at once.
+    IsVisible:              bool #align 1; /* 1 bits */ // Set to false when the node is hidden (usually disabled as it has no active window)
+    IsFocused:              bool #align 1; /* 1 bits */
+    IsBgDrawnThisFrame:     bool #align 1; /* 1 bits */
+    HasCloseButton:         bool #align 1; /* 1 bits */ // Provide space for a close button (if any of the docked window has one). Note that button may be hidden on window without one.
+    HasWindowMenuButton:    bool #align 1; /* 1 bits */
+    HasCentralNodeChild:    bool #align 1; /* 1 bits */
+    WantCloseAll:           bool #align 1; /* 1 bits */ // Set when closing all tabs at once.
     WantLockSizeOnce:       bool; /* 1 bits */
-    WantMouseMove:          bool; /* 1 bits */ // After a node extraction we need to transition toward moving the newly created host window
-    WantHiddenTabBarUpdate: bool; /* 1 bits */
-    WantHiddenTabBarToggle: bool; /* 1 bits */
+    WantMouseMove:          bool #align 1; /* 1 bits */ // After a node extraction we need to transition toward moving the newly created host window
+    WantHiddenTabBarUpdate: bool #align 1; /* 1 bits */
+    WantHiddenTabBarToggle: bool #align 1; /* 1 bits */
 
     Constructor :: (this: *DockNode, id: ID) -> void #cpp_method #foreign imgui "_ZN13ImGuiDockNodeC1Ej";
     Destructor_Base :: (this: *DockNode) -> void #cpp_method #foreign imgui "_ZN13ImGuiDockNodeD2Ev";
     Destructor :: (this: *DockNode) -> void #cpp_method #foreign imgui "_ZN13ImGuiDockNodeD1Ev";
+    #place ID_; DockNode_alignment: u64;
 }
 
 // List of colors that are stored at the time of Begin() into Docked Windows.
@@ -6462,6 +6466,7 @@ Context :: struct #type_info_none {
     WantTextInputNextFrame:                   s32;
     TempBuffer:                               ImVector(u8); // Temporary text buffer
     TempKeychordName:                         [64] u8;
+    #place Initialized; Context_alignment: u64;
 }
 
 // Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
@@ -6634,9 +6639,9 @@ Window :: struct {
     MemoryCompacted:                    bool; // Set when window extraneous data have been garbage collected
 
     DockIsActive:                       bool; /* 1 bits */ // When docking artifacts are actually visible. When this is set, DockNode is guaranteed to be != NULL. ~~ (DockNode != NULL) && (DockNode->Windows.Size > 1).
-    DockNodeIsVisible:                  bool; /* 1 bits */
-    DockTabIsVisible:                   bool; /* 1 bits */ // Is our window visible this frame? ~~ is the corresponding tab selected?
-    DockTabWantClose:                   bool; /* 1 bits */
+    DockNodeIsVisible:                  bool #align 1; /* 1 bits */
+    DockTabIsVisible:                   bool #align 1; /* 1 bits */ // Is our window visible this frame? ~~ is the corresponding tab selected?
+    DockTabWantClose:                   bool #align 1; /* 1 bits */
     DockOrder:                          s16; // Order of the last time the window was visible within its DockNode. This is used to reorder windows that are reappearing on the same frame. Same value between windows that were active and windows that were none are possible.
     DockStyle:                          WindowDockStyle;
     DockNode_:                          *DockNode; // Which node are we docked into. Important: Prefer testing DockIsActive in many cases as this will still be set when the dock node is hidden.
