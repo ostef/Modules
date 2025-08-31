@@ -1,5 +1,8 @@
 StringBuilder :: Basic.String_Builder;
 
+Append   :: StringBuilderAppend;
+Appendln :: StringBuilderAppendLine;
+
 StringBuilderFree :: inline (builder : *StringBuilder)
 {
     Basic.reset(builder);
