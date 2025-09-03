@@ -361,25 +361,26 @@ TypeIsSubstructOf :: inline (type : Type, of : Type) -> bool
     return TypeIsSubstructOf(cast(*Type_Info) type, cast(*Type_Info) of);
 }
 
-TypeIsSubstructOf :: (info : *Type_Info, of : *Type_Info) -> bool
+TypeIsSubstructOf :: (info : *Type_Info, of : *Type_Info, first_call := true) -> bool
 {
-    if info == of
+    if !TypeIsStruct(info) {
         return false;
-
-    while true
-    {
-        member := GetNonConstantStructMember(info, 0);
-
-        if !member || !(member.flags & .AS) || !(member.flags & .USING)
-            return false;
-
-        if member.type == of
-            return true;
-
-        info = member.type;
     }
 
-    return false;
+    if info == of {
+        return !first_call;
+    }
+
+    member := GetNonConstantStructMember(info, 0);
+    if !member || !(member.flags & .AS) || !(member.flags & .USING) {
+        return false;
+    }
+
+    if !TypeIsSubstructOf(member.type, of, false) {
+        return false;
+    }
+
+    return true;
 }
 
 TypeGetSourcePolymorph :: (info : *Type_Info_Struct) -> *Type_Info_Struct
