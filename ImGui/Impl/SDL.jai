@@ -775,3 +775,27 @@ TerminatePlatformInterface :: inline ()
     Free(main_viewport.PlatformUserData);
     main_viewport.PlatformUserData = null;
 }
+
+// Useful for hot-reloaded code, that needs to update function pointers to the newly loaded library
+ReloadAllCallbacks :: () {
+    io := ImGui.GetIO();
+
+    io.SetClipboardTextFn = SetClipboardText;
+    io.GetClipboardTextFn = GetClipboardText;
+
+    if (io.ConfigFlags_ & .ViewportsEnable) && (io.BackendFlags_ & .PlatformHasViewports)
+    {
+        using platform_io := ImGui.GetPlatformIO();
+        Platform_CreateWindow = CreateWindow;
+        Platform_DestroyWindow = DestroyWindow;
+        Platform_ShowWindow = ShowWindow;
+        Platform_SetWindowPos = SetWindowPos;
+        Platform_GetWindowPos = GetWindowPos;
+        Platform_SetWindowSize = SetWindowSize;
+        Platform_GetWindowSize = GetWindowSize;
+        Platform_SetWindowFocus = SetWindowFocus;
+        Platform_GetWindowFocus = GetWindowFocus;
+        Platform_GetWindowMinimized = GetWindowMinimized;
+        Platform_SetWindowTitle = SetWindowTitle;
+    }
+}
