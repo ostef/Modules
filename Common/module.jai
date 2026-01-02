@@ -132,18 +132,18 @@ Println :: inline (format_string : string, args : ..Any, to_standard_error := fa
     ];
 }
 
+#add_context panicking := false;
+
+#if Enable_Asserts
+{
+
 Assert :: (assertion : bool, format_string := "", args : ..Any, location := #caller_location) #expand
 {
-    #if Enable_Asserts
-    {
-        if !assertion && Basic.assert_helper(format_string, ..args, location)
-            debug_break();
-    }
+    if !assertion && Basic.assert_helper(format_string, ..args, location)
+        debug_break();
 }
 @PrintLike
 @NoProfile
-
-#add_context panicking := false;
 
 Panic :: (format_string := "", args : ..Any, location := #caller_location) #expand
 {
@@ -154,6 +154,24 @@ Panic :: (format_string := "", args : ..Any, location := #caller_location) #expa
 }
 @PrintLike
 @NoProfile
+
+}
+else
+{
+
+Assert :: (#discard assertion : bool, #discard format_string := "", #discard args : ..Any, #discard location := #caller_location) #expand
+{
+}
+@PrintLike
+@NoProfile
+
+Panic :: (#discard format_string := "", #discard args : ..Any, #discard location := #caller_location) #expand
+{
+}
+@PrintLike
+@NoProfile
+
+}
 
 Initialize :: inline (item : *$T)
 {
