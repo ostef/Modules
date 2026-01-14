@@ -169,9 +169,10 @@ HashSetInsert :: (set : *HashSet, value : set.T) -> *set.T, was_present : bool
     hash, index, is_present := HashSetProbe(set, value);
 
     entry := *set.entries[index];
-    entry.value = value;
     if is_present
         return *entry.value, true;
+
+    entry.value = value;
 
     entry.hash = hash;
     set.occupied += 1;
