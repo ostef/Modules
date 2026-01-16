@@ -109,11 +109,15 @@ ArrayPushMultiple :: inline (arr : *[..]$T, elems : []T)
     arr.count += elems.count;
 }
 
-ArrayPop :: inline (arr : *[..]$T)
+ArrayPop :: inline (arr : *[..]$T, count := 1)
 {
-    Assert(arr.count > 0, "Popping empty array");
+    if count <= 0 {
+        return;
+    }
 
-    arr.count -= 1;
+    Assert(arr.count - count >= 0, "Popping too many elements from array");
+
+    arr.count = Max(arr.count - count, 0);
 }
 
 ArrayInsert :: inline (arr : *[..]$T, index : s64, $initialize := true) -> *T
