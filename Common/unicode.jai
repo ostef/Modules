@@ -263,7 +263,7 @@ EncodeCharacterAsUtf8 :: (codepoint : u32, buffer : []u8, byte_offset : s64) -> 
         codepoint >>= 6;
     }
 
-    First_Byte_Mark :: u8.[ 0x00, 0x00, 0xc0, 0xe0 ];
+    First_Byte_Mark :: u8.[ 0x00, 0x00, 0xc0, 0xe0, 0xf0 ];
 
     buffer[byte_offset] = xx (codepoint | First_Byte_Mark[size]);
 
