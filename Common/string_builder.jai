@@ -103,7 +103,12 @@ StringBuilderAppendStringLiteral :: inline (builder : *StringBuilder, str : stri
         case #char "\t"; count += StringBuilderAppendString(builder, "\\t");
         case #char "\r"; count += StringBuilderAppendString(builder, "\\r");
         case #char "\n"; count += StringBuilderAppendString(builder, "\\n");
-        case;            count += StringBuilderAppendByte(builder, str[i]);
+        case;
+            if Basic.is_print(str[i]) {
+                count += StringBuilderAppendByte(builder, str[i]);
+            } else {
+                count += StringBuilderAppend(builder, "\\x%", FormatIntHex(str[i], 2));
+            }
         }
     }
 
